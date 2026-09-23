@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- offline verze – data se ukládají jen v tomto prohlížeči (localStorage) -->
-<!-- v1.5 -->
+<!-- v1.6 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -183,7 +183,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v1.5';
+const APP_VERSION = 'v1.6';
 
 const POSTUP_CATS = [
   {id:'vstupni_logistika', label:'Vstupní logistika'},
@@ -318,7 +318,7 @@ function videoBlockHtml(url){
   if(!v) return '';
   if(v.type === 'youtube'){
     if(videoOpen){
-      return '<div class="video-block"><iframe src="https://www.youtube-nocookie.com/embed/' + v.id + '" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>';
+      return '<div class="video-block"><iframe src="https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>';
     }
     return '<div class="video-block"><div class="video-thumb" id="videoThumb">' +
       '<img src="https://img.youtube.com/vi/' + v.id + '/hqdefault.jpg" alt="Náhled videa">' +
