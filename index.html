@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Znalostní báze – Sladká dílna</title>
+<!-- offline verze – data se ukládají jen v tomto prohlížeči (localStorage) -->
+<!-- v1.5 -->
+<style>
+  :root{
+    --cream:#F7EFE0;
+    --paper:#FFFDF8;
+    --cocoa:#3B2A20;
+    --cocoa-soft:#6B5744;
+    --caramel:#B9793A;
+    --caramel-deep:#8F5A24;
+    --sage:#5B7B52;
+    --line:#E7D9BE;
+    --line-soft:#F0E5CE;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--cream);color:var(--cocoa);
+    font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:14px;
+  }
+  h1,h2,h3{font-family:Georgia,"Iowan Old Style",serif;margin:0;}
+  .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh;}
+  @media (max-width:760px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{border-right:none;border-bottom:1px solid var(--line);}
+    .main{padding:20px 14px 60px;}
+  }
+  .sidebar{background:var(--paper);border-right:1px solid var(--line);padding:20px 16px;display:flex;flex-direction:column;min-height:100vh;}
+  .sidebar h1{font-size:18px;line-height:1.25;}
+  .sidebar .sub{color:var(--cocoa-soft);font-size:12px;margin-top:4px;margin-bottom:14px;}
+  .mode-badge{
+    display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;
+    margin-bottom:10px;background:var(--line-soft);color:var(--caramel-deep);
+  }
+  .mode-badge.reader{background:#DCE6F0;color:#2F4E6B;}
+  .mode-btn{
+    width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);
+    background:var(--paper);color:var(--cocoa);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:16px;
+  }
+  .mode-btn:hover{background:var(--line-soft);}
+  .axis-switch{display:flex;gap:6px;margin-bottom:14px;}
+  .axis-btn{
+    flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--line);background:var(--paper);
+    color:var(--cocoa-soft);font-size:11.5px;font-weight:600;cursor:pointer;
+  }
+  .axis-btn.active{background:var(--caramel);color:#fff;border-color:var(--caramel);}
+  .cat-group{margin-bottom:4px;}
+  .cat-label{
+    font-size:11px;font-weight:700;text-transform:uppercase;color:var(--caramel-deep);
+    margin:12px 0 4px;letter-spacing:.04em;
+  }
+  .art-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:3px;}
+  .art-item{
+    padding:7px 9px;border-radius:7px;cursor:pointer;border:1px solid transparent;font-size:13px;
+  }
+  .art-item:hover{background:var(--line-soft);}
+  .art-item.active{background:var(--cream);border-color:var(--caramel);}
+  .add-btn{
+    margin-top:16px;width:100%;padding:8px;border-radius:8px;
+    border:1.5px dashed var(--caramel);background:transparent;color:var(--caramel-deep);
+    font-weight:600;cursor:pointer;font-size:12.5px;
+  }
+  .add-btn:hover{background:var(--line-soft);}
+  .plain-btn{
+    width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);
+    color:var(--cocoa);font-weight:600;cursor:pointer;font-size:12.5px;margin-top:8px;
+  }
+  .plain-btn:hover{background:var(--line-soft);}
+  .status{font-size:11px;color:var(--cocoa-soft);margin-top:14px;line-height:1.4;}
+  .backup-row{display:flex;gap:6px;margin-top:12px;}
+  .backup-btn{
+    flex:1;padding:7px 4px;border-radius:6px;border:1px solid var(--line);
+    background:var(--paper);color:var(--cocoa-soft);font-size:11px;cursor:pointer;
+  }
+  .backup-btn:hover{background:var(--line-soft);}
+  .sidebar-spacer{flex:1;}
+  .version-tag{font-size:9.5px;color:var(--line);margin-top:16px;text-align:right;user-select:none;}
+
+  .main{padding:26px 30px 60px;max-width:720px;}
+  .empty-state{color:var(--cocoa-soft);padding-top:60px;text-align:center;}
+  .art-title{font-family:Georgia,serif;font-size:24px;font-weight:700;margin-bottom:6px;}
+  .art-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
+  .tag-chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--line-soft);color:var(--cocoa-soft);}
+  .art-body{font-size:15px;line-height:1.65;white-space:pre-wrap;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:20px;}
+  .btn{
+    background:var(--caramel);color:#fff;border:none;border-radius:8px;
+    padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;
+  }
+  .btn.ghost{background:var(--line-soft);color:var(--cocoa-soft);}
+  .btn.red{background:#A63446;}
+
+  .field-label{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--cocoa-soft);margin:14px 0 5px;letter-spacing:.04em;}
+  .field-label:first-child{margin-top:0;}
+  .field-hint{font-size:11.5px;color:var(--cocoa-soft);margin:-2px 0 6px;line-height:1.4;}
+  input.f-title, textarea.f-content, input.f-video, select.f-select{
+    width:100%;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;
+    padding:9px 10px;background:var(--paper);color:var(--cocoa);
+  }
+  input.f-title{font-family:Georgia,serif;font-size:18px;font-weight:700;}
+  textarea.f-content{min-height:260px;resize:vertical;line-height:1.55;}
+  .tag-box{display:flex;flex-wrap:wrap;gap:7px;}
+  .tag-check{
+    display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--line);
+    border-radius:8px;padding:5px 9px;cursor:pointer;background:var(--paper);
+  }
+
+  .img-gallery{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .img-gallery img{width:140px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;}
+  .img-edit-item{position:relative;width:100px;height:80px;}
+  .img-edit-item img{width:100%;height:100%;object-fit:cover;border-radius:7px;border:1px solid var(--line);}
+  .img-del{
+    position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;
+    background:#A63446;color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;
+  }
+  .img-add-label{
+    display:flex;align-items:center;justify-content:center;width:100px;height:80px;
+    border:1.5px dashed var(--caramel);border-radius:7px;color:var(--caramel-deep);
+    font-size:12px;cursor:pointer;text-align:center;
+  }
+  .img-add-label input{display:none;}
+
+  .video-block{margin-top:18px;max-width:480px;}
+  .video-thumb{
+    position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;
+    background:var(--line-soft);cursor:pointer;
+  }
+  .video-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .video-play{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  }
+  .video-play span{
+    width:54px;height:54px;border-radius:50%;background:rgba(59,42,32,.72);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+  }
+  .video-block iframe, .video-block video{width:100%;aspect-ratio:16/9;border:none;border-radius:10px;}
+  .video-link-btn{display:inline-block;}
+
+  .role-row{
+    display:flex;gap:8px;align-items:center;justify-content:space-between;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:8px;
+  }
+
+  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--caramel);outline-offset:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div>
+      <h1>Znalostní báze</h1>
+      <div class="sub">Sladká dílna</div>
+      <div class="mode-badge" id="modeLabel"></div>
+      <button class="mode-btn" id="modeBtn"></button>
+
+      <div id="roleSelectWrap" style="display:none;margin-bottom:14px;">
+        <div class="field-label" style="margin:0 0 5px">Moje role</div>
+        <select class="f-select" id="roleSelect"></select>
+      </div>
+      <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
+
+      <div class="axis-switch" id="axisSwitch"></div>
+      <div id="catList"></div>
+      <button class="add-btn" id="addBtn" style="display:none">+ Nový článek</button>
+      <div class="backup-row" id="backupRow">
+        <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
+        <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="version-tag" id="versionTag"></div>
+  </div>
+  <div class="main" id="main">
+    <div class="empty-state">Načítám…</div>
+  </div>
+</div>
+
+<script>
+const APP_VERSION = 'v1.5';
+
+const POSTUP_CATS = [
+  {id:'vstupni_logistika', label:'Vstupní logistika'},
+  {id:'novacek', label:'Nováček'},
+  {id:'pokrocily', label:'Pokročilý'},
+  {id:'expert', label:'Expert'}
+];
+const MANUAL_CATS = [
+  {id:'uvod', label:'Úvod'},
+  {id:'prostory', label:'Prostory'},
+  {id:'zasady_fungovani', label:'Zásady fungování'},
+  {id:'desatero', label:'Desatero'},
+  {id:'obsluha', label:'Obsluha'},
+  {id:'vitrina', label:'Vitrína'},
+  {id:'dorty_zakusky', label:'Dorty a zákusky'},
+  {id:'start_dne', label:'Start dne'},
+  {id:'volny_cas', label:'Co dělat ve volných chvílích'},
+  {id:'konec_dne', label:'Konec dne'},
+  {id:'poukazy', label:'Poukazy'},
+  {id:'zmrzlina', label:'Zmrzlina'},
+  {id:'objednavani_dortu', label:'Objednávání dortu'},
+  {id:'napojovy_manual', label:'Nápojový manuál'},
+  {id:'slevy', label:'Slevy, sousedská a personální káva'},
+  {id:'jak_se_to_vari', label:'Jak se to vaří (limo/svařák/čoko)'}
+];
+const AXES = [
+  {id:'postup', label:'Podle postupu', field:'postupTags', cats:POSTUP_CATS,
+   hint:'Do jaké fáze zaškolení návod patří – stejné skupiny jako checklist v kartě zaměstnance.'},
+  {id:'manual', label:'Podle manuálu', field:'manualTags', cats:MANUAL_CATS,
+   hint:'Do jaké kapitoly kompletního provozního manuálu návod patří.'}
+];
+
+// SEED_ALL = veškerý pilotní obsah dosud připravený. Appka si při startu hlídá,
+// aby každý článek z tohoto seznamu v datech byl – chybějící doplní, existující nepřepisuje.
+const SEED_ALL = [
+  {id:'uvod', title:'Úvod – co je Sladká dílna', postupTags:['vstupni_logistika'], manualTags:['uvod'], images:[], videoUrl:'', content:
+"V naší cukrárně nejde jen o dorty a kávu – jde hlavně o lidi. O zákazníky, kteří k nám chodí pro radost a pohodu, i o nás samotné, kteří tu tvoříme tým. Chceme, aby Sladká dílna byla místem, kde se všichni cítí vítaní, opečovaní a spokojení.\n\nProto jsme si stanovili jednoduché zásady: být k sobě i k hostům vždy milí a vřelí, pracovat poctivě a srdcem a nabízet jen to, co bychom si sami dali na talíř nebo do sklenice.\n\nKdyž se jich budeme držet, bude naše práce lehčí, atmosféra příjemnější a hosté se k nám budou rádi vracet."},
+  {id:'prostory', title:'Prostory cukrárny', postupTags:['vstupni_logistika'], manualTags:['prostory'], images:[], videoUrl:'', content:
+"Kancelář – místo pro svačení a obídvání, najdeš tam zástěru a cedulku „školím se“.\n\nŠatna – tady se převlékáme a necháváme osobní věci. Na směnu chodíme v tmavém oblečení (ideálně černé triko a černé legíny/šortky). V šatně je i lednice na personální jídlo.\n\nMyčka – odnos špinavého nádobí.\n\nChladicí box – mléko, citrusy na limonády, dorty na objednávku, pečené nanuky, makronky. Pokud jdeš vyzvednout dort na objednávku a nemůžeš ho v boxu najít: podívej se do lednice → zeptej se ve výrobě → jdi se znovu zeptat na jméno → podívej se znovu všude → teprve pak jdi za zákazníkem, že dort není. Postupuj tak, abys zákazníka zbytečně nevyděsil – většinou je příčinou to, že dort jen nevidíme, nebo se uložil do jiné lednice.\n\nMrazicí box – zásoba ledu, zmrzliny.\n\nSuchý sklad – zrnka kávy, nápoje v plastu, základy na zmrzlinu.\n\nDoplňovací lednice – bílá slouží k doplňování dezertů, prosklená obsahuje koláče a kusy dortů."},
+  {id:'zasady_fungovani', title:'Zásady fungování', postupTags:['vstupni_logistika'], manualTags:['zasady_fungovani'], images:[], videoUrl:'', content:
+"Priority práce na place, v tomto pořadí:\n1. Obsluha zákazníků\n2. Úklid placu a pracovní barové plochy kolem kávovaru a dřezu\n3. Doplnění vitríny\n4. Veškeré ostatní činnosti (vyleštění vitríny, skládání krabic/ubrousků, razítkování...)\n\nNenecháváme nikdy prázdný krám – na place musí být vždy alespoň jeden člen posádky. Pokud musíš jít pro dort nebo cokoli jiného dozadu a jsi na place sám, popros jiného dostupného kolegu, aby šel na stráž.\n\nKdyž do cukrárny vstoupí zákazník, dáváme mu najevo, že jsme ready o něj pečovat – nahlas mile a s úsměvem pozdravíme. Small talky jsou vítané.\n\nKdyž zrovna nikoho neobsluhujeme, neznamená to, že se můžeme opírat o pult nebo koukat do mobilu. Osobní telefon používáme pouze v zázemí, a jen když si potřebujeme vyřídit něco urgentního.\n\nNa směnu chodíme 10 minut předem – v čase zapsaném v TT už musíme být převlečení a připravení pracovat. Nečekané zpoždění včas hlásíme vedoucímu směny.\n\nČipování: při příchodu se čipujeme až po převlečení do pracovního se zástěrou, při odchodu se čipujeme po dokončení práce a teprve pak se jdeme převlékat.\n\nKomunikace s kolegy: udáváme pozici nebo nejbližší plány (jdu pro Pavlovu, jdu na WC, jdu pro dort do boxu...). Pokud bereš ze skladu poslední kus něčeho (poslední pytel kávy, poslední balík brček), vždy to nahlas služebně staršímu kolegovi. Pokud doplňuješ vitrínu, jsi v kontaktu s kuchyní – hlásíš, co dochází.\n\nÚklid a sklízení stolů: stoly udržujeme čisté, špinavé nádobí odnášíme na myčku vždy s platem – nikdy s minimálním množstvím (třeba s jedním talířem). Pokud poškodíš dort nebo zákusek, odnes ho do kuchyně na resuscitaci – většinou to jde zachránit."},
+  {id:'desatero', title:'Desatero Sladké dílny', postupTags:['vstupni_logistika'], manualTags:['desatero'], images:[], videoUrl:'', content:
+"1. Vlídnost – se zákazníkem mluvíme vlídně a chováme se pohostinně.\n\n2. Vitrína – je středobodem cukrárny, staráme se, aby byla vždy doplněná a upravená.\n\n3. Efektivita – když nemáme čekající zákazníky, věnujeme se činnostem z manuálu „co dělat, když to nechodí“. Každá cesta má mít smysl – při odnášení objednávky bereme špinavé nádobí z placu a zpátky nosíme čisté z kuchyně.\n\n4. Zodpovědnost – nápoje vydáváme vždy v perfektní kvalitě podle receptury, hlídáme čerstvost surovin.\n\n5. Neznalost omlouvá – když nevíme odpověď, nikdy zákazníka neodbydeme. Jdeme se zeptat zkušenějšího kolegy.\n\n6. Slušnost – čekajícího zákazníka jdeme co nejdříve obsloužit, sedícího nerušíme hlasitým smíchem. Před zákazníky nikdy nejíme, u kasy nejsme na osobním telefonu.\n\n7. Čistota – po odchodu zákazníka co nejrychleji uklidíme nádobí a stůl, debarasujeme vždy s platem.\n\n8. Komunikace – o provozních věcech aktivně komunikujeme na place i v kuchyni.\n\n9. Pružnost – výběr činnosti přizpůsobujeme aktuální situaci, i když to znamená něco přerušit.\n\n10. Víc očí víc vidí – při výdeji objednávky kontrolujeme, zda obsah sedí se zadáním."},
+
+  {id:'nandavani', title:'Nandávání zákusků & debaras nádobí', postupTags:['novacek'], manualTags:['obsluha'], images:[], videoUrl:'', content:
+"Nástroje na nandávání jsou připravené přímo ve vitríně – lopatky a kleště.\n\nŠiroká lopatka je určená pouze na Pavlovu.\n\nPorcovky a trojúhelníčky nabíráme užší lopatkou a rovnými kleštěmi – zákusek podebereme lopatkou a kleštěmi přidržujeme, umístíme na talíř.\n\nPečené nanuky a cake popy bereme za „tyčku“ – samotného zákusku se nedotýkáme.\n\nZaoblené kleště (nahoře na vitríně) používáme na drobnější zákusky – makronky, cookies, linecká kolečka, brownie, rumové koule.\n\nIndiánky a špičky nabíráme zaoblenými kleštěmi a lopatkou (indiánek položíme na lopatce, kleštěmi jemně přidržíme).\n\nChlebíčky nabíráme zaoblenými kleštěmi nahoře na druhé vitríně – tyto kleště jsou určené jen na slané výrobky.\n\nZákusky nandáváme na bílé talíře, nápisem směrem k zákazníkovi, ubrousek vlevo a na něj vidlička. Panna cottu a Tiramisu servírujeme na černý ubrousek se lžičkou, cake pop/nanuky/makronky/cookie na černý ubrousek.\n\nDEBARAS: stoly udržujeme čisté, špinavé nádobí odnášíme na myčku vždy s platem – nikdy s minimálním množstvím (třeba jedním talířem). Menší množství (např. jedna sklenice) můžeš dočasně odložit za roh na průhlednou lednici a odnést s větším množstvím najednou. Dřevěné tácky se na myčku nenosí, otřou se hadříkem a vrátí do poličky. Když jdeš do kuchyně nebo na toaletu s prázdnýma rukama, vezmi nádobí s sebou. Když se vracíš z kuchyně s volnýma rukama, vezmi dopředu umyté nádobí."},
+
+  {id:'ranni_vecerni', title:'Ranní příprava a večerní úklid', postupTags:['novacek'], manualTags:['start_dne','konec_dne'], images:[], videoUrl:'', content:
+"RÁNO\n\nZkontroluj vitrínu a lednice – všechny produkty mají cedulku (na středu tácku, u dortů vpravo od produktu), vitrína je vyleštěná, zapni a rozsviť ji. Chlebíčky jsou připravené na tácech a zabalené fresh fólií.\n\nSundej všechny židle, stoly otři hadrem na stoly. V létě rozlož zahrádku a zkontroluj čistotu pod stoly.\n\nPřiprav pracovní plochu – ubrousky, brčka, sklenička na nůž a míchací lžíci.\n\nZapni kávovar (i mlýnek), pokud ho ještě nezapnuly cukrářky ráno.\n\nZkontroluj a případně doplň cenovky, dezerty ve vitríně (podívej se i dozadu, zda nějaký dort nepotřebuje jít do vitríny dřív), stav limonád, mléka a alternativní mléka, led v mrazicím boxu.\n\nZkontroluj služební mobil (zapnutý, nabitý, mail s objednávkami) a nástěnku kvůli objednávkám.\n\nPusť hudbu na tabletu – příjemná hlasitost, vhodný playlist na Spotify.\n\nZapni Dáme jídlo a uprav dostupnost položek, zkontroluj Foodoru.\n\nPŘES DEN\n\nKontroluj rostliny ve vázách (čistá voda), čas od času zajdi zkontrolovat čistotu na WC (toaletní papír, ubrousky, mýdlo), sleduj stav zásob limonád a surovin – při nedostatku napiš na tabuli.\n\nVEČER\n\n17:30 – začni přeskládávat dezerty, které to potřebují, na čisté tácy, odnes na myčku sklenice.\n18:00 – i přes případnou frontu začni zanášet trvanlivější dezerty z vitríny do lednice (postup viz článek Doplňování vitríny).\n\nDoplň lednici na nápoje, vynes dopředu prázdné bedny od chlebíčků, stáhni špinavé utěrky do červeného pytle u kanceláře a připrav nové, poklid dětský koutek.\n\nKáva: umyj a vypni kávovar a mlýnek, vysyp lógr do koše – kávu do mlýnku nedoplňuj, lepší nasypat ráno čerstvě otevřené.\n\nZmrzlina: stroj zanocuj/umyj (bílé poklopy, nerez vyleštit), umyj a vrať vaničku, doplň kornoutky do krabice i do záložní. Směsi nemíchej na noc, lepší čerstvé ráno.\n\nPŘED ODCHODEM ZKONTROLUJ: vypnutá světla (i v lednici na drinky), vypnuté ventilátory (i mini u vitríny), nabíjí se mobil/tablet, kasa zhaslá a klíček pod tiskárnou, vypnutý kávovar a obě vitríny, dozavřená příruční lednice, zavřený ledovač, zavřená všechna okna."},
+
+  {id:'vitrina_doplnovani', title:'Doplňování vitríny', postupTags:['novacek'], manualTags:['vitrina'], images:[], videoUrl:'', content:
+"Vitrína je středobod cukrárny – musí být vždy čistá, doplněná, upravená a lákavá.\n\nVšechny dorty i zákusky doplňujeme metodou FIFO (first in first out) – starší dozadu, čerstvější dopředu, aby se nikdy nestalo, že se novější zákusky prodají dřív než starší.\n\nAkutně doplňuj, když na tácu chybí 4 a více kusů. Při 1–3 chybějících kusech doplň, až nebude fronta a budeš mít čas.\n\nDorty musí být vždy otočené řezem k zákazníkovi a u nich musí být správná cedulka – když dort přehodíš na jiné místo, přehoď i cedulku.\n\nNa jeden tác dáváme max. dva druhy dortu, výjimečně tři (pokud zbyl jeden/dva kousky).\n\nHorní patro: pečené nanuky (barevný mix z chladicího boxu), makronky (mix z jedné krabice v nerezové lednici), Tiramisu/Panna cotta (bílá lednice v zázemí – Panna cottu před doplněním zalij zavařeninou cca 1 cm), rumové koule (9 na tácek, doplňují se přes bílý košík), cake pops (prosklená lednice, vždy namíchej barvy).\n\nDruhé patro (porcovky, větrníky): doplňuj podle FIFO, akutně při 4+ chybějících kusech. Vždy hlas v kuchyni, když zákusky docházejí. Doplňuj opatrně, ať zákusky nepoškodíš – u tartaletky se slaným karamelem a indiánku se nedotýkej určitých částí (otisky prstů).\n\nTřetí patro: 4 tácy – koláče, cheesecake, 2× různé dorty podle nabídky dne.\n\nSpodní patro: 4 tácy různých dortů, Pavlova vzadu za ostatními dorty (zákazníci ji znají, případně upozorníme).\n\nPokud cokoli chybí a ve vitríně to nenajdeš, zkontroluj nerezovou lednici (první po levé ruce před kuchyní), případně popros cukrářky o dopečení – nejlépe kontroluj zásoby průběžně a hlas v kuchyni ještě před úplným dojitím.\n\nUdržuj vitrínu čistou – utírej prosklené police, vymetej drobečky, v případě potřeby umyj lopatku, kleště a tácek."},
+
+  {id:'kasa_penize', title:'Kasa a peníze', postupTags:['novacek'], manualTags:['obsluha'], images:[], videoUrl:'', content:
+"Ráno počítá pokladnu vedoucí (nebo někoho pověří) – depozit je 3 000 Kč. Večer pokladnu uzavírá vedoucí.\n\nNepřijímáme stravenky. Zákazník může platit stravenkovou kartou, ale ne všechny fungují.\n\nODPIS – markuje se v kase na stoly dole vpravo. Použij, když zákusek spadne nebo se zničí a nejde opravit.\n\nVYŘAZENO – použij, když se zboží nedá prodat kvůli špatné kvalitě, nestabilitě nebo stáří.\n\nSlevy pro zaměstnance: 20 % na vše (platí i pro blízkou rodinu, ne pro vzdálené příbuzné, které jsi nikdy neviděl). Bývalí dlouhodobí zaměstnanci mají 10 % na vše. Sousedské podniky (květinářství, Malina, Duha, Farmářský obchůdek, kadeřnictví) mají nárok na sousedskou kávu (espresso, espresso macchiatto, cappuccino, latte, lungo, americano) – jiné nápoje/zákusky se markují klasicky, bez slevy. Pokud si nejsi jistý, jestli má někdo na sousedskou kávu nárok, zeptej se služebně staršího kolegy nebo vedoucího.\n\nPerso káva: každý zaměstnanec má nárok na jednu kávu denně zdarma, každá další je za 10 Kč (tlačítko v kase „personální káva“). Když nepiješ kávu, můžeš mít místo ní za směnu jedno Chai latte nebo limču."},
+
+  {id:'tocenim', title:'Točení a velikosti zmrzliny', postupTags:['novacek'], manualTags:['zmrzlina'], images:[], videoUrl:'', content:
+"Velikosti a gramáž:\nBABY – 60 g, naplněný kornoutek a malá špička.\nMALÁ – 80 g, jedna otočka a špička.\nVELKÁ – 120 g, dvě otočky a špička.\n\nGramáž si na začátku ověř na váze, ať víš, jak má správná porce vypadat.\n\nTermoboxy: malý termobox pojme až tři velké zmrzliny, velký termobox až pět velkých zmrzlin.\n\nOvocné zmrzliny (malinová, jahodová, mango&maracuja, černý rybíz) jsou sorbet. Vanilková, čokoládová, slaný karamel a kokosová jsou smetanové.\n\nPokud je zmrzlina příliš tuhá nebo příliš tekutá, řešení je na ovládacím panelu stroje (SET + ZMRZLINA a šipka nahoru/dolů) – tohle si projdi s vedoucím směny nebo zkušenějším kolegou, u stroje je potřeba to nejdřív vidět naživo."},
+
+  {id:'volny_cas', title:'Co dělat, když zrovna nikoho neobsluhujeme', postupTags:['vstupni_logistika','novacek'], manualTags:['volny_cas'], images:[], videoUrl:'', content:
+"Údržba čistoty: sklidit špinavé nádobí, utřít stoly, uklidit sezení na oknech, dát dohromady dětský koutek, vyleštit vitrínu vepředu od dětských paciček, umýt špinavé překládáky ve slané a sladké vitríně, refresh konviček na mléko a okolí kávovaru.\n\nDoplňování vitríny – viz článek Doplňování vitríny.\n\nDoplňování surovin, zboží a pomůcek:\n– okolo kasy: cukry, míchátka, vizitky, jellybeans, pusinky\n– na vitríně: ubrousky, plastové příbory, víčka, cookies, lineckáče\n– nápojová lednice\n– pod kávovarem: horká čokoláda, ubrousky, bezkofeinová káva\n– okolo kávovaru: cukry, kávová zrna, brčka, ubrousky, med\n– poličky: kelímky, čaje, pytle kávy, alkohol\n– barová lednice: perlivé vody, mléko, alternativní mléka, limonády, prosecco\n\nOstatní: skládání krabic, razítkování kelímků a sáčků, skládání ubrousků – případně jiná práce, kterou zadá vedoucí směny."},
+
+  {id:'kavovar', title:'Kávovar – obsluha a základní nápoje', postupTags:['pokrocily'], manualTags:['napojovy_manual'], images:[], videoUrl:'', content:
+"Mléko ke kávovým nápojům, které standardně mléko neobsahují, dáváme podle přání zákazníka teplé nebo studené bokem v malé konvičce. S sebou nalévej mléko před zákazníkem, aby mohl říct stop.\n\nPozor na zbytečné přehřívání mléka nad 65 °C při šlehání – kvalita pěny je důležitější než perfektní obrázek na hladině.\n\nESPRESSO – jeden shot čerstvé kávy do malého šálku, mléko jen na vyžádání. Tady: espresso šálek. S sebou: XS kelímek.\n\nCAPPUCCINO – jeden shot kávy do šálku, doplnit do plna lesklou čerstvou pěnou (1–2 cm). Tady: cappuccino šálek. S sebou: S kelímek.\n\nCAFFÈ LATTE – shot kávy rovnou do šálku, doplnit našlehaným mlékem s lesklou pěnou (1 cm). Tady: šálek 300 ml. S sebou: L kelímek.\n\nFLAT WHITE – doppio rovnou do sklenky, doplnit do plna mlékem téměř bez pěny (0,5 cm). Nech čerstvé doppio chvíli odstát, než začneš nalévat – má hustou cremu. Tady: Flat white sklenka. S sebou: S kelímek.\n\nPokud si nejsi jistý kvalitou nápoje, zeptej se odpovědné osoby.\n\nToto je základ pro zaškolení – kompletní recepty na všechny nápoje (Americano, Lungo, Macchiatto, čaje, matcha, studené i alkoholické nápoje) najdeš v plném nápojovém manuálu."},
+
+  {id:'system', title:'Systém – objednávání a výdej dortů', postupTags:['pokrocily'], manualTags:['objednavani_dortu'], images:[], videoUrl:'', content:
+"Objednání dortu v adminu:\n1. Sekce OBJEDNÁVKY → VYTVOŘIT, zaškrtnuté BĚŽNÁ OBJEDNÁVKA.\n2. VYHLEDAT PRODUKT → vybereš dort/zákusek → zjistíš od zákazníka velikost dortu.\n3. Zeptáš se, jestli chce cedulku nebo čokoládovou číslici, případně nabídneš úpravu (ovoce navíc, pusinky/makronky, barevná šlehačka – ne všechny dorty jdou celé obmazat).\n\nBezlaktózové dorty lze objednat jen jako ovocný světlý nebo ovocný tmavý.\n\nJedlý tisk může být ležící nebo stojící. Pokud má zákazník vlastní fotku, lepší ho nasměrovat na e-shop, ať si objednávku udělá sám; pokud chce běžný motiv (např. krtečka) a nemáme narváno, můžeme objednávku s tiskem vytvořit i na place (screen z tabletu, vložit z galerie).\n\nFigurky – cenu stanoví Saša (externista), k tomu se připočítá 50 % z té částky, minimální cena figurky je 350 Kč. Figurku objednej tak, aby byla na výrobně týden před termínem dortu (dort na 10. 8. → figurka objednaná do 3. 8.).\n\nDodatečné informace pro cukrářku, které nesmí přehlédnout, zadáváš do zvláštní kolonky v objednávce.\n\nDál vyplníš: datum a čas vyzvednutí, jméno zákazníka, způsob doručení (Petřiny/Čakovice), způsob platby, kontaktní údaje (e-mail, telefon – zákazníka upozorni, že mu přijde potvrzovací e-mail s číslem objednávky, poslední tři číslice po něm budeme chtít při vyzvedávání).\n\nPři platbě QR kódem nebo kartou musíš vyplnit i fakturační údaje. Při platbě na místě (dobírka) rovnou zaškrtni OZNAČIT OBJEDNÁVKU ZA ZAPLACENOU.\n\nNa závěr klikneš VYTVOŘIT OBJEDNÁVKU – systém bude chtít tvůj kód, kterým objednávku potvrdíš.\n\nOBJEDNÁVKA NA DRUHÝ DEN – nabídka je limitovaná (cukrářky mají založené jen některé dorty). Přes VYHLEDAT PRODUKT po zaškrtnutí NA ZÍTRA vidíš, co je na zítra k dispozici. Některé úpravy na druhý den nejdou zadat – konzultuj s cukrářkami.\n\nNEOBVYKLÉ POŽADAVKY – když si nejsi jistý, jestli něco jde vyrobit, zeptej se vedoucího směny, případně výrobny. Zákazníka neodbydeme, pokud si nejsme jistí – zjistíme to.\n\nNESYSTÉMOVÉ POŽADAVKY (co ti systém nedovolí zadat) – volej vrchní cukrářce Nadě, 775 395 493."},
+
+  {id:'michani', title:'Míchání zmrzliny', postupTags:['pokrocily'], manualTags:['zmrzlina'], images:[], videoUrl:'', content:
+"Zmrzliny mícháme vždy z báze; u ovocných přidáváme ovocné pyré.\n\nPostup: 1) do kýble nalij vodu, 2) u ovocné zmrzliny si nech v odměrce trochu vody na vypláchnutí kartonu od pyré, 3) přisyp obsah sáčku a hned pořádně rozmíchej, 4) vlij ovocná pyré, vypláchni kartony a zamíchej, 5) dej do chlaďáku alespoň na 15 minut, 6) znovu pořádně zamíchej a při nalévání do stroje ceď přes síto, 7) síto hned opláchni.\n\nZmrzliny mícháme podle uvážení – záleží, za jak dlouho stroj umýváme, kolik chodí zákazníků, jestli je všední den. Když si nejsi jistý, poraď se s vedoucím směny. Klasicky mícháme z jedné dávky, pokud vedoucí neřekne jinak.\n\nOvládání tuhosti: stupeň chlazení uprav stisknutím SET + ZMRZLINA a poté šipkou nahoru/dolů podle potřeby. Uprav vždy max. o 5 stupňů najednou.\n\nCo dělat když...\n– zmrzlina je moc tuhá/zmrzlá → sniž stupeň chlazení (SET+ZMRZLINA, šipka dolů)\n– zmrzlina je moc tekutá → zvyš stupeň chlazení (SET+ZMRZLINA, šipka nahoru)\n– míchaná zmrzlina teče jen jedna příchuť → sniž stupeň chlazení a problémovou zmrzlinu toč se zapnutým SET, pak vrať zpět na tvorbu zmrzliny\n– stroj při točení praská/je zavzdušněný → u problémové zmrzliny dej páku dolů, zmáčkni STOP, pak páku zpět nahoru (odtlakuje se stroj), odpoj a znovu nasaď trubku vedoucí do čerpadla, zkontroluj, že čerpadlo podává\n– zmrzlina vůbec neteče/zamrzla → páku dolů, STOP, páku zpět nahoru, odpoj trubku, čerpadlo vyndej, rozeber, umyj, promazané součástky vazelínou slož zpět, nasaď, zkontroluj podávání, pak spusť výrobu\n\nVečer stroj přepni do nočního režimu stisknutím symbolu skleničky a vločky.\n\nOvocné zmrzliny (malinová, jahodová, mango&maracuja, černý rybíz) = sorbet. Vanilková, čokoládová, slaný karamel, kokosová = smetanové."},
+
+  {id:'mytistroj', title:'Mytí a skládání stroje na zmrzlinu', postupTags:['expert'], manualTags:['zmrzlina'], images:[], videoUrl:'', content:
+"Denní mytí (konec dne): umyj a vrať vaničku, umyj bílé poklopy, stroj otři ze všech stran, nerez ideálně vyleštit speciálním přípravkem. Nemíchej směsi na noc – lepší čerstvé ráno. Doplň kornoutky do krabice na stole i do záložní, kornoutky po doplnění nezapomeň něčím zakrýt.\n\nRozebrání a mazání čerpadla (když zmrzlina neteče/je zamrzlá, nebo při hlubším čištění): u problémové zmrzliny dej páku dolů a zmáčkni STOP, pak páku zpět nahoru – tím se stroj odtlakuje a při odpojení trubky „nebouchne“. Odpoj trubku vedoucí do čerpadla, čerpadlo vyndej, rozeber, pořádně umyj a promazané součástky vazelínou slož zpět do původního stavu. Čerpadlo vlož zpátky do stroje, zapoj propojovací trubku, zmáčkni SET a zkontroluj, že čerpadlo podává (z malých dírek musí téct zmrzlina) – pak teprve zmáčkni výrobu zmrzliny.\n\nVečer stroj uveď do nočního režimu stisknutím symbolu skleničky a vločky.\n\nPokud si u rozebrání a skládání stroje nejsi jistý, projdi si to nejdřív naživo s vedoucím směny nebo zkušenějším kolegou."},
+
+  {id:'limonady', title:'Vaření limonád, svařáku a horké čokolády', postupTags:['expert'], manualTags:['jak_se_to_vari'], images:[], videoUrl:'', content:
+"MALINOVÁ LIMONÁDA\n2,5 kg mražené maliny\n750 g cukr krupice\n400–600 ml voda\n8–15 ml šťáva z citronu (podle chuti)\n\nMaliny dej s vodou rozvařit, až se úplně rozpustí, přidej cukr a povař. Rozmixuj tyčovým mixérem a přeceď přes špičatý cedník. Po vychladnutí přidej citronovou šťávu.\n\nZÁZVOROVÁ LIMONÁDA\n1 kg zázvor\n2 l vařící voda\n500 g cukr krupice\ncitronová šťáva podle chuti\n\nZázvor oloupej a najemno nakrájej, zalij vařící vodou a nech odležet max. 30 minut. Rozmixuj a přeceď přes cedník, po vychladnutí přidej citronovou šťávu. (Případně použij Irčin mixér – zázvor oloupeš, nakrájíš na kostičky, rozmixuješ s trochou vody a doplníš zbytkem vody.)\n\nSVAŘÁK do várnice\n5 l červené víno\n5 PL koření na svařák\n6 PL cukr krupice\n\nVíno nalij do várnice, počkej, až se zahřeje. Pak přidej cukr a koření a pořádně promíchej vařečkou.\n\nHORKÁ ČOKOLÁDA do várnice\n1 l smetana\n1 l mléko\n700 g mix čokoláda (hořká + mléčná)\n\nSmetanu a mléko ohřej na sporáku ve velkém hrnci. Pak přidej čoko a nech rozpustit. Promixuj tyčovým mixérem."}
+];
+
+let articles = [];
+let roles = [];          // [{id, label, allowedCats:[categoryId,...]}]
+let axisId = 'postup';
+let activeId = null;
+let editing = false;
+let videoOpen = false;
+let view = 'article';    // 'article' | 'roles'
+let editingRoleId = null;
+let readerRoleId = null;
+let MODE = 'editor';     // 'editor' | 'reader' – UI přepínač, bez zabezpečení
+try{ if(localStorage.getItem('kb-mode') === 'reader') MODE = 'reader'; }catch(e){}
+try{ readerRoleId = localStorage.getItem('kb-reader-role') || null; }catch(e){}
+
+const $ = id => document.getElementById(id);
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function currentAxis(){ return AXES.find(a=>a.id===axisId); }
+function currentRole(){ return roles.find(r=>r.id===readerRoleId) || null; }
+function articleVisibleToRole(art, role){
+  if(!role) return false;
+  const tags = (art.postupTags||[]).concat(art.manualTags||[]);
+  return tags.some(t=>role.allowedCats.indexOf(t) !== -1);
+}
+
+/* ---------- úložiště ---------- */
+function loadArticles(){
+  try{ const raw = localStorage.getItem('kb-articles'); if(raw) return JSON.parse(raw); }catch(e){}
+  return null;
+}
+function saveArticles(){
+  try{ localStorage.setItem('kb-articles', JSON.stringify(articles)); return true; }
+  catch(e){ $('status').textContent = 'Uložení selhalo (localStorage plný nebo nedostupný). Zmenši obrázky nebo jich uber a zkus to znovu.'; return false; }
+}
+function loadRoles(){
+  try{ const raw = localStorage.getItem('kb-roles'); if(raw) return JSON.parse(raw); }catch(e){}
+  return [];
+}
+function saveRoles(){
+  try{ localStorage.setItem('kb-roles', JSON.stringify(roles)); return true; }
+  catch(e){ $('status').textContent = 'Uložení rolí selhalo.'; return false; }
+}
+
+/* ---------- video ---------- */
+function detectVideo(url){
+  if(!url) return null;
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{6,})/);
+  if(yt) return {type:'youtube', id:yt[1]};
+  if(/dropbox\.com/.test(url)) return {type:'dropbox', raw:url.replace(/\?dl=0/,'?raw=1').replace(/[?&]dl=1/,'?raw=1')};
+  return {type:'other', url:url};
+}
+function videoBlockHtml(url){
+  const v = detectVideo(url);
+  if(!v) return '';
+  if(v.type === 'youtube'){
+    if(videoOpen){
+      return '<div class="video-block"><iframe src="https://www.youtube-nocookie.com/embed/' + v.id + '" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>';
+    }
+    return '<div class="video-block"><div class="video-thumb" id="videoThumb">' +
+      '<img src="https://img.youtube.com/vi/' + v.id + '/hqdefault.jpg" alt="Náhled videa">' +
+      '<div class="video-play"><span>▶</span></div></div></div>';
+  }
+  if(v.type === 'dropbox'){
+    if(videoOpen){
+      return '<div class="video-block"><video src="' + escapeHtml(v.raw) + '" controls autoplay></video></div>';
+    }
+    return '<div class="video-block"><div class="video-thumb" id="videoThumb" style="background:var(--cocoa)">' +
+      '<div class="video-play"><span>▶</span></div></div></div>';
+  }
+  return '<div class="video-block"><a class="btn video-link-btn" href="' + escapeHtml(v.url) + '" target="_blank" rel="noopener">▶ Přehrát video</a></div>';
+}
+
+/* ---------- obrázky ---------- */
+function resizeImage(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('read failed'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>reject(new Error('image load failed'));
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- init ---------- */
+function init(){
+  const existing = loadArticles();
+  articles = existing || [];
+  articles.forEach(a=>{ if(!a.images) a.images = []; if(a.videoUrl == null) a.videoUrl = ''; });
+  // doplní jakékoli pilotní články, které v datech ještě nejsou – existující nepřepisuje
+  let added = false;
+  SEED_ALL.forEach(s=>{
+    if(!articles.find(a=>a.id === s.id)){
+      articles.push(Object.assign({}, s));
+      added = true;
+    }
+  });
+  if(added || !existing) saveArticles();
+
+  roles = loadRoles();
+  if(articles.length) activeId = articles[0].id;
+  $('versionTag').textContent = APP_VERSION;
+  applyMode();
+  render();
+}
+
+function applyMode(){
+  const isEditor = MODE === 'editor';
+  $('modeLabel').textContent = isEditor ? 'Role: Editor' : 'Role: Čtenář';
+  $('modeLabel').className = 'mode-badge' + (isEditor ? '' : ' reader');
+  $('modeBtn').textContent = isEditor ? 'Přepnout na Čtenáře' : 'Přepnout na Editora';
+  $('addBtn').style.display = isEditor ? 'block' : 'none';
+  $('backupRow').style.display = isEditor ? 'flex' : 'none';
+  $('rolesBtn').style.display = isEditor ? 'block' : 'none';
+  $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
+  if(!isEditor) renderRoleSelect();
+  $('status').textContent = 'Offline verze – data se ukládají jen v tomto prohlížeči. Pro přenos použij zálohu.';
+}
+
+function renderRoleSelect(){
+  const sel = $('roleSelect');
+  sel.innerHTML = '<option value="">— vyber roli —</option>' +
+    roles.map(r=>'<option value="' + r.id + '"' + (r.id===readerRoleId ? ' selected' : '') + '>' + escapeHtml(r.label) + '</option>').join('');
+  sel.onchange = ()=>{
+    readerRoleId = sel.value || null;
+    try{ if(readerRoleId) localStorage.setItem('kb-reader-role', readerRoleId); else localStorage.removeItem('kb-reader-role'); }catch(e){}
+    render();
+  };
+}
+
+function renderAxisSwitch(){
+  $('axisSwitch').innerHTML = AXES.map(a=>
+    '<button class="axis-btn' + (a.id===axisId ? ' active' : '') + '" data-axis="' + a.id + '">' + escapeHtml(a.label) + '</button>'
+  ).join('');
+  $('axisSwitch').querySelectorAll('[data-axis]').forEach(b=>{
+    b.onclick = ()=>{ axisId = b.dataset.axis; render(); };
+  });
+}
+
+function renderCatList(){
+  const axis = currentAxis();
+  const isEditor = MODE === 'editor';
+  const role = isEditor ? null : currentRole();
+  if(!isEditor && !role){
+    $('catList').innerHTML = '<div class="status">Vyber svou roli nahoře – appka ti pak ukáže návody pro tebe.</div>';
+    return;
+  }
+  let html = '';
+  axis.cats.forEach(cat=>{
+    if(!isEditor && role.allowedCats.indexOf(cat.id) === -1) return;
+    const items = articles.filter(a=>(a[axis.field]||[]).indexOf(cat.id) !== -1);
+    if(!items.length) return;
+    html += '<div class="cat-group"><div class="cat-label">' + escapeHtml(cat.label) + '</div><ul class="art-list">' +
+      items.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>').join('') +
+      '</ul></div>';
+  });
+  if(isEditor){
+    const unTagged = articles.filter(a=>!(a[axis.field]||[]).length);
+    if(unTagged.length){
+      html += '<div class="cat-group"><div class="cat-label">Nezařazeno</div><ul class="art-list">' +
+        unTagged.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>').join('') +
+        '</ul></div>';
+    }
+  }
+  $('catList').innerHTML = html || '<div class="status">' + (isEditor ? 'Zatím žádné články.' : 'Pro tvoji roli zatím nejsou povolené žádné kategorie.') + '</div>';
+  $('catList').querySelectorAll('[data-open]').forEach(el=>{
+    el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
+  });
+}
+
+function renderMain(){
+  const isEditor = MODE === 'editor';
+  const art = articles.find(a=>a.id===activeId);
+  if(!isEditor){
+    const role = currentRole();
+    if(!role){
+      $('main').innerHTML = '<div class="empty-state">Nejdřív si vlevo vyber svou roli.</div>';
+      return;
+    }
+    if(!art || !articleVisibleToRole(art, role)){
+      $('main').innerHTML = '<div class="empty-state">Vyber návod vlevo, nebo pro tvoji roli zatím není žádný zpřístupněný.</div>';
+      return;
+    }
+  }
+  if(!art){
+    $('main').innerHTML = '<div class="empty-state">Vyber článek vlevo' + (isEditor ? ', nebo přidej nový.' : '.') + '</div>';
+    return;
+  }
+  if(editing && isEditor){
+    $('main').innerHTML = editFormHtml(art);
+    bindEditForm(art);
+    return;
+  }
+  const tagsHtml = POSTUP_CATS.filter(c=>(art.postupTags||[]).indexOf(c.id)!==-1)
+    .concat(MANUAL_CATS.filter(c=>(art.manualTags||[]).indexOf(c.id)!==-1))
+    .map(c=>'<span class="tag-chip">' + escapeHtml(c.label) + '</span>').join('');
+  const galleryHtml = (art.images && art.images.length)
+    ? '<div class="img-gallery">' + art.images.map(src=>'<img src="' + src + '" alt="">').join('') + '</div>'
+    : '';
+  $('main').innerHTML =
+    '<div class="art-title">' + escapeHtml(art.title) + '</div>' +
+    '<div class="art-tags">' + tagsHtml + '</div>' +
+    '<div class="art-body">' + escapeHtml(art.content) + '</div>' +
+    galleryHtml +
+    videoBlockHtml(art.videoUrl) +
+    (isEditor ? '<div class="row"><button class="btn" id="editBtn">Upravit</button><button class="btn red" id="delBtn">Smazat</button></div>' : '');
+  const thumb = $('videoThumb');
+  if(thumb) thumb.onclick = ()=>{ videoOpen = true; renderMain(); };
+  if(isEditor){
+    $('editBtn').onclick = ()=>{ editing = true; render(); };
+    $('delBtn').onclick = ()=>{
+      if($('delBtn').dataset.armed !== '1'){
+        $('delBtn').dataset.armed = '1';
+        $('delBtn').textContent = 'Opravdu smazat?';
+        return;
+      }
+      articles = articles.filter(a=>a.id !== art.id);
+      saveArticles();
+      activeId = null;
+      render();
+    };
+  }
+}
+
+function uid(){ return 'a' + Date.now() + Math.random().toString(36).slice(2,7); }
+
+function tagBoxHtml(field, selected){
+  const cats = field === 'postupTags' ? POSTUP_CATS : MANUAL_CATS;
+  return '<div class="tag-box">' + cats.map(c=>
+    '<label class="tag-check"><input type="checkbox" data-tag="' + field + '" value="' + c.id + '"' +
+    ((selected||[]).indexOf(c.id)!==-1 ? ' checked' : '') + '> ' + escapeHtml(c.label) + '</label>'
+  ).join('') + '</div>';
+}
+
+function imgEditHtml(images){
+  const items = (images||[]).map((src, i)=>
+    '<div class="img-edit-item"><img src="' + src + '" alt=""><button type="button" class="img-del" data-del-img="' + i + '">×</button></div>'
+  ).join('');
+  return '<div class="img-gallery">' + items +
+    '<label class="img-add-label">+ Přidat<input type="file" id="imgInput" accept="image/*" multiple></label>' +
+  '</div>';
+}
+
+function editFormHtml(art){
+  return '<div class="field-label">Název</div>' +
+    '<input class="f-title" id="f-title" value="' + escapeHtml(art.title||'') + '">' +
+    '<div class="field-label">Podle postupu</div>' +
+    '<div class="field-hint">' + escapeHtml(AXES[0].hint) + '</div>' +
+    tagBoxHtml('postupTags', art.postupTags) +
+    '<div class="field-label">Podle manuálu</div>' +
+    '<div class="field-hint">' + escapeHtml(AXES[1].hint) + '</div>' +
+    tagBoxHtml('manualTags', art.manualTags) +
+    '<div class="field-label">Obsah</div>' +
+    '<textarea class="f-content" id="f-content">' + escapeHtml(art.content||'') + '</textarea>' +
+    '<div class="field-label">Obrázky</div>' +
+    imgEditHtml(art.images) +
+    '<div class="field-label">Video (odkaz)</div>' +
+    '<div class="field-hint">Vlož odkaz na YouTube nebo Dropbox – appka jen ukáže náhled s tlačítkem play.</div>' +
+    '<input class="f-video" id="f-video" placeholder="https://..." value="' + escapeHtml(art.videoUrl||'') + '">' +
+    '<div class="field-hint" style="margin-top:10px">Aby čtenáři návod viděli, musí mít zaškrtnutou aspoň jednu jeho kategorii povolenou u své role (viz „Spravovat role“).</div>' +
+    '<div class="row"><button class="btn" id="saveBtn">Uložit</button><button class="btn ghost" id="cancelBtn">Zrušit</button></div>';
+}
+
+function bindEditForm(art){
+  if(!art.images) art.images = [];
+  const imgInput = $('imgInput');
+  if(imgInput){
+    imgInput.addEventListener('change', async ()=>{
+      const files = Array.from(imgInput.files || []);
+      for(const file of files){
+        try{
+          const dataUrl = await resizeImage(file, 900, 0.72);
+          art.images.push(dataUrl);
+        }catch(e){}
+      }
+      $('main').innerHTML = editFormHtml(art);
+      bindEditForm(art);
+    });
+  }
+  document.querySelectorAll('[data-del-img]').forEach(b=>{
+    b.onclick = ()=>{
+      art.images.splice(parseInt(b.dataset.delImg, 10), 1);
+      $('main').innerHTML = editFormHtml(art);
+      bindEditForm(art);
+    };
+  });
+  $('saveBtn').onclick = ()=>{
+    art.title = $('f-title').value.trim() || 'Bez názvu';
+    art.content = $('f-content').value;
+    art.videoUrl = $('f-video').value.trim();
+    art.postupTags = Array.from(document.querySelectorAll('[data-tag="postupTags"]:checked')).map(el=>el.value);
+    art.manualTags = Array.from(document.querySelectorAll('[data-tag="manualTags"]:checked')).map(el=>el.value);
+    if(art.isNew){ delete art.isNew; articles.push(art); }
+    const ok = saveArticles();
+    if(ok){
+      activeId = art.id;
+      editing = false;
+      videoOpen = false;
+      render();
+    }
+  };
+  $('cancelBtn').onclick = ()=>{
+    editing = false;
+    if(art.isNew) activeId = null;
+    render();
+  };
+}
+
+/* ---------- role (jen editor) ---------- */
+function roleCatBoxHtml(cats, selected){
+  return '<div class="tag-box">' + cats.map(c=>
+    '<label class="tag-check"><input type="checkbox" data-role-cat value="' + c.id + '"' +
+    ((selected||[]).indexOf(c.id)!==-1 ? ' checked' : '') + '> ' + escapeHtml(c.label) + '</label>'
+  ).join('') + '</div>';
+}
+
+function roleEditHtml(role){
+  return '<div class="field-label">Název role</div>' +
+    '<input class="f-title" id="r-name" value="' + escapeHtml(role.label||'') + '">' +
+    '<div class="field-hint">Nová role zatím nevidí žádnou kategorii – zaškrtni tady, co jí zpřístupníš.</div>' +
+    '<div class="field-label">Viditelné kategorie – Podle postupu</div>' +
+    roleCatBoxHtml(POSTUP_CATS, role.allowedCats) +
+    '<div class="field-label">Viditelné kategorie – Podle manuálu</div>' +
+    roleCatBoxHtml(MANUAL_CATS, role.allowedCats) +
+    '<div class="row"><button class="btn" id="saveRoleBtn">Uložit</button><button class="btn ghost" id="cancelRoleBtn">Zrušit</button></div>';
+}
+
+function bindRoleEditForm(role){
+  $('saveRoleBtn').onclick = ()=>{
+    role.label = $('r-name').value.trim() || 'Bez názvu';
+    role.allowedCats = Array.from(document.querySelectorAll('[data-role-cat]:checked')).map(el=>el.value);
+    const idx = roles.findIndex(r=>r.id===role.id);
+    if(idx !== -1) roles[idx] = role;
+    saveRoles();
+    editingRoleId = null;
+    render();
+  };
+  $('cancelRoleBtn').onclick = ()=>{ editingRoleId = null; render(); };
+}
+
+function renderRolesMain(){
+  if(editingRoleId){
+    const role = roles.find(r=>r.id===editingRoleId);
+    if(!role){ editingRoleId = null; }
+    else{
+      $('main').innerHTML = roleEditHtml(role);
+      bindRoleEditForm(role);
+      return;
+    }
+  }
+  let html = '<div class="art-title">Role</div>' +
+    '<div class="field-hint">Role určuje, které kategorie návodů čtenář v této roli uvidí. Nová role zatím nevidí nic.</div>' +
+    '<div class="row"><input class="f-title" id="newRoleName" placeholder="Název nové role (např. Plac, Kuchyně, Vedoucí)" style="flex:1;font-size:14px;font-weight:400;font-family:inherit;"><button class="btn" id="addRoleBtn">Přidat roli</button></div>';
+  if(roles.length){
+    html += roles.map(r=>
+      '<div class="role-row"><span>' + escapeHtml(r.label) + ' <span class="tag-chip">' + r.allowedCats.length + ' kategorií</span></span>' +
+      '<span><button class="btn ghost" data-edit-role="' + r.id + '">Upravit</button> <button class="btn red" data-del-role="' + r.id + '">Smazat</button></span></div>'
+    ).join('');
+  } else {
+    html += '<div class="status" style="margin-top:14px">Zatím žádné role.</div>';
+  }
+  html += '<div class="row"><button class="btn ghost" id="backToArticles">Zpět na návody</button></div>';
+  $('main').innerHTML = html;
+  $('addRoleBtn').onclick = ()=>{
+    const name = $('newRoleName').value.trim();
+    if(!name) return;
+    const r = {id:uid(), label:name, allowedCats:[]};
+    roles.push(r);
+    saveRoles();
+    editingRoleId = r.id;
+    render();
+  };
+  document.querySelectorAll('[data-edit-role]').forEach(b=>{
+    b.onclick = ()=>{ editingRoleId = b.dataset.editRole; render(); };
+  });
+  document.querySelectorAll('[data-del-role]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Opravdu?'; return; }
+      const delId = b.dataset.delRole;
+      roles = roles.filter(r=>r.id !== delId);
+      saveRoles();
+      if(readerRoleId === delId){
+        readerRoleId = null;
+        try{ localStorage.removeItem('kb-reader-role'); }catch(e){}
+      }
+      render();
+    };
+  });
+  $('backToArticles').onclick = ()=>{ view = 'article'; render(); };
+}
+
+function render(){
+  renderAxisSwitch();
+  renderCatList();
+  if(view === 'roles') renderRolesMain();
+  else renderMain();
+}
+
+$('modeBtn').onclick = ()=>{
+  MODE = (MODE === 'editor') ? 'reader' : 'editor';
+  try{ localStorage.setItem('kb-mode', MODE); }catch(e){}
+  editing = false;
+  view = 'article';
+  applyMode();
+  render();
+};
+$('rolesBtn').onclick = ()=>{ view = 'roles'; editingRoleId = null; render(); };
+$('addBtn').onclick = ()=>{
+  activeId = uid();
+  editing = true;
+  videoOpen = false;
+  view = 'article';
+  const blank = {id:activeId, isNew:true, title:'', content:'', postupTags:[], manualTags:[], images:[], videoUrl:''};
+  renderAxisSwitch();
+  renderCatList();
+  $('main').innerHTML = editFormHtml(blank);
+  bindEditForm(blank);
+};
+
+$('exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify({articles, roles}, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'znalostni-baze-zaloha.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+$('importBtn').onclick = ()=>$('importFile').click();
+$('importFile').addEventListener('change', ()=>{
+  const file = $('importFile').files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      const newArticles = Array.isArray(parsed) ? parsed : parsed.articles;
+      const newRoles = Array.isArray(parsed) ? [] : (parsed.roles || []);
+      if(!Array.isArray(newArticles)) throw new Error('neplatný formát');
+      articles = newArticles;
+      articles.forEach(a=>{ if(!a.images) a.images = []; if(a.videoUrl == null) a.videoUrl = ''; });
+      roles = newRoles;
+      saveArticles();
+      saveRoles();
+      activeId = articles.length ? articles[0].id : null;
+      editing = false;
+      videoOpen = false;
+      view = 'article';
+      render();
+      $('status').textContent = 'Záloha nahrána.';
+    }catch(e){
+      $('status').textContent = 'Import se nezdařil – soubor neodpovídá formátu zálohy.';
+    }
+  };
+  reader.readAsText(file);
+  $('importFile').value = '';
+});
+
+init();
+</script>
+</body>
+</html>
