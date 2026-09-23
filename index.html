@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- offline verze – data se ukládají jen v tomto prohlížeči (localStorage) -->
-<!-- v1.6 -->
+<!-- v2.0 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -43,6 +43,12 @@
     background:var(--paper);color:var(--cocoa);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:16px;
   }
   .mode-btn:hover{background:var(--line-soft);}
+  .section-switch{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .section-btn{
+    padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);
+    color:var(--cocoa-soft);font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;
+  }
+  .section-btn.active{background:var(--cocoa);color:#fff;border-color:var(--cocoa);}
   .axis-switch{display:flex;gap:6px;margin-bottom:14px;}
   .axis-btn{
     flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--line);background:var(--paper);
@@ -164,6 +170,7 @@
       </div>
       <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
 
+      <div class="section-switch" id="sectionSwitch"></div>
       <div class="axis-switch" id="axisSwitch"></div>
       <div id="catList"></div>
       <button class="add-btn" id="addBtn" style="display:none">+ Nový článek</button>
@@ -183,7 +190,13 @@
 </div>
 
 <script>
-const APP_VERSION = 'v1.6';
+const APP_VERSION = 'v2.0';
+
+const SECTIONS = [
+  {id:'sop', label:'📋 Postupy (SOP)'},
+  {id:'wiki', label:'🏢 Firemní wiki'},
+  {id:'troubleshooting', label:'🛟 Troubleshooting'}
+];
 
 const POSTUP_CATS = [
   {id:'vstupni_logistika', label:'Vstupní logistika'},
@@ -193,7 +206,6 @@ const POSTUP_CATS = [
 ];
 const MANUAL_CATS = [
   {id:'uvod', label:'Úvod'},
-  {id:'prostory', label:'Prostory'},
   {id:'zasady_fungovani', label:'Zásady fungování'},
   {id:'desatero', label:'Desatero'},
   {id:'obsluha', label:'Obsluha'},
@@ -209,61 +221,113 @@ const MANUAL_CATS = [
   {id:'slevy', label:'Slevy, sousedská a personální káva'},
   {id:'jak_se_to_vari', label:'Jak se to vaří (limo/svařák/čoko)'}
 ];
-const AXES = [
-  {id:'postup', label:'Podle postupu', field:'postupTags', cats:POSTUP_CATS,
-   hint:'Do jaké fáze zaškolení návod patří – stejné skupiny jako checklist v kartě zaměstnance.'},
-  {id:'manual', label:'Podle manuálu', field:'manualTags', cats:MANUAL_CATS,
-   hint:'Do jaké kapitoly kompletního provozního manuálu návod patří.'}
+const WIKI_CATS = [
+  {id:'kontakty', label:'Kontakty a tým'},
+  {id:'nastroje', label:'Nástroje a systémy'},
+  {id:'provozni_rad', label:'Provozní řád'},
+  {id:'prostory_zazemi', label:'Prostory a zázemí'}
 ];
+const TROUBLESHOOT_CATS = [
+  {id:'zakaznik', label:'Problém se zákazníkem'},
+  {id:'technika', label:'Technika a systém nefunguje'},
+  {id:'objednavky', label:'Problém s objednávkou dortu'},
+  {id:'nouze', label:'Kam volat v nouzi'}
+];
+
+// Ke kterému seznamu kategorií patří které pole na článku – používá se pro checkboxy v editaci i pro role.
+const FIELD_CATS = {
+  postupTags: POSTUP_CATS,
+  manualTags: MANUAL_CATS,
+  wikiTags: WIKI_CATS,
+  troubleshootTags: TROUBLESHOOT_CATS
+};
+
+// Jaké osy (pohledy na kategorie) appka nabízí v jednotlivých sekcích. SOP má dvě (postup/manuál),
+// wiki a troubleshooting mají jen jednu – nejsou to postupy, dvojí členění by tam nedávalo smysl.
+const SECTION_AXES = {
+  sop: [
+    {id:'postup', label:'Podle postupu', field:'postupTags', cats:POSTUP_CATS,
+     hint:'Do jaké fáze zaškolení návod patří – stejné skupiny jako checklist v kartě zaměstnance.'},
+    {id:'manual', label:'Podle manuálu', field:'manualTags', cats:MANUAL_CATS,
+     hint:'Do jaké kapitoly kompletního provozního manuálu návod patří.'}
+  ],
+  wiki: [
+    {id:'wiki', label:'Firemní wiki', field:'wikiTags', cats:WIKI_CATS,
+     hint:'Kdo jsme, kde co najdeme a s čím pracujeme – ne postup práce, ale základní orientace ve firmě.'}
+  ],
+  troubleshooting: [
+    {id:'troubleshooting', label:'Troubleshooting', field:'troubleshootTags', cats:TROUBLESHOOT_CATS,
+     hint:'Rychlá pomoc, když se něco pokazí nebo nastane nestandardní situace.'}
+  ]
+};
 
 // SEED_ALL = veškerý pilotní obsah dosud připravený. Appka si při startu hlídá,
 // aby každý článek z tohoto seznamu v datech byl – chybějící doplní, existující nepřepisuje.
 const SEED_ALL = [
-  {id:'uvod', title:'Úvod – co je Sladká dílna', postupTags:['vstupni_logistika'], manualTags:['uvod'], images:[], videoUrl:'', content:
+  {id:'uvod', section:'sop', title:'Úvod – co je Sladká dílna', postupTags:['vstupni_logistika'], manualTags:['uvod'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "V naší cukrárně nejde jen o dorty a kávu – jde hlavně o lidi. O zákazníky, kteří k nám chodí pro radost a pohodu, i o nás samotné, kteří tu tvoříme tým. Chceme, aby Sladká dílna byla místem, kde se všichni cítí vítaní, opečovaní a spokojení.\n\nProto jsme si stanovili jednoduché zásady: být k sobě i k hostům vždy milí a vřelí, pracovat poctivě a srdcem a nabízet jen to, co bychom si sami dali na talíř nebo do sklenice.\n\nKdyž se jich budeme držet, bude naše práce lehčí, atmosféra příjemnější a hosté se k nám budou rádi vracet."},
-  {id:'prostory', title:'Prostory cukrárny', postupTags:['vstupni_logistika'], manualTags:['prostory'], images:[], videoUrl:'', content:
-"Kancelář – místo pro svačení a obídvání, najdeš tam zástěru a cedulku „školím se“.\n\nŠatna – tady se převlékáme a necháváme osobní věci. Na směnu chodíme v tmavém oblečení (ideálně černé triko a černé legíny/šortky). V šatně je i lednice na personální jídlo.\n\nMyčka – odnos špinavého nádobí.\n\nChladicí box – mléko, citrusy na limonády, dorty na objednávku, pečené nanuky, makronky. Pokud jdeš vyzvednout dort na objednávku a nemůžeš ho v boxu najít: podívej se do lednice → zeptej se ve výrobě → jdi se znovu zeptat na jméno → podívej se znovu všude → teprve pak jdi za zákazníkem, že dort není. Postupuj tak, abys zákazníka zbytečně nevyděsil – většinou je příčinou to, že dort jen nevidíme, nebo se uložil do jiné lednice.\n\nMrazicí box – zásoba ledu, zmrzliny.\n\nSuchý sklad – zrnka kávy, nápoje v plastu, základy na zmrzlinu.\n\nDoplňovací lednice – bílá slouží k doplňování dezertů, prosklená obsahuje koláče a kusy dortů."},
-  {id:'zasady_fungovani', title:'Zásady fungování', postupTags:['vstupni_logistika'], manualTags:['zasady_fungovani'], images:[], videoUrl:'', content:
+
+  {id:'prostory', section:'wiki', title:'Prostory cukrárny', postupTags:[], manualTags:[], wikiTags:['prostory_zazemi'], troubleshootTags:[], images:[], videoUrl:'', content:
+"Kancelář – místo pro svačení a obídvání, najdeš tam zástěru a cedulku „školím se“.\n\nŠatna – tady se převlékáme a necháváme osobní věci. Na směnu chodíme v tmavém oblečení (ideálně černé triko a černé legíny/šortky). V šatně je i lednice na personální jídlo.\n\nMyčka – odnos špinavého nádobí.\n\nChladicí box – mléko, citrusy na limonády, dorty na objednávku, pečené nanuky, makronky.\n\nMrazicí box – zásoba ledu, zmrzliny.\n\nSuchý sklad – zrnka kávy, nápoje v plastu, základy na zmrzlinu.\n\nDoplňovací lednice – bílá slouží k doplňování dezertů, prosklená obsahuje koláče a kusy dortů."},
+
+  {id:'zasady_fungovani', section:'sop', title:'Zásady fungování', postupTags:['vstupni_logistika'], manualTags:['zasady_fungovani'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Priority práce na place, v tomto pořadí:\n1. Obsluha zákazníků\n2. Úklid placu a pracovní barové plochy kolem kávovaru a dřezu\n3. Doplnění vitríny\n4. Veškeré ostatní činnosti (vyleštění vitríny, skládání krabic/ubrousků, razítkování...)\n\nNenecháváme nikdy prázdný krám – na place musí být vždy alespoň jeden člen posádky. Pokud musíš jít pro dort nebo cokoli jiného dozadu a jsi na place sám, popros jiného dostupného kolegu, aby šel na stráž.\n\nKdyž do cukrárny vstoupí zákazník, dáváme mu najevo, že jsme ready o něj pečovat – nahlas mile a s úsměvem pozdravíme. Small talky jsou vítané.\n\nKdyž zrovna nikoho neobsluhujeme, neznamená to, že se můžeme opírat o pult nebo koukat do mobilu. Osobní telefon používáme pouze v zázemí, a jen když si potřebujeme vyřídit něco urgentního.\n\nNa směnu chodíme 10 minut předem – v čase zapsaném v TT už musíme být převlečení a připravení pracovat. Nečekané zpoždění včas hlásíme vedoucímu směny.\n\nČipování: při příchodu se čipujeme až po převlečení do pracovního se zástěrou, při odchodu se čipujeme po dokončení práce a teprve pak se jdeme převlékat.\n\nKomunikace s kolegy: udáváme pozici nebo nejbližší plány (jdu pro Pavlovu, jdu na WC, jdu pro dort do boxu...). Pokud bereš ze skladu poslední kus něčeho (poslední pytel kávy, poslední balík brček), vždy to nahlas služebně staršímu kolegovi. Pokud doplňuješ vitrínu, jsi v kontaktu s kuchyní – hlásíš, co dochází.\n\nÚklid a sklízení stolů: stoly udržujeme čisté, špinavé nádobí odnášíme na myčku vždy s platem – nikdy s minimálním množstvím (třeba s jedním talířem). Pokud poškodíš dort nebo zákusek, odnes ho do kuchyně na resuscitaci – většinou to jde zachránit."},
-  {id:'desatero', title:'Desatero Sladké dílny', postupTags:['vstupni_logistika'], manualTags:['desatero'], images:[], videoUrl:'', content:
+
+  {id:'desatero', section:'sop', title:'Desatero Sladké dílny', postupTags:['vstupni_logistika'], manualTags:['desatero'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "1. Vlídnost – se zákazníkem mluvíme vlídně a chováme se pohostinně.\n\n2. Vitrína – je středobodem cukrárny, staráme se, aby byla vždy doplněná a upravená.\n\n3. Efektivita – když nemáme čekající zákazníky, věnujeme se činnostem z manuálu „co dělat, když to nechodí“. Každá cesta má mít smysl – při odnášení objednávky bereme špinavé nádobí z placu a zpátky nosíme čisté z kuchyně.\n\n4. Zodpovědnost – nápoje vydáváme vždy v perfektní kvalitě podle receptury, hlídáme čerstvost surovin.\n\n5. Neznalost omlouvá – když nevíme odpověď, nikdy zákazníka neodbydeme. Jdeme se zeptat zkušenějšího kolegy.\n\n6. Slušnost – čekajícího zákazníka jdeme co nejdříve obsloužit, sedícího nerušíme hlasitým smíchem. Před zákazníky nikdy nejíme, u kasy nejsme na osobním telefonu.\n\n7. Čistota – po odchodu zákazníka co nejrychleji uklidíme nádobí a stůl, debarasujeme vždy s platem.\n\n8. Komunikace – o provozních věcech aktivně komunikujeme na place i v kuchyni.\n\n9. Pružnost – výběr činnosti přizpůsobujeme aktuální situaci, i když to znamená něco přerušit.\n\n10. Víc očí víc vidí – při výdeji objednávky kontrolujeme, zda obsah sedí se zadáním."},
 
-  {id:'nandavani', title:'Nandávání zákusků & debaras nádobí', postupTags:['novacek'], manualTags:['obsluha'], images:[], videoUrl:'', content:
+  {id:'nandavani', section:'sop', title:'Nandávání zákusků & debaras nádobí', postupTags:['novacek'], manualTags:['obsluha'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Nástroje na nandávání jsou připravené přímo ve vitríně – lopatky a kleště.\n\nŠiroká lopatka je určená pouze na Pavlovu.\n\nPorcovky a trojúhelníčky nabíráme užší lopatkou a rovnými kleštěmi – zákusek podebereme lopatkou a kleštěmi přidržujeme, umístíme na talíř.\n\nPečené nanuky a cake popy bereme za „tyčku“ – samotného zákusku se nedotýkáme.\n\nZaoblené kleště (nahoře na vitríně) používáme na drobnější zákusky – makronky, cookies, linecká kolečka, brownie, rumové koule.\n\nIndiánky a špičky nabíráme zaoblenými kleštěmi a lopatkou (indiánek položíme na lopatce, kleštěmi jemně přidržíme).\n\nChlebíčky nabíráme zaoblenými kleštěmi nahoře na druhé vitríně – tyto kleště jsou určené jen na slané výrobky.\n\nZákusky nandáváme na bílé talíře, nápisem směrem k zákazníkovi, ubrousek vlevo a na něj vidlička. Panna cottu a Tiramisu servírujeme na černý ubrousek se lžičkou, cake pop/nanuky/makronky/cookie na černý ubrousek.\n\nDEBARAS: stoly udržujeme čisté, špinavé nádobí odnášíme na myčku vždy s platem – nikdy s minimálním množstvím (třeba jedním talířem). Menší množství (např. jedna sklenice) můžeš dočasně odložit za roh na průhlednou lednici a odnést s větším množstvím najednou. Dřevěné tácky se na myčku nenosí, otřou se hadříkem a vrátí do poličky. Když jdeš do kuchyně nebo na toaletu s prázdnýma rukama, vezmi nádobí s sebou. Když se vracíš z kuchyně s volnýma rukama, vezmi dopředu umyté nádobí."},
 
-  {id:'ranni_vecerni', title:'Ranní příprava a večerní úklid', postupTags:['novacek'], manualTags:['start_dne','konec_dne'], images:[], videoUrl:'', content:
+  {id:'ranni_vecerni', section:'sop', title:'Ranní příprava a večerní úklid', postupTags:['novacek'], manualTags:['start_dne','konec_dne'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "RÁNO\n\nZkontroluj vitrínu a lednice – všechny produkty mají cedulku (na středu tácku, u dortů vpravo od produktu), vitrína je vyleštěná, zapni a rozsviť ji. Chlebíčky jsou připravené na tácech a zabalené fresh fólií.\n\nSundej všechny židle, stoly otři hadrem na stoly. V létě rozlož zahrádku a zkontroluj čistotu pod stoly.\n\nPřiprav pracovní plochu – ubrousky, brčka, sklenička na nůž a míchací lžíci.\n\nZapni kávovar (i mlýnek), pokud ho ještě nezapnuly cukrářky ráno.\n\nZkontroluj a případně doplň cenovky, dezerty ve vitríně (podívej se i dozadu, zda nějaký dort nepotřebuje jít do vitríny dřív), stav limonád, mléka a alternativní mléka, led v mrazicím boxu.\n\nZkontroluj služební mobil (zapnutý, nabitý, mail s objednávkami) a nástěnku kvůli objednávkám.\n\nPusť hudbu na tabletu – příjemná hlasitost, vhodný playlist na Spotify.\n\nZapni Dáme jídlo a uprav dostupnost položek, zkontroluj Foodoru.\n\nPŘES DEN\n\nKontroluj rostliny ve vázách (čistá voda), čas od času zajdi zkontrolovat čistotu na WC (toaletní papír, ubrousky, mýdlo), sleduj stav zásob limonád a surovin – při nedostatku napiš na tabuli.\n\nVEČER\n\n17:30 – začni přeskládávat dezerty, které to potřebují, na čisté tácy, odnes na myčku sklenice.\n18:00 – i přes případnou frontu začni zanášet trvanlivější dezerty z vitríny do lednice (postup viz článek Doplňování vitríny).\n\nDoplň lednici na nápoje, vynes dopředu prázdné bedny od chlebíčků, stáhni špinavé utěrky do červeného pytle u kanceláře a připrav nové, poklid dětský koutek.\n\nKáva: umyj a vypni kávovar a mlýnek, vysyp lógr do koše – kávu do mlýnku nedoplňuj, lepší nasypat ráno čerstvě otevřené.\n\nZmrzlina: stroj zanocuj/umyj (bílé poklopy, nerez vyleštit), umyj a vrať vaničku, doplň kornoutky do krabice i do záložní. Směsi nemíchej na noc, lepší čerstvé ráno.\n\nPŘED ODCHODEM ZKONTROLUJ: vypnutá světla (i v lednici na drinky), vypnuté ventilátory (i mini u vitríny), nabíjí se mobil/tablet, kasa zhaslá a klíček pod tiskárnou, vypnutý kávovar a obě vitríny, dozavřená příruční lednice, zavřený ledovač, zavřená všechna okna."},
 
-  {id:'vitrina_doplnovani', title:'Doplňování vitríny', postupTags:['novacek'], manualTags:['vitrina'], images:[], videoUrl:'', content:
+  {id:'vitrina_doplnovani', section:'sop', title:'Doplňování vitríny', postupTags:['novacek'], manualTags:['vitrina'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Vitrína je středobod cukrárny – musí být vždy čistá, doplněná, upravená a lákavá.\n\nVšechny dorty i zákusky doplňujeme metodou FIFO (first in first out) – starší dozadu, čerstvější dopředu, aby se nikdy nestalo, že se novější zákusky prodají dřív než starší.\n\nAkutně doplňuj, když na tácu chybí 4 a více kusů. Při 1–3 chybějících kusech doplň, až nebude fronta a budeš mít čas.\n\nDorty musí být vždy otočené řezem k zákazníkovi a u nich musí být správná cedulka – když dort přehodíš na jiné místo, přehoď i cedulku.\n\nNa jeden tác dáváme max. dva druhy dortu, výjimečně tři (pokud zbyl jeden/dva kousky).\n\nHorní patro: pečené nanuky (barevný mix z chladicího boxu), makronky (mix z jedné krabice v nerezové lednici), Tiramisu/Panna cotta (bílá lednice v zázemí – Panna cottu před doplněním zalij zavařeninou cca 1 cm), rumové koule (9 na tácek, doplňují se přes bílý košík), cake pops (prosklená lednice, vždy namíchej barvy).\n\nDruhé patro (porcovky, větrníky): doplňuj podle FIFO, akutně při 4+ chybějících kusech. Vždy hlas v kuchyni, když zákusky docházejí. Doplňuj opatrně, ať zákusky nepoškodíš – u tartaletky se slaným karamelem a indiánku se nedotýkej určitých částí (otisky prstů).\n\nTřetí patro: 4 tácy – koláče, cheesecake, 2× různé dorty podle nabídky dne.\n\nSpodní patro: 4 tácy různých dortů, Pavlova vzadu za ostatními dorty (zákazníci ji znají, případně upozorníme).\n\nPokud cokoli chybí a ve vitríně to nenajdeš, zkontroluj nerezovou lednici (první po levé ruce před kuchyní), případně popros cukrářky o dopečení – nejlépe kontroluj zásoby průběžně a hlas v kuchyni ještě před úplným dojitím.\n\nUdržuj vitrínu čistou – utírej prosklené police, vymetej drobečky, v případě potřeby umyj lopatku, kleště a tácek."},
 
-  {id:'kasa_penize', title:'Kasa a peníze', postupTags:['novacek'], manualTags:['obsluha'], images:[], videoUrl:'', content:
+  {id:'kasa_penize', section:'sop', title:'Kasa a peníze', postupTags:['novacek'], manualTags:['obsluha'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Ráno počítá pokladnu vedoucí (nebo někoho pověří) – depozit je 3 000 Kč. Večer pokladnu uzavírá vedoucí.\n\nNepřijímáme stravenky. Zákazník může platit stravenkovou kartou, ale ne všechny fungují.\n\nODPIS – markuje se v kase na stoly dole vpravo. Použij, když zákusek spadne nebo se zničí a nejde opravit.\n\nVYŘAZENO – použij, když se zboží nedá prodat kvůli špatné kvalitě, nestabilitě nebo stáří.\n\nSlevy pro zaměstnance: 20 % na vše (platí i pro blízkou rodinu, ne pro vzdálené příbuzné, které jsi nikdy neviděl). Bývalí dlouhodobí zaměstnanci mají 10 % na vše. Sousedské podniky (květinářství, Malina, Duha, Farmářský obchůdek, kadeřnictví) mají nárok na sousedskou kávu (espresso, espresso macchiatto, cappuccino, latte, lungo, americano) – jiné nápoje/zákusky se markují klasicky, bez slevy. Pokud si nejsi jistý, jestli má někdo na sousedskou kávu nárok, zeptej se služebně staršího kolegy nebo vedoucího.\n\nPerso káva: každý zaměstnanec má nárok na jednu kávu denně zdarma, každá další je za 10 Kč (tlačítko v kase „personální káva“). Když nepiješ kávu, můžeš mít místo ní za směnu jedno Chai latte nebo limču."},
 
-  {id:'tocenim', title:'Točení a velikosti zmrzliny', postupTags:['novacek'], manualTags:['zmrzlina'], images:[], videoUrl:'', content:
+  {id:'tocenim', section:'sop', title:'Točení a velikosti zmrzliny', postupTags:['novacek'], manualTags:['zmrzlina'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Velikosti a gramáž:\nBABY – 60 g, naplněný kornoutek a malá špička.\nMALÁ – 80 g, jedna otočka a špička.\nVELKÁ – 120 g, dvě otočky a špička.\n\nGramáž si na začátku ověř na váze, ať víš, jak má správná porce vypadat.\n\nTermoboxy: malý termobox pojme až tři velké zmrzliny, velký termobox až pět velkých zmrzlin.\n\nOvocné zmrzliny (malinová, jahodová, mango&maracuja, černý rybíz) jsou sorbet. Vanilková, čokoládová, slaný karamel a kokosová jsou smetanové.\n\nPokud je zmrzlina příliš tuhá nebo příliš tekutá, řešení je na ovládacím panelu stroje (SET + ZMRZLINA a šipka nahoru/dolů) – tohle si projdi s vedoucím směny nebo zkušenějším kolegou, u stroje je potřeba to nejdřív vidět naživo."},
 
-  {id:'volny_cas', title:'Co dělat, když zrovna nikoho neobsluhujeme', postupTags:['vstupni_logistika','novacek'], manualTags:['volny_cas'], images:[], videoUrl:'', content:
+  {id:'volny_cas', section:'sop', title:'Co dělat, když zrovna nikoho neobsluhujeme', postupTags:['vstupni_logistika','novacek'], manualTags:['volny_cas'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Údržba čistoty: sklidit špinavé nádobí, utřít stoly, uklidit sezení na oknech, dát dohromady dětský koutek, vyleštit vitrínu vepředu od dětských paciček, umýt špinavé překládáky ve slané a sladké vitríně, refresh konviček na mléko a okolí kávovaru.\n\nDoplňování vitríny – viz článek Doplňování vitríny.\n\nDoplňování surovin, zboží a pomůcek:\n– okolo kasy: cukry, míchátka, vizitky, jellybeans, pusinky\n– na vitríně: ubrousky, plastové příbory, víčka, cookies, lineckáče\n– nápojová lednice\n– pod kávovarem: horká čokoláda, ubrousky, bezkofeinová káva\n– okolo kávovaru: cukry, kávová zrna, brčka, ubrousky, med\n– poličky: kelímky, čaje, pytle kávy, alkohol\n– barová lednice: perlivé vody, mléko, alternativní mléka, limonády, prosecco\n\nOstatní: skládání krabic, razítkování kelímků a sáčků, skládání ubrousků – případně jiná práce, kterou zadá vedoucí směny."},
 
-  {id:'kavovar', title:'Kávovar – obsluha a základní nápoje', postupTags:['pokrocily'], manualTags:['napojovy_manual'], images:[], videoUrl:'', content:
+  {id:'kavovar', section:'sop', title:'Kávovar – obsluha a základní nápoje', postupTags:['pokrocily'], manualTags:['napojovy_manual'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Mléko ke kávovým nápojům, které standardně mléko neobsahují, dáváme podle přání zákazníka teplé nebo studené bokem v malé konvičce. S sebou nalévej mléko před zákazníkem, aby mohl říct stop.\n\nPozor na zbytečné přehřívání mléka nad 65 °C při šlehání – kvalita pěny je důležitější než perfektní obrázek na hladině.\n\nESPRESSO – jeden shot čerstvé kávy do malého šálku, mléko jen na vyžádání. Tady: espresso šálek. S sebou: XS kelímek.\n\nCAPPUCCINO – jeden shot kávy do šálku, doplnit do plna lesklou čerstvou pěnou (1–2 cm). Tady: cappuccino šálek. S sebou: S kelímek.\n\nCAFFÈ LATTE – shot kávy rovnou do šálku, doplnit našlehaným mlékem s lesklou pěnou (1 cm). Tady: šálek 300 ml. S sebou: L kelímek.\n\nFLAT WHITE – doppio rovnou do sklenky, doplnit do plna mlékem téměř bez pěny (0,5 cm). Nech čerstvé doppio chvíli odstát, než začneš nalévat – má hustou cremu. Tady: Flat white sklenka. S sebou: S kelímek.\n\nPokud si nejsi jistý kvalitou nápoje, zeptej se odpovědné osoby.\n\nToto je základ pro zaškolení – kompletní recepty na všechny nápoje (Americano, Lungo, Macchiatto, čaje, matcha, studené i alkoholické nápoje) najdeš v plném nápojovém manuálu."},
 
-  {id:'system', title:'Systém – objednávání a výdej dortů', postupTags:['pokrocily'], manualTags:['objednavani_dortu'], images:[], videoUrl:'', content:
-"Objednání dortu v adminu:\n1. Sekce OBJEDNÁVKY → VYTVOŘIT, zaškrtnuté BĚŽNÁ OBJEDNÁVKA.\n2. VYHLEDAT PRODUKT → vybereš dort/zákusek → zjistíš od zákazníka velikost dortu.\n3. Zeptáš se, jestli chce cedulku nebo čokoládovou číslici, případně nabídneš úpravu (ovoce navíc, pusinky/makronky, barevná šlehačka – ne všechny dorty jdou celé obmazat).\n\nBezlaktózové dorty lze objednat jen jako ovocný světlý nebo ovocný tmavý.\n\nJedlý tisk může být ležící nebo stojící. Pokud má zákazník vlastní fotku, lepší ho nasměrovat na e-shop, ať si objednávku udělá sám; pokud chce běžný motiv (např. krtečka) a nemáme narváno, můžeme objednávku s tiskem vytvořit i na place (screen z tabletu, vložit z galerie).\n\nFigurky – cenu stanoví Saša (externista), k tomu se připočítá 50 % z té částky, minimální cena figurky je 350 Kč. Figurku objednej tak, aby byla na výrobně týden před termínem dortu (dort na 10. 8. → figurka objednaná do 3. 8.).\n\nDodatečné informace pro cukrářku, které nesmí přehlédnout, zadáváš do zvláštní kolonky v objednávce.\n\nDál vyplníš: datum a čas vyzvednutí, jméno zákazníka, způsob doručení (Petřiny/Čakovice), způsob platby, kontaktní údaje (e-mail, telefon – zákazníka upozorni, že mu přijde potvrzovací e-mail s číslem objednávky, poslední tři číslice po něm budeme chtít při vyzvedávání).\n\nPři platbě QR kódem nebo kartou musíš vyplnit i fakturační údaje. Při platbě na místě (dobírka) rovnou zaškrtni OZNAČIT OBJEDNÁVKU ZA ZAPLACENOU.\n\nNa závěr klikneš VYTVOŘIT OBJEDNÁVKU – systém bude chtít tvůj kód, kterým objednávku potvrdíš.\n\nOBJEDNÁVKA NA DRUHÝ DEN – nabídka je limitovaná (cukrářky mají založené jen některé dorty). Přes VYHLEDAT PRODUKT po zaškrtnutí NA ZÍTRA vidíš, co je na zítra k dispozici. Některé úpravy na druhý den nejdou zadat – konzultuj s cukrářkami.\n\nNEOBVYKLÉ POŽADAVKY – když si nejsi jistý, jestli něco jde vyrobit, zeptej se vedoucího směny, případně výrobny. Zákazníka neodbydeme, pokud si nejsme jistí – zjistíme to.\n\nNESYSTÉMOVÉ POŽADAVKY (co ti systém nedovolí zadat) – volej vrchní cukrářce Nadě, 775 395 493."},
+  {id:'system', section:'sop', title:'Systém – objednávání a výdej dortů', postupTags:['pokrocily'], manualTags:['objednavani_dortu'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
+"Objednání dortu v adminu:\n1. Sekce OBJEDNÁVKY → VYTVOŘIT, zaškrtnuté BĚŽNÁ OBJEDNÁVKA.\n2. VYHLEDAT PRODUKT → vybereš dort/zákusek → zjistíš od zákazníka velikost dortu.\n3. Zeptáš se, jestli chce cedulku nebo čokoládovou číslici, případně nabídneš úpravu (ovoce navíc, pusinky/makronky, barevná šlehačka – ne všechny dorty jdou celé obmazat).\n\nBezlaktózové dorty lze objednat jen jako ovocný světlý nebo ovocný tmavý.\n\nJedlý tisk může být ležící nebo stojící. Pokud má zákazník vlastní fotku, lepší ho nasměrovat na e-shop, ať si objednávku udělá sám; pokud chce běžný motiv (např. krtečka) a nemáme narváno, můžeme objednávku s tiskem vytvořit i na place (screen z tabletu, vložit z galerie).\n\nFigurky – cenu stanoví Saša (externista), k tomu se připočítá 50 % z té částky, minimální cena figurky je 350 Kč. Figurku objednej tak, aby byla na výrobně týden před termínem dortu (dort na 10. 8. → figurka objednaná do 3. 8.).\n\nDodatečné informace pro cukrářku, které nesmí přehlédnout, zadáváš do zvláštní kolonky v objednávce.\n\nDál vyplníš: datum a čas vyzvednutí, jméno zákazníka, způsob doručení (Petřiny/Čakovice), způsob platby, kontaktní údaje (e-mail, telefon – zákazníka upozorni, že mu přijde potvrzovací e-mail s číslem objednávky, poslední tři číslice po něm budeme chtít při vyzvedávání).\n\nPři platbě QR kódem nebo kartou musíš vyplnit i fakturační údaje. Při platbě na místě (dobírka) rovnou zaškrtni OZNAČIT OBJEDNÁVKU ZA ZAPLACENOU.\n\nNa závěr klikneš VYTVOŘIT OBJEDNÁVKU – systém bude chtít tvůj kód, kterým objednávku potvrdíš.\n\nOBJEDNÁVKA NA DRUHÝ DEN – nabídka je limitovaná (cukrářky mají založené jen některé dorty). Přes VYHLEDAT PRODUKT po zaškrtnutí NA ZÍTRA vidíš, co je na zítra k dispozici. Některé úpravy na druhý den nejdou zadat – konzultuj s cukrářkami.\n\nNEOBVYKLÉ POŽADAVKY – když si nejsi jistý, jestli něco jde vyrobit, zeptej se vedoucího směny, případně výrobny. Zákazníka neodbydeme, pokud si nejsme jistí – zjistíme to."},
 
-  {id:'michani', title:'Míchání zmrzliny', postupTags:['pokrocily'], manualTags:['zmrzlina'], images:[], videoUrl:'', content:
-"Zmrzliny mícháme vždy z báze; u ovocných přidáváme ovocné pyré.\n\nPostup: 1) do kýble nalij vodu, 2) u ovocné zmrzliny si nech v odměrce trochu vody na vypláchnutí kartonu od pyré, 3) přisyp obsah sáčku a hned pořádně rozmíchej, 4) vlij ovocná pyré, vypláchni kartony a zamíchej, 5) dej do chlaďáku alespoň na 15 minut, 6) znovu pořádně zamíchej a při nalévání do stroje ceď přes síto, 7) síto hned opláchni.\n\nZmrzliny mícháme podle uvážení – záleží, za jak dlouho stroj umýváme, kolik chodí zákazníků, jestli je všední den. Když si nejsi jistý, poraď se s vedoucím směny. Klasicky mícháme z jedné dávky, pokud vedoucí neřekne jinak.\n\nOvládání tuhosti: stupeň chlazení uprav stisknutím SET + ZMRZLINA a poté šipkou nahoru/dolů podle potřeby. Uprav vždy max. o 5 stupňů najednou.\n\nCo dělat když...\n– zmrzlina je moc tuhá/zmrzlá → sniž stupeň chlazení (SET+ZMRZLINA, šipka dolů)\n– zmrzlina je moc tekutá → zvyš stupeň chlazení (SET+ZMRZLINA, šipka nahoru)\n– míchaná zmrzlina teče jen jedna příchuť → sniž stupeň chlazení a problémovou zmrzlinu toč se zapnutým SET, pak vrať zpět na tvorbu zmrzliny\n– stroj při točení praská/je zavzdušněný → u problémové zmrzliny dej páku dolů, zmáčkni STOP, pak páku zpět nahoru (odtlakuje se stroj), odpoj a znovu nasaď trubku vedoucí do čerpadla, zkontroluj, že čerpadlo podává\n– zmrzlina vůbec neteče/zamrzla → páku dolů, STOP, páku zpět nahoru, odpoj trubku, čerpadlo vyndej, rozeber, umyj, promazané součástky vazelínou slož zpět, nasaď, zkontroluj podávání, pak spusť výrobu\n\nVečer stroj přepni do nočního režimu stisknutím symbolu skleničky a vločky.\n\nOvocné zmrzliny (malinová, jahodová, mango&maracuja, černý rybíz) = sorbet. Vanilková, čokoládová, slaný karamel, kokosová = smetanové."},
+  {id:'michani', section:'sop', title:'Míchání zmrzliny', postupTags:['pokrocily'], manualTags:['zmrzlina'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
+"Zmrzliny mícháme vždy z báze; u ovocných přidáváme ovocné pyré.\n\nPostup: 1) do kýble nalij vodu, 2) u ovocné zmrzliny si nech v odměrce trochu vody na vypláchnutí kartonu od pyré, 3) přisyp obsah sáčku a hned pořádně rozmíchej, 4) vlij ovocná pyré, vypláchni kartony a zamíchej, 5) dej do chlaďáku alespoň na 15 minut, 6) znovu pořádně zamíchej a při nalévání do stroje ceď přes síto, 7) síto hned opláchni.\n\nZmrzliny mícháme podle uvážení – záleží, za jak dlouho stroj umýváme, kolik chodí zákazníků, jestli je všední den. Když si nejsi jistý, poraď se s vedoucím směny. Klasicky mícháme z jedné dávky, pokud vedoucí neřekne jinak.\n\nOvládání tuhosti: stupeň chlazení uprav stisknutím SET + ZMRZLINA a poté šipkou nahoru/dolů podle potřeby. Uprav vždy max. o 5 stupňů najednou.\n\nVečer stroj přepni do nočního režimu stisknutím symbolu skleničky a vločky.\n\nOvocné zmrzliny (malinová, jahodová, mango&maracuja, černý rybíz) = sorbet. Vanilková, čokoládová, slaný karamel, kokosová = smetanové. Co dělat, když stroj zlobí, najdeš pod Troubleshooting → Technika a systém nefunguje."},
 
-  {id:'mytistroj', title:'Mytí a skládání stroje na zmrzlinu', postupTags:['expert'], manualTags:['zmrzlina'], images:[], videoUrl:'', content:
+  {id:'mytistroj', section:'sop', title:'Mytí a skládání stroje na zmrzlinu', postupTags:['expert'], manualTags:['zmrzlina'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
 "Denní mytí (konec dne): umyj a vrať vaničku, umyj bílé poklopy, stroj otři ze všech stran, nerez ideálně vyleštit speciálním přípravkem. Nemíchej směsi na noc – lepší čerstvé ráno. Doplň kornoutky do krabice na stole i do záložní, kornoutky po doplnění nezapomeň něčím zakrýt.\n\nRozebrání a mazání čerpadla (když zmrzlina neteče/je zamrzlá, nebo při hlubším čištění): u problémové zmrzliny dej páku dolů a zmáčkni STOP, pak páku zpět nahoru – tím se stroj odtlakuje a při odpojení trubky „nebouchne“. Odpoj trubku vedoucí do čerpadla, čerpadlo vyndej, rozeber, pořádně umyj a promazané součástky vazelínou slož zpět do původního stavu. Čerpadlo vlož zpátky do stroje, zapoj propojovací trubku, zmáčkni SET a zkontroluj, že čerpadlo podává (z malých dírek musí téct zmrzlina) – pak teprve zmáčkni výrobu zmrzliny.\n\nVečer stroj uveď do nočního režimu stisknutím symbolu skleničky a vločky.\n\nPokud si u rozebrání a skládání stroje nejsi jistý, projdi si to nejdřív naživo s vedoucím směny nebo zkušenějším kolegou."},
 
-  {id:'limonady', title:'Vaření limonád, svařáku a horké čokolády', postupTags:['expert'], manualTags:['jak_se_to_vari'], images:[], videoUrl:'', content:
-"MALINOVÁ LIMONÁDA\n2,5 kg mražené maliny\n750 g cukr krupice\n400–600 ml voda\n8–15 ml šťáva z citronu (podle chuti)\n\nMaliny dej s vodou rozvařit, až se úplně rozpustí, přidej cukr a povař. Rozmixuj tyčovým mixérem a přeceď přes špičatý cedník. Po vychladnutí přidej citronovou šťávu.\n\nZÁZVOROVÁ LIMONÁDA\n1 kg zázvor\n2 l vařící voda\n500 g cukr krupice\ncitronová šťáva podle chuti\n\nZázvor oloupej a najemno nakrájej, zalij vařící vodou a nech odležet max. 30 minut. Rozmixuj a přeceď přes cedník, po vychladnutí přidej citronovou šťávu. (Případně použij Irčin mixér – zázvor oloupeš, nakrájíš na kostičky, rozmixuješ s trochou vody a doplníš zbytkem vody.)\n\nSVAŘÁK do várnice\n5 l červené víno\n5 PL koření na svařák\n6 PL cukr krupice\n\nVíno nalij do várnice, počkej, až se zahřeje. Pak přidej cukr a koření a pořádně promíchej vařečkou.\n\nHORKÁ ČOKOLÁDA do várnice\n1 l smetana\n1 l mléko\n700 g mix čokoláda (hořká + mléčná)\n\nSmetanu a mléko ohřej na sporáku ve velkém hrnci. Pak přidej čoko a nech rozpustit. Promixuj tyčovým mixérem."}
+  {id:'limonady', section:'sop', title:'Vaření limonád, svařáku a horké čokolády', postupTags:['expert'], manualTags:['jak_se_to_vari'], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', content:
+"MALINOVÁ LIMONÁDA\n2,5 kg mražené maliny\n750 g cukr krupice\n400–600 ml voda\n8–15 ml šťáva z citronu (podle chuti)\n\nMaliny dej s vodou rozvařit, až se úplně rozpustí, přidej cukr a povař. Rozmixuj tyčovým mixérem a přeceď přes špičatý cedník. Po vychladnutí přidej citronovou šťávu.\n\nZÁZVOROVÁ LIMONÁDA\n1 kg zázvor\n2 l vařící voda\n500 g cukr krupice\ncitronová šťáva podle chuti\n\nZázvor oloupej a najemno nakrájej, zalij vařící vodou a nech odležet max. 30 minut. Rozmixuj a přeceď přes cedník, po vychladnutí přidej citronovou šťávu. (Případně použij Irčin mixér – zázvor oloupeš, nakrájíš na kostičky, rozmixuješ s trochou vody a doplníš zbytkem vody.)\n\nSVAŘÁK do várnice\n5 l červené víno\n5 PL koření na svařák\n6 PL cukr krupice\n\nVíno nalij do várnice, počkej, až se zahřeje. Pak přidej cukr a koření a pořádně promíchej vařečkou.\n\nHORKÁ ČOKOLÁDA do várnice\n1 l smetana\n1 l mléko\n700 g mix čokoláda (hořká + mléčná)\n\nSmetanu a mléko ohřej na sporáku ve velkém hrnci. Pak přidej čoko a nech rozpustit. Promixuj tyčovým mixérem."},
+
+  {id:'kontakty_tym', section:'wiki', title:'Kdo je kdo', postupTags:[], manualTags:[], wikiTags:['kontakty'], troubleshootTags:[], images:[], videoUrl:'', content:
+"Iryna Jamborova – jednatelka, zakladatelka.\nAndrej Malon – supervize.\nMartina Krausová – vedoucí.\nZuzana Martínková – vedoucí.\nPetra Stejskalová – office manager, zakázková výroba.\n\nVrchní cukrářka pro dotazy k výrobě a nestandardní objednávky dortů: Nada, 775 395 493.\n\nKonkrétní telefonní čísla a e-maily na ostatní kolegy zatím chybí – doplní Andrej."},
+
+  {id:'it_stack', section:'wiki', title:'Nástroje, které používáme', postupTags:[], manualTags:[], wikiTags:['nastroje'], troubleshootTags:[], images:[], videoUrl:'', content:
+"Freelo – úkoly, zadávání a sledování práce na systematizaci a provozu.\n\nObjednávkový systém (admin) – objednávky dortů, poukazy, sledování, co je k vyzvednutí.\n\nGoogle Sheets – evidence odpracovaných hodin a sazeb pro přípravu mezd.\n\nDropbox – složky se soubory k zaměstnancům.\n\nTablet u kasy – ovládání hudby (Spotify) a práce s objednávkami/vyzvedáváním dortů.\n\nDáme jídlo a Foodora – rozvozové platformy, kontrolujeme a aktualizujeme ráno i v průběhu dne.\n\nPřihlašovací údaje k jednotlivým systémům zatím chybí – doplní Andrej."},
+
+  {id:'mesicni_uzaverka', section:'wiki', title:'Konec měsíce – co se posílá', postupTags:[], manualTags:[], wikiTags:['provozni_rad'], troubleshootTags:[], images:[], videoUrl:'', content:
+"Na konci měsíce je potřeba Natálce dodat:\n1. Měsíční výjezd z pokladny + denní uzávěrky za celý měsíc – dát do papírového sáčku na lineckáč, zalepit páskou a podepsat: KASA Čako + měsíc/rok (např. 3/26).\n2. Faktury za minulý měsíc nahrané v DB.\n3. Podepsané výplatní pásky za minulý měsíc.\n4. Export hodin z Timebox – zkontrolovat u každého zaměstnance, jestli má čipnutý příchod i odchod. Posílá se na centrala@sladkadilna.cz.\n5. Podklady pro přípravu mezd – tabulka se sazbami a osobním ohodnocením."},
+
+  {id:'dort_neni_v_boxu', section:'troubleshooting', title:'Dort na objednávku není v boxu', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:['objednavky'], images:[], videoUrl:'', content:
+"Zákazník přišel pro objednaný dort a v chladicím boxu ho nevidíš:\n1. Podívej se do lednice.\n2. Zeptej se ve výrobě.\n3. Jdi se znovu zeptat na jméno – možná je uložený jinde.\n4. Podívej se znovu všude.\n5. Teprve pak jdi za zákazníkem s tím, že dort momentálně nemáte.\n\nPostupuj tak, abys zákazníka zbytečně nevyděsil – většinou je příčinou to, že dort jen nevidíme nebo se uložil do jiné lednice, ne že by chyběl."},
+
+  {id:'system_nedovoli', section:'troubleshooting', title:'Systém mi nedovolí zadat požadavek na dort', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:['technika','objednavky'], images:[], videoUrl:'', content:
+"Zákazník chce něco, co ti systém nedovolí zadat (nesystémový požadavek na dort)?\nVolej vrchní cukrářce Nadě – 775 395 493. Řekne, jestli daná věc jde vyrobit, případně pomůže vymyslet alternativu.\n\nPokud si nejsi jistý, jestli je vůbec technicky možné něco vyrobit (neobvyklý požadavek, který ale systém zadat umožňuje), zeptej se nejdřív vedoucího směny."}
 ];
 
 let articles = [];
 let roles = [];          // [{id, label, allowedCats:[categoryId,...]}]
+let sectionId = 'sop';
 let axisId = 'postup';
 let activeId = null;
 let editing = false;
@@ -279,12 +343,15 @@ const $ = id => document.getElementById(id);
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function currentAxis(){ return AXES.find(a=>a.id===axisId); }
+function currentAxes(){ return SECTION_AXES[sectionId]; }
+function currentAxis(){ return currentAxes().find(a=>a.id===axisId) || currentAxes()[0]; }
 function currentRole(){ return roles.find(r=>r.id===readerRoleId) || null; }
+function articleAllTags(art){
+  return (art.postupTags||[]).concat(art.manualTags||[]).concat(art.wikiTags||[]).concat(art.troubleshootTags||[]);
+}
 function articleVisibleToRole(art, role){
   if(!role) return false;
-  const tags = (art.postupTags||[]).concat(art.manualTags||[]);
-  return tags.some(t=>role.allowedCats.indexOf(t) !== -1);
+  return articleAllTags(art).some(t=>role.allowedCats.indexOf(t) !== -1);
 }
 
 /* ---------- úložiště ---------- */
@@ -361,7 +428,19 @@ function resizeImage(file, maxDim, quality){
 function init(){
   const existing = loadArticles();
   articles = existing || [];
-  articles.forEach(a=>{ if(!a.images) a.images = []; if(a.videoUrl == null) a.videoUrl = ''; });
+  articles.forEach(a=>{
+    if(!a.images) a.images = [];
+    if(a.videoUrl == null) a.videoUrl = '';
+    if(!a.section) a.section = 'sop';
+    if(!a.wikiTags) a.wikiTags = [];
+    if(!a.troubleshootTags) a.troubleshootTags = [];
+  });
+  // jednorázová migrace: "Prostory cukrárny" dřív patřily mezi SOP, nově patří do Firemní wiki
+  const prostory = articles.find(a=>a.id === 'prostory');
+  if(prostory && prostory.section !== 'wiki'){
+    prostory.section = 'wiki';
+    prostory.wikiTags = ['prostory_zazemi'];
+  }
   // doplní jakékoli pilotní články, které v datech ještě nejsou – existující nepřepisuje
   let added = false;
   SEED_ALL.forEach(s=>{
@@ -370,7 +449,7 @@ function init(){
       added = true;
     }
   });
-  if(added || !existing) saveArticles();
+  if(added || !existing || prostory) saveArticles();
 
   roles = loadRoles();
   if(articles.length) activeId = articles[0].id;
@@ -403,8 +482,31 @@ function renderRoleSelect(){
   };
 }
 
+function renderSectionSwitch(){
+  $('sectionSwitch').innerHTML = SECTIONS.map(s=>
+    '<button class="section-btn' + (s.id===sectionId ? ' active' : '') + '" data-section="' + s.id + '">' + escapeHtml(s.label) + '</button>'
+  ).join('');
+  $('sectionSwitch').querySelectorAll('[data-section]').forEach(b=>{
+    b.onclick = ()=>{
+      sectionId = b.dataset.section;
+      axisId = currentAxes()[0].id;
+      activeId = null;
+      editing = false;
+      view = 'article';
+      render();
+    };
+  });
+}
+
 function renderAxisSwitch(){
-  $('axisSwitch').innerHTML = AXES.map(a=>
+  const axes = currentAxes();
+  if(axes.length <= 1){
+    $('axisSwitch').innerHTML = '';
+    $('axisSwitch').style.display = 'none';
+    return;
+  }
+  $('axisSwitch').style.display = 'flex';
+  $('axisSwitch').innerHTML = axes.map(a=>
     '<button class="axis-btn' + (a.id===axisId ? ' active' : '') + '" data-axis="' + a.id + '">' + escapeHtml(a.label) + '</button>'
   ).join('');
   $('axisSwitch').querySelectorAll('[data-axis]').forEach(b=>{
@@ -423,21 +525,21 @@ function renderCatList(){
   let html = '';
   axis.cats.forEach(cat=>{
     if(!isEditor && role.allowedCats.indexOf(cat.id) === -1) return;
-    const items = articles.filter(a=>(a[axis.field]||[]).indexOf(cat.id) !== -1);
+    const items = articles.filter(a=>a.section===sectionId && (a[axis.field]||[]).indexOf(cat.id) !== -1);
     if(!items.length) return;
     html += '<div class="cat-group"><div class="cat-label">' + escapeHtml(cat.label) + '</div><ul class="art-list">' +
       items.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>').join('') +
       '</ul></div>';
   });
   if(isEditor){
-    const unTagged = articles.filter(a=>!(a[axis.field]||[]).length);
+    const unTagged = articles.filter(a=>a.section===sectionId && !(a[axis.field]||[]).length);
     if(unTagged.length){
       html += '<div class="cat-group"><div class="cat-label">Nezařazeno</div><ul class="art-list">' +
         unTagged.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>').join('') +
         '</ul></div>';
     }
   }
-  $('catList').innerHTML = html || '<div class="status">' + (isEditor ? 'Zatím žádné články.' : 'Pro tvoji roli zatím nejsou povolené žádné kategorie.') + '</div>';
+  $('catList').innerHTML = html || '<div class="status">' + (isEditor ? 'V téhle sekci zatím nejsou žádné články.' : 'Pro tvoji roli zatím nejsou povolené žádné kategorie v téhle sekci.') + '</div>';
   $('catList').querySelectorAll('[data-open]').forEach(el=>{
     el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
   });
@@ -468,6 +570,8 @@ function renderMain(){
   }
   const tagsHtml = POSTUP_CATS.filter(c=>(art.postupTags||[]).indexOf(c.id)!==-1)
     .concat(MANUAL_CATS.filter(c=>(art.manualTags||[]).indexOf(c.id)!==-1))
+    .concat(WIKI_CATS.filter(c=>(art.wikiTags||[]).indexOf(c.id)!==-1))
+    .concat(TROUBLESHOOT_CATS.filter(c=>(art.troubleshootTags||[]).indexOf(c.id)!==-1))
     .map(c=>'<span class="tag-chip">' + escapeHtml(c.label) + '</span>').join('');
   const galleryHtml = (art.images && art.images.length)
     ? '<div class="img-gallery">' + art.images.map(src=>'<img src="' + src + '" alt="">').join('') + '</div>'
@@ -500,11 +604,19 @@ function renderMain(){
 function uid(){ return 'a' + Date.now() + Math.random().toString(36).slice(2,7); }
 
 function tagBoxHtml(field, selected){
-  const cats = field === 'postupTags' ? POSTUP_CATS : MANUAL_CATS;
+  const cats = FIELD_CATS[field];
   return '<div class="tag-box">' + cats.map(c=>
     '<label class="tag-check"><input type="checkbox" data-tag="' + field + '" value="' + c.id + '"' +
     ((selected||[]).indexOf(c.id)!==-1 ? ' checked' : '') + '> ' + escapeHtml(c.label) + '</label>'
   ).join('') + '</div>';
+}
+
+function sectionTagsHtml(sec, art){
+  return SECTION_AXES[sec].map(axis=>
+    '<div class="field-label">' + escapeHtml(axis.label) + '</div>' +
+    '<div class="field-hint">' + escapeHtml(axis.hint) + '</div>' +
+    tagBoxHtml(axis.field, art[axis.field])
+  ).join('');
 }
 
 function imgEditHtml(images){
@@ -517,14 +629,13 @@ function imgEditHtml(images){
 }
 
 function editFormHtml(art){
+  const sec = art.section || 'sop';
   return '<div class="field-label">Název</div>' +
     '<input class="f-title" id="f-title" value="' + escapeHtml(art.title||'') + '">' +
-    '<div class="field-label">Podle postupu</div>' +
-    '<div class="field-hint">' + escapeHtml(AXES[0].hint) + '</div>' +
-    tagBoxHtml('postupTags', art.postupTags) +
-    '<div class="field-label">Podle manuálu</div>' +
-    '<div class="field-hint">' + escapeHtml(AXES[1].hint) + '</div>' +
-    tagBoxHtml('manualTags', art.manualTags) +
+    '<div class="field-label">Sekce</div>' +
+    '<div class="field-hint">Do které části znalostní báze článek patří – mění, jaké kategorie si dole vybereš.</div>' +
+    '<select class="f-select" id="f-section">' + SECTIONS.map(s=>'<option value="' + s.id + '"' + (s.id===sec ? ' selected' : '') + '>' + escapeHtml(s.label) + '</option>').join('') + '</select>' +
+    '<div id="sectionTagsArea">' + sectionTagsHtml(sec, art) + '</div>' +
     '<div class="field-label">Obsah</div>' +
     '<textarea class="f-content" id="f-content">' + escapeHtml(art.content||'') + '</textarea>' +
     '<div class="field-label">Obrázky</div>' +
@@ -538,6 +649,10 @@ function editFormHtml(art){
 
 function bindEditForm(art){
   if(!art.images) art.images = [];
+  const sectionSel = $('f-section');
+  sectionSel.onchange = ()=>{
+    $('sectionTagsArea').innerHTML = sectionTagsHtml(sectionSel.value, art);
+  };
   const imgInput = $('imgInput');
   if(imgInput){
     imgInput.addEventListener('change', async ()=>{
@@ -561,14 +676,18 @@ function bindEditForm(art){
   });
   $('saveBtn').onclick = ()=>{
     art.title = $('f-title').value.trim() || 'Bez názvu';
+    art.section = $('f-section').value;
     art.content = $('f-content').value;
     art.videoUrl = $('f-video').value.trim();
-    art.postupTags = Array.from(document.querySelectorAll('[data-tag="postupTags"]:checked')).map(el=>el.value);
-    art.manualTags = Array.from(document.querySelectorAll('[data-tag="manualTags"]:checked')).map(el=>el.value);
+    SECTION_AXES[art.section].forEach(axis=>{
+      art[axis.field] = Array.from(document.querySelectorAll('[data-tag="' + axis.field + '"]:checked')).map(el=>el.value);
+    });
     if(art.isNew){ delete art.isNew; articles.push(art); }
     const ok = saveArticles();
     if(ok){
       activeId = art.id;
+      sectionId = art.section;
+      axisId = currentAxes()[0].id;
       editing = false;
       videoOpen = false;
       render();
@@ -593,10 +712,14 @@ function roleEditHtml(role){
   return '<div class="field-label">Název role</div>' +
     '<input class="f-title" id="r-name" value="' + escapeHtml(role.label||'') + '">' +
     '<div class="field-hint">Nová role zatím nevidí žádnou kategorii – zaškrtni tady, co jí zpřístupníš.</div>' +
-    '<div class="field-label">Viditelné kategorie – Podle postupu</div>' +
+    '<div class="field-label">📋 Postupy – podle postupu</div>' +
     roleCatBoxHtml(POSTUP_CATS, role.allowedCats) +
-    '<div class="field-label">Viditelné kategorie – Podle manuálu</div>' +
+    '<div class="field-label">📋 Postupy – podle manuálu</div>' +
     roleCatBoxHtml(MANUAL_CATS, role.allowedCats) +
+    '<div class="field-label">🏢 Firemní wiki</div>' +
+    roleCatBoxHtml(WIKI_CATS, role.allowedCats) +
+    '<div class="field-label">🛟 Troubleshooting</div>' +
+    roleCatBoxHtml(TROUBLESHOOT_CATS, role.allowedCats) +
     '<div class="row"><button class="btn" id="saveRoleBtn">Uložit</button><button class="btn ghost" id="cancelRoleBtn">Zrušit</button></div>';
 }
 
@@ -624,7 +747,7 @@ function renderRolesMain(){
     }
   }
   let html = '<div class="art-title">Role</div>' +
-    '<div class="field-hint">Role určuje, které kategorie návodů čtenář v této roli uvidí. Nová role zatím nevidí nic.</div>' +
+    '<div class="field-hint">Role určuje, které kategorie návodů (napříč všemi sekcemi) čtenář v této roli uvidí. Nová role zatím nevidí nic.</div>' +
     '<div class="row"><input class="f-title" id="newRoleName" placeholder="Název nové role (např. Plac, Kuchyně, Vedoucí)" style="flex:1;font-size:14px;font-weight:400;font-family:inherit;"><button class="btn" id="addRoleBtn">Přidat roli</button></div>';
   if(roles.length){
     html += roles.map(r=>
@@ -665,6 +788,7 @@ function renderRolesMain(){
 }
 
 function render(){
+  renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
   if(view === 'roles') renderRolesMain();
@@ -685,7 +809,8 @@ $('addBtn').onclick = ()=>{
   editing = true;
   videoOpen = false;
   view = 'article';
-  const blank = {id:activeId, isNew:true, title:'', content:'', postupTags:[], manualTags:[], images:[], videoUrl:''};
+  const blank = {id:activeId, isNew:true, section:sectionId, title:'', content:'', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:[], images:[], videoUrl:''};
+  renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
   $('main').innerHTML = editFormHtml(blank);
@@ -715,7 +840,13 @@ $('importFile').addEventListener('change', ()=>{
       const newRoles = Array.isArray(parsed) ? [] : (parsed.roles || []);
       if(!Array.isArray(newArticles)) throw new Error('neplatný formát');
       articles = newArticles;
-      articles.forEach(a=>{ if(!a.images) a.images = []; if(a.videoUrl == null) a.videoUrl = ''; });
+      articles.forEach(a=>{
+        if(!a.images) a.images = [];
+        if(a.videoUrl == null) a.videoUrl = '';
+        if(!a.section) a.section = 'sop';
+        if(!a.wikiTags) a.wikiTags = [];
+        if(!a.troubleshootTags) a.troubleshootTags = [];
+      });
       roles = newRoles;
       saveArticles();
       saveRoles();
