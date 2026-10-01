@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.40 -->
+<!-- v2.41 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -534,7 +534,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.40';
+const APP_VERSION = 'v2.41';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1329,7 +1329,12 @@ function renderCatList(){
   }
   $('catList').innerHTML = html || '<div class="status">' + (isEditor ? 'V téhle sekci zatím nejsou žádné kategorie.' : 'Pro tvoji roli zatím nejsou povolené žádné kategorie v téhle sekci.') + '</div>';
   $('catList').querySelectorAll('[data-open]').forEach(el=>{
-    el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); scrollToMainOnMobile(); };
+    el.onclick = ()=>{
+      if(!canLeaveEdit()) return;
+      const g = el.closest('[data-catgroup]');
+      navCatId = g ? g.dataset.catgroup : null;
+      activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); scrollToMainOnMobile();
+    };
   });
   $('catList').querySelectorAll('[data-cat-toggle]').forEach(el=>{
     el.onclick = ()=>{
@@ -1549,27 +1554,37 @@ function bindLightbox(body){
 }
 
 /* ---------- předchozí / další článek v kategorii ---------- */
+let navCatId = null;   // kategorie, ze které čtenář článek otevřel (článek může být ve více kategoriích)
 function categorySiblings(art){
   const isEditor = MODE === 'editor';
   const role = isEditor ? null : currentRole();
   const axes = SECTION_AXES[art.section] || [];
   const axisOrder = axes.slice().sort((x, y)=> (x.id === axisId ? -1 : 0) - (y.id === axisId ? -1 : 0));
+  const vis = a => a.section === art.section && (isEditor || (role && articleVisibleToRole(a, role)));
   for(const ax of axisOrder){
-    const cat = ax.cats.find(c=>(art[ax.field] || []).indexOf(c.id) !== -1);
-    if(!cat) continue;
-    const list = articles.filter(a=>a.section === art.section && (a[ax.field] || []).indexOf(cat.id) !== -1 &&
-      (isEditor || (role && articleVisibleToRole(a, role))));
-    return {cat: cat, list: list, idx: list.findIndex(a=>a.id === art.id)};
+    if(!ax.cats.some(c=>(art[ax.field] || []).indexOf(c.id) !== -1)) continue;
+    // celé pořadí sekce: kategorie za sebou, v každé její články
+    const seq = [];
+    ax.cats.forEach(c=>{
+      if(!isEditor && role && role.allowedCats.indexOf(c.id) === -1) return;
+      articles.filter(a=>vis(a) && (a[ax.field] || []).indexOf(c.id) !== -1).forEach(a=>seq.push({a: a, cat: c}));
+    });
+    let i = seq.findIndex(p=>p.a.id === art.id && p.cat.id === navCatId);
+    if(i === -1) i = seq.findIndex(p=>p.a.id === art.id);
+    if(i === -1) continue;
+    const cat = seq[i].cat;
+    const list = seq.filter(p=>p.cat.id === cat.id).map(p=>p.a);
+    return {cat: cat, list: list, idx: list.findIndex(a=>a.id === art.id), prev: seq[i - 1] || null, next: seq[i + 1] || null};
   }
   return null;
 }
 function prevNextHtml(art){
   const sib = categorySiblings(art);
-  if(!sib || sib.idx === -1 || sib.list.length < 2) return '';
-  const prev = sib.list[sib.idx - 1], next = sib.list[sib.idx + 1];
+  if(!sib || (!sib.prev && !sib.next)) return '';
+  const lbl = (p, dir)=> dir + (p.cat.id !== sib.cat.id ? ' · ' + escapeHtml(p.cat.label) : '');
   return '<div class="pn-nav">' +
-    (prev ? '<button class="pn-btn" data-pn="' + prev.id + '"><span class="pn-dir">← Předchozí</span><span class="pn-title">' + escapeHtml(prev.title) + '</span></button>' : '') +
-    (next ? '<button class="pn-btn next" data-pn="' + next.id + '"><span class="pn-dir">Další →</span><span class="pn-title">' + escapeHtml(next.title) + '</span></button>' : '') +
+    (sib.prev ? '<button class="pn-btn" data-pn="' + sib.prev.a.id + '" data-pn-cat="' + sib.prev.cat.id + '"><span class="pn-dir">' + lbl(sib.prev, '← Předchozí') + '</span><span class="pn-title">' + escapeHtml(sib.prev.a.title) + '</span></button>' : '') +
+    (sib.next ? '<button class="pn-btn next" data-pn="' + sib.next.a.id + '" data-pn-cat="' + sib.next.cat.id + '"><span class="pn-dir">' + lbl(sib.next, 'Další →') + '</span><span class="pn-title">' + escapeHtml(sib.next.a.title) + '</span></button>' : '') +
     '</div><div class="pn-pos">' + escapeHtml(sib.cat.label) + ' · ' + (sib.idx + 1) + ' z ' + sib.list.length + '</div>';
 }
 function openArticle(id){
@@ -1956,7 +1971,7 @@ function renderMain(){
   $('mBack').onclick = ()=>{ document.body.classList.add('m-panel'); renderCatList(); window.scrollTo(0, 0); };
   if(artBody) processBranchBlocks(artBody, isEditor);
   if(artBody){ bindInlineVideos(artBody); buildToc(artBody); bindLightbox(artBody); if(art.checklist) buildChecklist(art, artBody); }
-  $('main').querySelectorAll('[data-pn]').forEach(b=>{ b.onclick = ()=>openArticle(b.dataset.pn); });
+  $('main').querySelectorAll('[data-pn]').forEach(b=>{ b.onclick = ()=>{ navCatId = b.dataset.pnCat; openArticle(b.dataset.pn); }; });
   if(markSeen(art)) renderCatList();
   document.querySelectorAll('.related-box [data-open]').forEach(el=>{
     el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; render(); scrollToMainOnMobile(); };
