@@ -1,4 +1,3 @@
-```javascript
 const INITIAL_DATA = {
   postupCats: [
     {id:'vstupni_logistika', label:'Vstupní logistika'},
