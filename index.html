@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.32 -->
+<!-- v2.33 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -247,7 +247,15 @@
   .tile-edit{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:6px;}
   .tile-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .tile-in{flex:1 1 160px;min-width:0;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--cocoa);}
-  .tile-ico{width:48px;text-align:center;font-size:18px;padding:4px;border:1px solid var(--line);border-radius:7px;background:#fff;}
+  .tile-ico{width:48px;height:34px;text-align:center;font-size:18px;padding:2px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;}
+  .tile-ico:hover{border-color:var(--caramel);}
+  .ico-pick{border-top:1px dashed var(--line);padding-top:8px;}
+  .ico-cats{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+  .ico-cat{border:1px solid var(--line);background:#fff;color:var(--cocoa-soft);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer;}
+  .ico-cat.on{background:var(--caramel);border-color:var(--caramel);color:#fff;}
+  .ico-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:4px;}
+  .ico-opt{border:1px solid transparent;background:#fff;border-radius:8px;font-size:22px;height:40px;cursor:pointer;padding:0;}
+  .ico-opt:hover{border-color:var(--caramel);background:var(--line-soft);}
   .tile-tools{display:flex;gap:2px;}
   .tile-tool{border:none;background:var(--line-soft);color:var(--cocoa-soft);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
   .tile-add{border:none;background:none;color:var(--caramel-deep);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:8px 0;}
@@ -434,7 +442,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.32';
+const APP_VERSION = 'v2.33';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1469,6 +1477,26 @@ let HOME = JSON.parse(JSON.stringify((typeof _initData !== 'undefined' && _initD
 function saveHome(){ if(saveJSON('kb-home', HOME, 'Uložení úvodní stránky selhalo.')) markUnpublished(); }
 /* ---------- úprava úvodní stránky (editor) ---------- */
 let homeWork = null;
+let icoPick = -1, icoCat = 0;
+const ICON_CATS = [
+  {n:'Káva a nápoje', i:'☕ 🍵 🥛 🍼 🍹 🍸 🍷 🍺 🍻 🥂 🍾 🍶 🧃 🧉 🧊 🧋'},
+  {n:'Sladké', i:'🍰 🎂 🧁 🍩 🍪 🍫 🍬 🍭 🍮 🍯 🍦 🍧 🍨 🥧 🥐 🥨 🧇 🥞 🍞 🥖'},
+  {n:'Ovoce a jídlo', i:'🍓 🍒 🍎 🍏 🍐 🍊 🍋 🍌 🍉 🍇 🍑 🍍 🥝 🥥 🥜 🌰 🥚 🧀 🥪 🍕 🥗 🍽️ 🥄 🍴 🔪'},
+  {n:'Provoz', i:'🏪 🏠 🚪 🔑 🔒 🔓 💡 🔌 🧹 🧽 🧼 🧺 🧴 🗑️ 🚿 🧯 🛠️ 🔧 🔨 ⚙️ 🌡️ ❄️ 🔥 💧 📦 🛒 🚚 🧾 📋 🏷️'},
+  {n:'Peníze a kasa', i:'💳 💰 💵 💶 🧮 🧾 🎟️ 🎫 🎁 🛍️ 📈 📉 📊 🏦'},
+  {n:'Čas a den', i:'🌅 🌄 ☀️ 🌤️ 🌙 ⭐ 🌟 ⏰ ⏱️ ⌛ 🕐 📅 📆 🗓️'},
+  {n:'Lidé a komunikace', i:'👋 🙂 😊 👍 👌 🤝 👥 👤 👩‍🍳 🧑‍🍳 👨‍🍳 💬 📞 📱 ✉️ 📧 📣 🔔 🗣️'},
+  {n:'Dokumenty a učení', i:'📖 📚 📘 📝 ✏️ 🖊️ 📌 📍 📎 🗂️ 📁 📄 🎓 🧠 💻 🖨️ 📷 🎥 ▶️ 🔍'},
+  {n:'Symboly', i:'❤️ ✅ ✔️ ❌ ⚠️ ❗ ❓ ℹ️ 🆘 🆕 🔝 ⬆️ ⬇️ ➡️ ⬅️ 🔄 ♻️ 🚫 ⛔ 💯 ⭕ 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪'},
+  {n:'Ostatní', i:'🎉 🎈 🎀 🌸 🌷 🌹 🌻 🌿 🍀 🎄 🐣 🎃 💐 🏆 🥇 🎯 🚀 ✨ 💎 👑'}
+];
+function icoPickerHtml(){
+  const c = ICON_CATS[icoCat];
+  return '<div class="ico-pick">' +
+    '<div class="ico-cats">' + ICON_CATS.map((k, j)=>'<button class="ico-cat' + (j === icoCat ? ' on' : '') + '" data-ico-cat="' + j + '">' + escapeHtml(k.n) + '</button>').join('') + '</div>' +
+    '<div class="ico-grid">' + c.i.split(' ').map(e=>'<button class="ico-opt" data-ico="' + escapeHtml(e) + '">' + e + '</button>').join('') + '</div>' +
+  '</div>';
+}
 function tileTargetOptions(t){
   const cur = t.section ? 'sec:' + t.section : 'art:' + (t.id || '');
   let h = '<optgroup label="Celá sekce (první článek)">' + SECTIONS.map(sx=>
@@ -1482,7 +1510,7 @@ function tileTargetOptions(t){
   return h;
 }
 function renderHomeEdit(msg){
-  if(!homeWork) homeWork = JSON.parse(JSON.stringify(HOME));
+  if(!homeWork){ homeWork = JSON.parse(JSON.stringify(HOME)); icoPick = -1; }
   const W = homeWork;
   let html = '<div class="art-title">Úvodní stránka</div>' +
     '<div class="field-hint">Nadpis, podtitulek a dlaždice s hlavními tématy. Čtenář vidí jen dlaždice, jejichž článek (nebo sekci) má povolený ve své roli. Seznam nových a upravených článků pod dlaždicemi se tvoří automaticky.</div>' +
@@ -1491,16 +1519,16 @@ function renderHomeEdit(msg){
     '<div class="field-label">Dlaždice</div>' +
     W.tiles.map((t, i)=>
       '<div class="tile-edit"><div class="tile-row">' +
-        '<input class="tile-ico" data-t="' + i + ',ico" value="' + escapeHtml(t.ico || '') + '" title="Ikona (emoji)" maxlength="4">' +
+        '<button class="tile-ico" data-ico-open="' + i + '" title="Vybrat ikonu">' + escapeHtml(t.ico || '＋') + '</button>' +
         '<input class="tile-in" data-t="' + i + ',lbl" value="' + escapeHtml(t.lbl || '') + '" placeholder="Název">' +
         '<span class="tile-tools"><button class="tile-tool" data-t-up="' + i + '" title="Nahoru">↑</button><button class="tile-tool" data-t-down="' + i + '" title="Dolů">↓</button><button class="tile-tool" data-t-del="' + i + '" title="Smazat">✕</button></span>' +
       '</div><div class="tile-row">' +
         '<input class="tile-in" data-t="' + i + ',dsc" value="' + escapeHtml(t.dsc || '') + '" placeholder="Krátký popis">' +
         '<select class="tile-in" data-t-target="' + i + '" title="Kam dlaždice vede">' + tileTargetOptions(t) + '</select>' +
-      '</div></div>'
+      '</div>' + (icoPick === i ? icoPickerHtml() : '') + '</div>'
     ).join('') +
     '<button class="tile-add" id="tAdd">+ Přidat dlaždici</button>' +
-    '<div class="field-hint" style="margin-top:8px">Tip na ikonu: použij běžné emoji (☕ 🍰 🍦 🎂 💳 🧾 🧹 🆘 📞 📦). Úplně nová emoji se na starších počítačích a telefonech zobrazí jako prázdný obdélník.</div>' +
+    '<div class="field-hint" style="margin-top:8px">Ikonu změníš kliknutím na ni – otevře se nabídka podle kategorií.</div>' +
     '<div class="row"><button class="btn" id="hSave">Uložit</button><button class="btn ghost" id="hCancel">Zrušit</button><button class="btn ghost" id="hReset">Obnovit výchozí</button></div>' +
     '<div class="status" id="hMsg">' + (msg || '') + '</div>';
   $('main').innerHTML = html;
@@ -1515,13 +1543,22 @@ function renderHomeEdit(msg){
       if(v[0] === 'sec') t.section = v[1]; else t.id = v[1];
     };
   });
-  const swap = (i, j)=>{ if(j < 0 || j >= W.tiles.length) return; const x = W.tiles[i]; W.tiles[i] = W.tiles[j]; W.tiles[j] = x; renderHomeEdit(); };
+  $('main').querySelectorAll('[data-ico-open]').forEach(b=>{
+    b.onclick = ()=>{ const i = +b.dataset.icoOpen; icoPick = (icoPick === i ? -1 : i); renderHomeEdit(); };
+  });
+  $('main').querySelectorAll('[data-ico-cat]').forEach(b=>{
+    b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderHomeEdit(); };
+  });
+  $('main').querySelectorAll('[data-ico]').forEach(b=>{
+    b.onclick = ()=>{ W.tiles[icoPick].ico = b.dataset.ico; icoPick = -1; renderHomeEdit(); };
+  });
+  const swap = (i, j)=>{ if(j < 0 || j >= W.tiles.length) return; icoPick = -1; const x = W.tiles[i]; W.tiles[i] = W.tiles[j]; W.tiles[j] = x; renderHomeEdit(); };
   $('main').querySelectorAll('[data-t-up]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tUp, +b.dataset.tUp - 1); });
   $('main').querySelectorAll('[data-t-down]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tDown, +b.dataset.tDown + 1); });
   $('main').querySelectorAll('[data-t-del]').forEach(b=>{
     b.onclick = ()=>{
       if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
-      W.tiles.splice(+b.dataset.tDel, 1); renderHomeEdit();
+      W.tiles.splice(+b.dataset.tDel, 1); icoPick = -1; renderHomeEdit();
     };
   });
   $('tAdd').onclick = ()=>{
@@ -2329,7 +2366,7 @@ function renderHelpMain(){
       '</ul>' +
       '<h3>Role</h3><ul>' +
       '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
-      '<li>Na úvodní stránce odkazem <b>✎ Upravit úvodní stránku</b> změníš nadpis, podtitulek a dlaždice (ikona, název, popis, kam vedou, pořadí).</li>' +
+      '<li>Na úvodní stránce odkazem <b>✎ Upravit úvodní stránku</b> změníš nadpis, podtitulek a dlaždice (ikona – vyber kliknutím, název, popis, kam vedou, pořadí).</li>' +
       '<li><b>🏷️ QR štítky</b> (dole pod zálohami) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
       '<li>Novou sekci přidáš odkazem <b>+ sekce</b> pod sekcemi. Každou sekci přejmenuješ ✎ nebo smažeš ✕ (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
       '<li>Přepínač Editor/Čtenář vidí jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
