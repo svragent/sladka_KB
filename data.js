@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-01T13:12:34.000Z",
+ "publishedAt": "2026-10-01T14:58:00.127Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
@@ -78,6 +78,10 @@ const INITIAL_DATA = {
   {
    "id": "jak_se_to_vari",
    "label": "Jak se to vaří (limo/svařák/čoko)"
+  },
+  {
+   "id": "a17908666195430yuf7",
+   "label": "TEST"
   }
  ],
  "wikiCats": [
@@ -154,6 +158,19 @@ const INITIAL_DATA = {
   }
  ],
  "seedAll": [
+  {
+   "id": "a1790866626938swfjm",
+   "section": "sop",
+   "title": "TESSSS",
+   "body": "SDSSDDSD<div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div>SDSDSD</div></div><div>DCXC</div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div><br></div>",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "videoUrl": "https://www.youtube.com/watch?v=M7Eup3ZeHlI&t=2s",
+   "related": [],
+   "updatedAt": "2026-10-01"
+  },
   {
    "id": "uvod",
    "title": "Úvod – co je Sladká dílna",
