@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.26 -->
+<!-- v2.27 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -53,6 +53,25 @@
     color:var(--cocoa-soft);font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;
   }
   .section-btn.active{background:var(--cocoa);color:#fff;border-color:var(--cocoa);}
+  .sec-wrap{display:flex;gap:4px;align-items:stretch;}
+  .sec-wrap .section-btn{flex:1;min-width:0;}
+  .sec-tool{
+    border:none;background:transparent;color:var(--cocoa-soft);cursor:pointer;font-size:12px;
+    padding:0 5px;border-radius:6px;opacity:0;transition:opacity .15s;
+  }
+  .sec-wrap:hover .sec-tool, .sec-wrap.active .sec-tool, .sec-tool:focus-visible{opacity:1;}
+  .sec-tool:hover{background:var(--line-soft);color:var(--cocoa);}
+  .sec-tool.armed{opacity:1;color:#A63446;font-weight:700;}
+  .sec-add{
+    align-self:flex-start;border:none;background:none;padding:2px 2px;font:inherit;font-size:11.5px;
+    color:var(--cocoa-soft);cursor:pointer;opacity:.75;
+  }
+  .sec-add:hover{opacity:1;color:var(--caramel-deep);}
+  .sec-form{display:flex;gap:4px;}
+  .sec-form input{flex:1;min-width:0;font-size:12.5px;padding:6px 8px;border:1px solid var(--caramel);border-radius:8px;font-family:inherit;background:var(--paper);color:var(--cocoa);}
+  .sec-form button{border:none;border-radius:8px;width:30px;cursor:pointer;font-size:13px;}
+  .sec-form .ok{background:var(--caramel);color:#fff;}
+  .sec-form .no{background:var(--line-soft);color:var(--cocoa-soft);}
   .axis-switch{display:flex;gap:6px;margin-bottom:14px;}
   .axis-btn{
     flex:1;padding:7px 4px;border-radius:8px;border:1px solid var(--line);background:var(--paper);
@@ -316,7 +335,6 @@
         <select class="f-select" id="roleSelect"></select>
       </div>
       <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
-      <button class="plain-btn" id="qrBtn" style="display:none;">🏷️ QR štítky</button>
 
       <input class="search-box" id="searchInput" type="text" placeholder="🔍 Hledat ve všech článcích…">
       <div class="section-switch" id="sectionSwitch"></div>
@@ -328,6 +346,9 @@
         <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
         <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+      <div class="backup-row" id="qrRow" style="display:none;margin-top:6px;">
+        <button class="backup-btn" id="qrBtn">🏷️ QR štítky k vytištění</button>
       </div>
       <div class="status" id="status"></div>
     </div>
@@ -343,13 +364,14 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.26';
+const APP_VERSION = 'v2.27';
 
-const SECTIONS = [
+const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
   {id:'wiki', label:'🏢 Firemní wiki'},
   {id:'troubleshooting', label:'🛟 Troubleshooting'}
 ];
+const SECTIONS = BASE_SECTIONS.slice();   // doplní se o vlastní sekce (rebuildSections)
 
 // Ochrana pro případ, že soubor data.js chybí
 const _initData = typeof INITIAL_DATA !== 'undefined' ? INITIAL_DATA : { postupCats:[], manualCats:[], wikiCats:[], troubleshootCats:[], seedAll:[] };
@@ -359,6 +381,8 @@ let MANUAL_CATS = _initData.manualCats.slice();
 let WIKI_CATS = _initData.wikiCats.slice();
 let TROUBLESHOOT_CATS = _initData.troubleshootCats.slice();
 const SEED_ALL = _initData.seedAll.slice();
+// Vlastní sekce vytvořené editorem: [{id, label, cats:[{id,label}]}]; články v nich mají kategorie v poli customTags
+let CUSTOM_SECTIONS = JSON.parse(JSON.stringify(_initData.customSections || []));
 
 // Osy kategorií: field = jméno pole na článku, storageKey = kam se seznam kategorií ukládá.
 const EDITABLE_AXES = {
@@ -381,6 +405,23 @@ const SECTION_AXES = {
     {id:'troubleshooting', label:'Troubleshooting', field:'troubleshootTags', cats:TROUBLESHOOT_CATS}
   ]
 };
+
+// Promítne vlastní sekce do přepínače sekcí a do os kategorií
+function rebuildSections(){
+  SECTIONS.length = 0;
+  BASE_SECTIONS.forEach(x=>SECTIONS.push(x));
+  Object.keys(SECTION_AXES).forEach(k=>{ if(!BASE_SECTIONS.some(b=>b.id === k)) delete SECTION_AXES[k]; });
+  Object.keys(EDITABLE_AXES).forEach(k=>{ if(EDITABLE_AXES[k].custom) delete EDITABLE_AXES[k]; });
+  CUSTOM_SECTIONS.forEach(cs=>{
+    SECTIONS.push({id:cs.id, label:cs.label, custom:true});
+    SECTION_AXES[cs.id] = [{id:cs.id, label:cs.label, field:'customTags', cats:cs.cats}];
+    EDITABLE_AXES[cs.id] = {cats:cs.cats, field:'customTags', custom:true};
+  });
+}
+function saveCustomSections(){
+  if(saveJSON('kb-custom-sections', CUSTOM_SECTIONS, 'Uložení sekcí selhalo.')) markUnpublished();
+}
+rebuildSections();
 
 let articles = [];
 let roles = [];          // [{id, label, allowedCats:[categoryId,...]}]
@@ -434,7 +475,7 @@ function currentAxes(){ return SECTION_AXES[sectionId]; }
 function currentAxis(){ return currentAxes().find(a=>a.id===axisId) || currentAxes()[0]; }
 function currentRole(){ return roles.find(r=>r.id===readerRoleId) || null; }
 function articleAllTags(art){
-  return (art.postupTags||[]).concat(art.manualTags||[]).concat(art.wikiTags||[]).concat(art.troubleshootTags||[]);
+  return (art.postupTags||[]).concat(art.manualTags||[]).concat(art.wikiTags||[]).concat(art.troubleshootTags||[]).concat(art.customTags||[]);
 }
 function articleVisibleToRole(art, role){
   if(!role) return false;
@@ -566,6 +607,7 @@ async function publishToGitHub(){
       manualCats: MANUAL_CATS,
       wikiCats: WIKI_CATS,
       troubleshootCats: TROUBLESHOOT_CATS,
+      customSections: CUSTOM_SECTIONS,
       roles: roles,
       seedAll: articles.map(a=>{
         const c = Object.assign({}, a);
@@ -610,8 +652,11 @@ async function publishToGitHub(){
 
 /* ---------- kategorie ---------- */
 function loadEditableCats(){
+  const cs = loadJSON('kb-custom-sections');
+  if(Array.isArray(cs)){ CUSTOM_SECTIONS = cs; rebuildSections(); }
   Object.keys(EDITABLE_AXES).forEach(key=>{
     const ax = EDITABLE_AXES[key];
+    if(ax.custom) return;
     const loaded = loadJSON(ax.storageKey);
     if(loaded && Array.isArray(loaded) && loaded.length){
       ax.cats.length = 0;
@@ -622,6 +667,7 @@ function loadEditableCats(){
   });
 }
 function saveEditableCats(key){
+  if(EDITABLE_AXES[key] && EDITABLE_AXES[key].custom){ saveCustomSections(); return; }
   if(saveJSON(EDITABLE_AXES[key].storageKey, EDITABLE_AXES[key].cats, 'Uložení kategorií selhalo.')) markUnpublished();
 }
 
@@ -736,7 +782,9 @@ function init(){
     if(!a.section) a.section = 'sop';
     if(!a.wikiTags) a.wikiTags = [];
     if(!a.troubleshootTags) a.troubleshootTags = [];
+    if(!a.customTags) a.customTags = [];
     if(!a.related) a.related = [];
+    if(!SECTION_AXES[a.section]) a.section = 'sop';
   });
   
   const prostory = articles.find(a=>a.id === 'prostory');
@@ -758,6 +806,7 @@ function init(){
     saveArticles();
     saveRoles();
     Object.keys(EDITABLE_AXES).forEach(key=>saveEditableCats(key));
+    saveCustomSections();
     setUnpublishedFlag('0');
     saveJSON('kb-base-published-at', publishedAt);
   }
@@ -794,7 +843,7 @@ function applyMode(){
   $('backupRow').style.display = isEditor ? 'flex' : 'none';
   $('publishBtn').style.display = isEditor ? 'block' : 'none';
   $('rolesBtn').style.display = isEditor ? 'block' : 'none';
-  $('qrBtn').style.display = isEditor ? 'block' : 'none';
+  $('qrRow').style.display = isEditor ? 'flex' : 'none';
   $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
   if(!isEditor) renderRoleSelect();
   updatePublishStatus();
@@ -811,10 +860,22 @@ function renderRoleSelect(){
   };
 }
 
+let secEdit = null;   // null | 'new' | id sekce, která se přejmenovává
+function secFormHtml(value){
+  return '<div class="sec-form"><input id="secInput" maxlength="40" placeholder="Ikona a název, např. 🎂 Dorty na míru" value="' + escapeHtml(value || '') + '">' +
+    '<button class="ok" id="secOk" title="Uložit">✓</button><button class="no" id="secNo" title="Zrušit">✕</button></div>';
+}
 function renderSectionSwitch(){
-  $('sectionSwitch').innerHTML = SECTIONS.map(s=>
-    '<button class="section-btn' + (s.id===sectionId ? ' active' : '') + '" data-section="' + s.id + '">' + escapeHtml(s.label) + '</button>'
-  ).join('');
+  const isEditor = MODE === 'editor';
+  $('sectionSwitch').innerHTML = SECTIONS.map(s=>{
+    if(isEditor && secEdit === s.id) return secFormHtml(s.label);
+    const btn = '<button class="section-btn' + (s.id===sectionId ? ' active' : '') + '" data-section="' + s.id + '">' + escapeHtml(s.label) + '</button>';
+    if(!(isEditor && s.custom)) return btn;
+    return '<div class="sec-wrap' + (s.id===sectionId ? ' active' : '') + '">' + btn +
+      '<button class="sec-tool" data-sec-rename="' + s.id + '" title="Přejmenovat sekci">✎</button>' +
+      '<button class="sec-tool" data-sec-del="' + s.id + '" title="Smazat sekci">✕</button></div>';
+  }).join('') + (isEditor ? (secEdit === 'new' ? secFormHtml('') : '<button class="sec-add" id="secAddBtn">+ sekce</button>') : '');
+  if(isEditor) bindSectionTools();
   $('sectionSwitch').querySelectorAll('[data-section]').forEach(b=>{
     b.onclick = ()=>{
       if(!canLeaveEdit()) return;
@@ -823,6 +884,56 @@ function renderSectionSwitch(){
       activeId = null;
       editing = false;
       view = 'article';
+      render();
+    };
+  });
+}
+
+function bindSectionTools(){
+  const add = $('secAddBtn');
+  if(add) add.onclick = ()=>{ secEdit = 'new'; renderSectionSwitch(); $('secInput').focus(); };
+  const input = $('secInput');
+  if(input){
+    const finish = ok=>{
+      const name = input.value.trim();
+      if(ok && name){
+        if(secEdit === 'new'){
+          const id = 'sec_' + Date.now().toString(36);
+          CUSTOM_SECTIONS.push({id: id, label: name, cats: []});
+          rebuildSections();
+          saveCustomSections();
+          sectionId = id; axisId = id; activeId = null; view = 'article';
+        } else {
+          const cs = CUSTOM_SECTIONS.find(x=>x.id === secEdit);
+          if(cs){ cs.label = name; rebuildSections(); saveCustomSections(); }
+        }
+      }
+      secEdit = null;
+      render();
+    };
+    $('secOk').onclick = ()=>finish(true);
+    $('secNo').onclick = ()=>finish(false);
+    input.onkeydown = e=>{ if(e.key === 'Enter') finish(true); if(e.key === 'Escape') finish(false); };
+  }
+  $('sectionSwitch').querySelectorAll('[data-sec-rename]').forEach(b=>{
+    b.onclick = ()=>{ secEdit = b.dataset.secRename; renderSectionSwitch(); const i = $('secInput'); i.focus(); i.select(); };
+  });
+  $('sectionSwitch').querySelectorAll('[data-sec-del]').forEach(b=>{
+    b.onclick = ()=>{
+      const id = b.dataset.secDel;
+      const count = articles.filter(a=>a.section === id).length;
+      if(count){
+        $('status').textContent = 'Sekci nejde smazat, protože v ní jsou články (' + count + '). Nejdřív je přesuň do jiné sekce nebo smaž.';
+        return;
+      }
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.classList.add('armed'); b.textContent = 'Smazat?'; return; }
+      const cs = CUSTOM_SECTIONS.find(x=>x.id === id);
+      const catIds = cs ? cs.cats.map(c=>c.id) : [];
+      CUSTOM_SECTIONS = CUSTOM_SECTIONS.filter(x=>x.id !== id);
+      rebuildSections();
+      saveCustomSections();
+      if(catIds.length){ roles.forEach(r=>{ r.allowedCats = r.allowedCats.filter(t=>catIds.indexOf(t) === -1); }); saveRoles(); }
+      if(sectionId === id){ sectionId = 'sop'; axisId = currentAxes()[0].id; activeId = null; }
       render();
     };
   });
@@ -1291,6 +1402,7 @@ function renderMain(){
     .concat(MANUAL_CATS.filter(c=>(art.manualTags||[]).indexOf(c.id)!==-1))
     .concat(WIKI_CATS.filter(c=>(art.wikiTags||[]).indexOf(c.id)!==-1))
     .concat(TROUBLESHOOT_CATS.filter(c=>(art.troubleshootTags||[]).indexOf(c.id)!==-1))
+    .concat(((CUSTOM_SECTIONS.find(x=>x.id === art.section) || {}).cats || []).filter(c=>(art.customTags||[]).indexOf(c.id)!==-1))
     .map(c=>'<span class="tag-chip">' + escapeHtml(c.label) + '</span>').join('');
   const role = isEditor ? null : currentRole();
   const relatedIds = (art.related||[]).slice();
@@ -1619,6 +1731,8 @@ function roleEditHtml(role){
     roleCatBoxHtml(WIKI_CATS, role.allowedCats) +
     '<div class="field-label">🛟 Troubleshooting</div>' +
     roleCatBoxHtml(TROUBLESHOOT_CATS, role.allowedCats) +
+    CUSTOM_SECTIONS.map(cs=>'<div class="field-label">' + escapeHtml(cs.label) + '</div>' +
+      (cs.cats.length ? roleCatBoxHtml(cs.cats, role.allowedCats) : '<div class="field-hint">Sekce zatím nemá kategorie.</div>')).join('') +
     '<div class="row"><button class="btn" id="saveRoleBtn">Uložit</button><button class="btn ghost" id="cancelRoleBtn">Zrušit</button></div>';
 }
 
@@ -1698,7 +1812,7 @@ function articleSnapshot(a){
     title: a.title || '',
     body: a.body != null ? a.body : legacyContentToHtml(a),
     section: a.section || 'sop',
-    tags: [].concat(a.postupTags || [], a.manualTags || [], a.wikiTags || [], a.troubleshootTags || []).join(','),
+    tags: [].concat(a.postupTags || [], a.manualTags || [], a.wikiTags || [], a.troubleshootTags || [], a.customTags || []).join(','),
     videoUrl: a.videoUrl || '',
     related: (a.related || []).join(',')
   };
@@ -1840,7 +1954,8 @@ function renderHelpMain(){
       '</ul>' +
       '<h3>Role</h3><ul>' +
       '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
-      '<li><b>🏷️ QR štítky</b> – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
+      '<li><b>🏷️ QR štítky</b> (dole pod zálohami) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
+      '<li>Novou sekci přidáš odkazem <b>+ sekce</b> pod sekcemi. Vlastní sekci přejmenuješ ✎ nebo smažeš ✕ (jen prázdnou). Kdo ji uvidí, nastavíš v rolích.</li>' +
       '<li>Přepínač Editor/Čtenář vidí jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
       '</ul>' +
       '<h3>Uložit a publikovat</h3><ul>' +
@@ -1947,7 +2062,7 @@ $('addBtn').onclick = ()=>{
   editing = true;
   videoOpen = false;
   view = 'article';
-  const blank = {id:activeId, isNew:true, section:sectionId, title:'', body:'', content:'', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:[], images:[], videoUrl:'', related:[]};
+  const blank = {id:activeId, isNew:true, section:sectionId, title:'', body:'', content:'', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:[], customTags:[], images:[], videoUrl:'', related:[]};
   renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
@@ -1964,7 +2079,8 @@ $('exportBtn').onclick = ()=>{
     postupCats: POSTUP_CATS,
     manualCats: MANUAL_CATS,
     wikiCats: WIKI_CATS,
-    troubleshootCats: TROUBLESHOOT_CATS
+    troubleshootCats: TROUBLESHOOT_CATS,
+    customSections: CUSTOM_SECTIONS
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1996,8 +2112,16 @@ $('importFile').addEventListener('change', ()=>{
         if(!a.troubleshootTags) a.troubleshootTags = [];
         if(!a.related) a.related = [];
         if(a.body == null) a.body = legacyContentToHtml(a);
+        if(!a.customTags) a.customTags = [];
       });
       roles = newRoles;
+      if(!Array.isArray(parsed) && Array.isArray(parsed.customSections)){
+        CUSTOM_SECTIONS = parsed.customSections;
+        rebuildSections();
+        saveCustomSections();
+      }
+      articles.forEach(a=>{ if(!SECTION_AXES[a.section]) a.section = 'sop'; });
+      sectionId = 'sop'; axisId = currentAxes()[0].id;
       if(!Array.isArray(parsed) && Array.isArray(parsed.postupCats) && parsed.postupCats.length){
         POSTUP_CATS.length = 0;
         parsed.postupCats.forEach(c=>POSTUP_CATS.push(c));
