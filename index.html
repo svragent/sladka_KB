@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
-<!-- offline verze – data se ukládají jen v tomto prohlížeči (localStorage) -->
-<!-- v2.15 -->
+<!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
+<!-- v2.16 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -207,6 +207,7 @@
       <div class="axis-switch" id="axisSwitch"></div>
       <div id="catList"></div>
       <button class="add-btn" id="addBtn" style="display:none">+ Nový článek</button>
+      <button class="plain-btn" id="publishBtn" style="display:none;margin-top:12px;">☁ Publikovat na web</button>
       <div class="backup-row" id="backupRow">
         <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
         <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
@@ -223,10 +224,10 @@
 </div>
 
 <!-- NAČTENÍ DAT ZE SOUBORU data.js -->
-<script src="data.js"></script>
+<script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.15';
+const APP_VERSION = 'v2.16';
 
 const SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -320,9 +321,106 @@ function saveJSON(key, val, errMsg){
   catch(e){ if(errMsg) $('status').textContent = errMsg; return false; }
 }
 function loadArticles(){ return loadJSON('kb-articles'); }
-function saveArticles(){ return saveJSON('kb-articles', articles, 'Uložení selhalo (localStorage plný nebo nedostupný). Zmenši obrázky nebo jich uber a zkus to znovu.'); }
+function saveArticles(){
+  const ok = saveJSON('kb-articles', articles, 'Uložení selhalo (localStorage plný nebo nedostupný). Zmenši obrázky nebo jich uber a zkus to znovu.');
+  if(ok) markUnpublished();
+  return ok;
+}
 function loadRoles(){ return loadJSON('kb-roles') || []; }
-function saveRoles(){ return saveJSON('kb-roles', roles, 'Uložení rolí selhalo.'); }
+function saveRoles(){
+  const ok = saveJSON('kb-roles', roles, 'Uložení rolí selhalo.');
+  if(ok) markUnpublished();
+  return ok;
+}
+
+/* ---------- publikování na GitHub ---------- */
+const GH_REPO = 'svragent/sladka_KB';
+const GH_FILE = 'data.js';
+function getUnpublishedFlag(){
+  try{ return localStorage.getItem('kb-unpublished'); }catch(e){ return null; }
+}
+function setUnpublishedFlag(val){
+  try{ localStorage.setItem('kb-unpublished', val); }catch(e){}
+}
+function updatePublishStatus(){
+  if(MODE !== 'editor'){ $('status').textContent = ''; return; }
+  $('status').textContent = getUnpublishedFlag() === '1'
+    ? 'Máš nepublikované změny – klikni na ☁ Publikovat na web.'
+    : 'Vše je publikované.';
+}
+function markUnpublished(){
+  setUnpublishedFlag('1');
+  updatePublishStatus();
+}
+function toBase64Utf8(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for(let i = 0; i < bytes.length; i += 32768){
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+  }
+  return btoa(bin);
+}
+async function publishToGitHub(){
+  if(editing){ $('status').textContent = 'Nejdřív článek ulož nebo zruš úpravu.'; return; }
+  let token = null;
+  try{ token = localStorage.getItem('kb-gh-token'); }catch(e){}
+  if(!token){
+    token = (prompt('Vlož GitHub token (uloží se jen v tomto prohlížeči):') || '').trim();
+    if(!token) return;
+    try{ localStorage.setItem('kb-gh-token', token); }catch(e){}
+  }
+  const btn = $('publishBtn');
+  btn.disabled = true;
+  $('status').textContent = 'Publikuji…';
+  const publishedAt = new Date().toISOString();
+  const payload = {
+    publishedAt: publishedAt,
+    postupCats: POSTUP_CATS,
+    manualCats: MANUAL_CATS,
+    wikiCats: WIKI_CATS,
+    troubleshootCats: TROUBLESHOOT_CATS,
+    roles: roles,
+    seedAll: articles.map(a=>{
+      const c = Object.assign({}, a);
+      delete c.content;
+      delete c.images;
+      delete c.isNew;
+      return c;
+    })
+  };
+  const text = 'const INITIAL_DATA = ' + JSON.stringify(payload, null, 1) + ';\n';
+  const url = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_FILE;
+  const headers = {'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'};
+  try{
+    const getRes = await fetch(url + '?ref=main', {headers: headers, cache: 'no-store'});
+    if(getRes.status === 401 || getRes.status === 403 || getRes.status === 404) throw new Error('auth');
+    if(!getRes.ok) throw new Error('get');
+    const info = await getRes.json();
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: headers,
+      body: JSON.stringify({
+        message: 'Publikace ' + publishedAt.slice(0, 16).replace('T', ' '),
+        content: toBase64Utf8(text),
+        sha: info.sha,
+        branch: 'main'
+      })
+    });
+    if(putRes.status === 401 || putRes.status === 403) throw new Error('auth');
+    if(!putRes.ok) throw new Error('put');
+    saveJSON('kb-published-at', publishedAt);
+    setUnpublishedFlag('0');
+    $('status').textContent = 'Publikováno. Na webu se změny projeví do pár minut.';
+  }catch(e){
+    if(e.message === 'auth'){
+      try{ localStorage.removeItem('kb-gh-token'); }catch(err){}
+      $('status').textContent = 'Publikace selhala: neplatný token nebo chybí oprávnění. Při dalším pokusu zadej token znovu.';
+    } else {
+      $('status').textContent = 'Publikace selhala (síť nebo GitHub). Zkus to znovu.';
+    }
+  }
+  btn.disabled = false;
+}
 
 /* ---------- kategorie ---------- */
 function loadEditableCats(){
@@ -338,7 +436,7 @@ function loadEditableCats(){
   });
 }
 function saveEditableCats(key){
-  saveJSON(EDITABLE_AXES[key].storageKey, EDITABLE_AXES[key].cats, 'Uložení kategorií selhalo.');
+  if(saveJSON(EDITABLE_AXES[key].storageKey, EDITABLE_AXES[key].cats, 'Uložení kategorií selhalo.')) markUnpublished();
 }
 
 /* ---------- video ---------- */
@@ -395,10 +493,22 @@ function resizeImage(file, maxDim, quality){
 
 /* ---------- init ---------- */
 function init(){
-  loadEditableCats();
-
   const existing = loadArticles();
-  articles = existing || [];
+  const unpublished = getUnpublishedFlag();
+  const publishedAt = _initData.publishedAt || '';
+  const localPublishedAt = loadJSON('kb-published-at') || '';
+  // Lokální kopii použij, když má editor nepublikované změny,
+  // nebo když web ještě neukazuje poslední publikaci z tohoto prohlížeče.
+  const useLocal = !!existing && ((MODE === 'editor' && unpublished !== '0') || localPublishedAt > publishedAt);
+
+  if(useLocal){
+    loadEditableCats();
+    articles = existing;
+    roles = loadRoles();
+  } else {
+    articles = JSON.parse(JSON.stringify(SEED_ALL));
+    roles = Array.isArray(_initData.roles) ? JSON.parse(JSON.stringify(_initData.roles)) : loadRoles();
+  }
   articles.forEach(a=>{
     if(!a.images) a.images = [];
     if(a.videoUrl == null) a.videoUrl = '';
@@ -414,15 +524,6 @@ function init(){
     prostory.wikiTags = ['prostory_zazemi'];
   }
   
-  let added = false;
-  const deletedIds = loadJSON('kb-deleted') || [];
-  SEED_ALL.forEach(s=>{
-    if(deletedIds.indexOf(s.id) === -1 && !articles.find(a=>a.id === s.id)){
-      articles.push(Object.assign({}, s));
-      added = true;
-    }
-  });
-  
   let migrated = false;
   articles.forEach(a=>{
     if(a.body == null){
@@ -430,9 +531,16 @@ function init(){
       migrated = true;
     }
   });
-  if(added || migrated || !existing || prostory) saveArticles();
+  if(useLocal){
+    if(migrated) saveArticles();
+    if(unpublished === null) setUnpublishedFlag('1');
+  } else if(MODE === 'editor'){
+    saveArticles();
+    saveRoles();
+    Object.keys(EDITABLE_AXES).forEach(key=>saveEditableCats(key));
+    setUnpublishedFlag('0');
+  }
 
-  roles = loadRoles();
   if(articles.length) activeId = articles[0].id;
   $('versionTag').textContent = APP_VERSION;
   $('searchInput').oninput = ()=>{ searchQuery = $('searchInput').value; renderCatList(); };
@@ -446,10 +554,11 @@ function applyMode(){
   $('modeToggleBtn').className = 'mode-badge' + (isEditor ? '' : ' reader');
   $('addBtn').style.display = isEditor ? 'block' : 'none';
   $('backupRow').style.display = isEditor ? 'flex' : 'none';
+  $('publishBtn').style.display = isEditor ? 'block' : 'none';
   $('rolesBtn').style.display = isEditor ? 'block' : 'none';
   $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
   if(!isEditor) renderRoleSelect();
-  $('status').textContent = 'Offline verze – data se ukládají jen v tomto prohlížeči. Pro přenos použij zálohu.';
+  updatePublishStatus();
 }
 
 function renderRoleSelect(){
@@ -720,8 +829,6 @@ function renderMain(){
       }
       articles = articles.filter(a=>a.id !== art.id);
       saveArticles();
-      const deletedIds = loadJSON('kb-deleted') || [];
-      if(deletedIds.indexOf(art.id) === -1){ deletedIds.push(art.id); saveJSON('kb-deleted', deletedIds); }
       activeId = null;
       render();
     };
@@ -1084,6 +1191,8 @@ $('addBtn').onclick = ()=>{
   $('main').innerHTML = editFormHtml(blank);
   bindEditForm(blank);
 };
+
+$('publishBtn').onclick = ()=>{ publishToGitHub(); };
 
 $('exportBtn').onclick = ()=>{
   const payload = {
