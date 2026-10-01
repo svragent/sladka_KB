@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.21 -->
+<!-- v2.26 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -27,7 +27,12 @@
   .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh;}
   @media (max-width:760px){
     .app{grid-template-columns:1fr;}
-    .sidebar{border-right:none;border-bottom:1px solid var(--line);}
+    .sidebar{border-right:none;border-bottom:1px solid var(--line);min-height:0;}
+    .sidebar-spacer{display:none;}
+    .main .to-list-btn{
+      display:inline-block;margin-bottom:12px;background:none;border:none;padding:0;
+      color:var(--caramel-deep);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+    }
     .main{padding:20px 14px 60px;}
   }
   .sidebar{background:var(--paper);border-right:1px solid var(--line);padding:20px 16px;display:flex;flex-direction:column;min-height:100vh;}
@@ -100,6 +105,104 @@
   }
   .backup-btn:hover{background:var(--line-soft);}
   .sidebar-spacer{flex:1;}
+  .title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .help-btn{
+    width:22px;height:22px;border-radius:50%;border:1px solid var(--caramel);
+    background:var(--paper);color:var(--caramel-deep);font-weight:700;font-size:12px;
+    cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,sans-serif;padding:0;
+  }
+  .help-btn:hover{background:var(--line-soft);}
+  .to-list-btn{display:none;}
+  .cat-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+  .cat-toggle:hover{color:var(--caramel);}
+  .cat-chev{display:inline-block;width:10px;font-size:9px;transition:transform .15s;color:var(--cocoa-soft);}
+  .cat-group.closed .cat-chev{transform:rotate(-90deg);}
+  .cat-group.closed .art-list{display:none;}
+  .cat-count{font-weight:600;color:var(--cocoa-soft);font-size:10.5px;letter-spacing:0;}
+  .cat-chev-btn{border:none;background:transparent;cursor:pointer;padding:0 2px;line-height:1;}
+  .crumbs{font-size:12px;color:var(--cocoa-soft);margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;}
+  .crumb{background:none;border:none;padding:0;font:inherit;color:var(--caramel-deep);cursor:pointer;}
+  .crumb:hover{text-decoration:underline;}
+  .crumb-sep{color:var(--line);}
+  .badge-new{
+    display:inline-block;margin-left:6px;font-size:9.5px;font-weight:700;text-transform:uppercase;
+    padding:1px 6px;border-radius:8px;background:var(--caramel);color:#fff;vertical-align:1px;
+  }
+  .badge-new.upd{background:var(--sage);}
+  .search-snippet{display:block;font-size:11.5px;color:var(--cocoa-soft);margin-top:2px;line-height:1.35;}
+  .search-snippet mark{background:#F6E3B4;color:inherit;padding:0 1px;border-radius:2px;}
+  .toc{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 0 18px;}
+  .toc summary{
+    font-size:11px;font-weight:700;text-transform:uppercase;color:var(--caramel-deep);letter-spacing:.04em;
+    cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;
+  }
+  .toc summary::-webkit-details-marker{display:none;}
+  .toc summary::after{content:'▾';font-size:12px;transition:transform .15s;}
+  .toc:not([open]) summary::after{transform:rotate(-90deg);}
+  .toc-group{margin-top:9px;}
+  .toc-group-title{font-size:12.5px;font-weight:700;color:var(--cocoa);margin-bottom:3px;cursor:pointer;}
+  .toc-group-title:hover{color:var(--caramel-deep);}
+  .toc-items{font-size:13px;line-height:1.7;color:var(--cocoa-soft);}
+  .toc-item{color:var(--caramel-deep);cursor:pointer;display:inline-block;max-width:100%;}
+  .main{min-width:0;}
+  .toc{max-width:100%;overflow-wrap:anywhere;}
+  .toc-item:hover{text-decoration:underline;}
+  .toc-sep{margin:0 6px;color:var(--line);}
+  .art-body img{cursor:zoom-in;}
+  .lightbox{
+    position:fixed;inset:0;z-index:1000;background:rgba(30,20,14,.88);display:flex;align-items:center;
+    justify-content:center;padding:16px;cursor:zoom-out;
+  }
+  .lightbox img{max-width:100%;max-height:100%;border-radius:8px;background:#fff;}
+  .lightbox-close{
+    position:fixed;top:calc(12px + env(safe-area-inset-top, 0px));right:14px;width:38px;height:38px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.9);color:#3B2A20;font-size:20px;cursor:pointer;
+  }
+  .pn-nav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px;padding-top:16px;border-top:1px solid var(--line);}
+  .pn-btn{
+    text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    cursor:pointer;font-family:inherit;color:var(--cocoa);min-width:0;
+  }
+  .pn-btn:hover{border-color:var(--caramel);}
+  .pn-btn.next{text-align:right;grid-column:2;}
+  .pn-dir{display:block;font-size:11px;color:var(--cocoa-soft);margin-bottom:2px;}
+  .pn-title{display:block;font-size:13.5px;font-weight:600;overflow-wrap:anywhere;}
+  .pn-pos{font-size:11px;color:var(--cocoa-soft);margin-top:8px;text-align:center;}
+  .home-hello{font-family:Georgia,serif;font-size:26px;font-weight:700;line-height:1.2;margin-bottom:6px;text-wrap:balance;}
+  .home-sub{color:var(--cocoa-soft);font-size:14px;margin-bottom:22px;}
+  .home-tiles{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:10px;margin-bottom:26px;}
+  .home-tile{
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;
+    cursor:pointer;font-family:inherit;color:var(--cocoa);display:flex;flex-direction:column;gap:6px;min-width:0;
+  }
+  .home-tile:hover{border-color:var(--caramel);background:var(--cream);}
+  .home-tile .ico{font-size:24px;line-height:1;}
+  .home-tile .lbl{font-weight:700;font-size:14px;}
+  .home-tile .dsc{font-size:12px;color:var(--cocoa-soft);line-height:1.35;}
+  .home-h{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--caramel-deep);letter-spacing:.04em;margin:0 0 8px;}
+  .home-list{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-direction:column;gap:4px;max-width:520px;}
+  .home-list li{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:var(--paper);font-size:13.5px;}
+  .home-list li:hover{border-color:var(--caramel);}
+  .home-list .when{font-size:11px;color:var(--cocoa-soft);white-space:nowrap;}
+  .sidebar h1{cursor:pointer;}
+  .toc-link{
+    font-size:12px;padding:4px 9px;border-radius:12px;border:1px solid var(--line);background:var(--cream);
+    color:var(--cocoa);cursor:pointer;font-family:inherit;
+  }
+  .toc-link.main{font-weight:700;background:var(--line-soft);}
+  .qr-pick{columns:2 260px;column-gap:20px;margin:10px 0 14px;}
+  .qr-pick .field-label{break-after:avoid;}
+  .qr-pick label{display:block;font-size:13px;padding:3px 0;break-inside:avoid;cursor:pointer;}
+  .qr-sheet{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;margin-top:14px;}
+  .qr-label{
+    display:flex;gap:12px;align-items:center;border:1px dashed var(--cocoa-soft);border-radius:8px;
+    padding:10px;background:#fff;break-inside:avoid;
+  }
+  .qr-label .qr-img{width:110px;height:110px;flex-shrink:0;}
+  .qr-label .qr-img svg{width:100%;height:100%;display:block;}
+  .qr-label .qr-name{font-family:Georgia,serif;font-weight:700;font-size:15px;line-height:1.25;color:#000;}
+  .qr-label .qr-hint{font-size:10.5px;color:#444;margin-top:5px;}
   .version-tag{font-size:9.5px;color:var(--line);margin-top:16px;text-align:right;user-select:none;}
 
   .main{padding:26px 30px 60px;max-width:720px;}
@@ -112,7 +215,11 @@
   .related-box .art-item{cursor:pointer;}
   .search-results .cat-label{font-style:italic;}
   @media print{
-    .sidebar, .row{display:none !important;}
+    .sidebar, .row, .toc, .no-print, .to-list-btn, .crumbs, .pn-nav, .pn-pos, .lightbox{display:none !important;}
+    .app{display:block !important;}
+    .main{max-width:none !important;padding:0 !important;}
+    .qr-sheet{grid-template-columns:repeat(2, 9cm);gap:0.4cm;}
+    .qr-label .qr-img{width:3.5cm;height:3.5cm;}
     body.printing .main{max-width:100%;padding:0;}
   }
   .tag-chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--line-soft);color:var(--cocoa-soft);}
@@ -197,7 +304,10 @@
 <div class="app">
   <div class="sidebar">
     <div>
-      <h1>Znalostní báze</h1>
+      <div class="title-row">
+        <h1 id="homeLink" title="Úvodní stránka">Znalostní báze</h1>
+        <button class="help-btn" id="helpBtn" title="Nápověda" aria-label="Nápověda">?</button>
+      </div>
       <div class="sub">Sladká dílna</div>
       <button class="mode-badge" id="modeToggleBtn" title="Kliknutím přepneš režim"></button>
 
@@ -206,7 +316,7 @@
         <select class="f-select" id="roleSelect"></select>
       </div>
       <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
-      <button class="plain-btn" id="helpBtn">❓ Nápověda</button>
+      <button class="plain-btn" id="qrBtn" style="display:none;">🏷️ QR štítky</button>
 
       <input class="search-box" id="searchInput" type="text" placeholder="🔍 Hledat ve všech článcích…">
       <div class="section-switch" id="sectionSwitch"></div>
@@ -233,7 +343,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.21';
+const APP_VERSION = 'v2.26';
 
 const SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -286,8 +396,20 @@ let searchQuery = '';
 let deepLinkId = null;   // článek otevřený odkazem (např. z Karty zaměstnance) – zobrazí se vždy
 let historyData = null;  // {artId, loading, error, versions, openIdx}
 let editSnapshot = null;
-let MODE = 'editor';     // 'editor' | 'reader' – UI přepínač, bez zabezpečení
-try{ if(localStorage.getItem('kb-mode') === 'reader') MODE = 'reader'; }catch(e){}
+let catOpen = {};        // ruční rozbalení/sbalení kategorií v seznamu (klíč = id kategorie)
+// Režim Editor je vidět jen v prohlížeči, kde je uložený GitHub token.
+// Na novém zařízení: otevři odkaz …/sladka_KB/#editor a zadej token.
+function hasEditorToken(){ try{ return !!localStorage.getItem('kb-gh-token'); }catch(e){ return false; } }
+function handleEditorHash(){
+  if(location.hash !== '#editor') return false;
+  const t = (prompt('Režim Editor – vlož GitHub token (uloží se jen v tomto prohlížeči):') || '').trim();
+  if(t){ try{ localStorage.setItem('kb-gh-token', t); localStorage.setItem('kb-mode', 'editor'); }catch(e){} }
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+  return true;
+}
+handleEditorHash();
+let MODE = 'reader';     // 'editor' | 'reader' – editor jen s tokenem, bez skutečného zabezpečení
+try{ if(hasEditorToken() && localStorage.getItem('kb-mode') !== 'reader') MODE = 'editor'; }catch(e){}
 try{ readerRoleId = localStorage.getItem('kb-reader-role') || null; }catch(e){}
 
 const $ = id => document.getElementById(id);
@@ -641,8 +763,15 @@ function init(){
   }
 
   if(articles.length) activeId = articles[0].id;
-  openFromHash();
-  window.addEventListener('hashchange', ()=>{ if(openFromHash()) render(); });
+  // první návštěva: vše bereme jako přečtené, značky se ukážou až u dalších změn
+  if(!loadJSON('kb-seen')){
+    const seen = {};
+    articles.forEach(a=>{ seen[a.id] = a.updatedAt || ''; });
+    saveJSON('kb-seen', seen);
+  }
+  const fromLink = openFromHash();
+  if(!fromLink){ view = 'home'; activeId = null; }
+  window.addEventListener('hashchange', ()=>{ if(handleEditorHash()){ location.reload(); return; } if(openFromHash()){ render(); scrollToMainOnMobile(); } });
   let versionText = APP_VERSION;
   if(publishedAt){
     const d = new Date(publishedAt);
@@ -653,16 +782,19 @@ function init(){
   $('searchInput').oninput = ()=>{ searchQuery = $('searchInput').value; renderCatList(); };
   applyMode();
   render();
+  if(fromLink) scrollToMainOnMobile();
 }
 
 function applyMode(){
   const isEditor = MODE === 'editor';
+  $('modeToggleBtn').style.display = hasEditorToken() ? 'inline-block' : 'none';
   $('modeToggleBtn').innerHTML = (isEditor ? 'Role: Editor' : 'Role: Čtenář') + ' &nbsp;🔄';
   $('modeToggleBtn').className = 'mode-badge' + (isEditor ? '' : ' reader');
   $('addBtn').style.display = isEditor ? 'block' : 'none';
   $('backupRow').style.display = isEditor ? 'flex' : 'none';
   $('publishBtn').style.display = isEditor ? 'block' : 'none';
   $('rolesBtn').style.display = isEditor ? 'block' : 'none';
+  $('qrBtn').style.display = isEditor ? 'block' : 'none';
   $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
   if(!isEditor) renderRoleSelect();
   updatePublishStatus();
@@ -722,30 +854,35 @@ function renderCatList(){
   const q = searchQuery.trim().toLowerCase();
   if(q){
     let pool = articles.filter(a=> isEditor || articleVisibleToRole(a, role));
-    pool = pool.filter(a=> (a.title||'').toLowerCase().indexOf(q)!==-1 || (a.body||'').replace(/<[^>]*>/g,' ').toLowerCase().indexOf(q)!==-1);
+    pool = pool.filter(a=> (a.title||'').toLowerCase().indexOf(q)!==-1 || plainText(a.body).toLowerCase().indexOf(q)!==-1);
     let html = '<div class="cat-group search-results"><div class="cat-label">Výsledky hledání (' + pool.length + ')</div>';
     html += pool.length
-      ? '<ul class="art-list">' + pool.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>').join('') + '</ul>'
+      ? '<ul class="art-list">' + pool.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + searchSnippet(a, q) + '</li>').join('') + '</ul>'
       : '<div class="status">Nic nenalezeno.</div>';
     html += '</div>';
     $('catList').innerHTML = html;
     $('catList').querySelectorAll('[data-open]').forEach(el=>{
-      el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
+      el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); scrollToMainOnMobile(); };
     });
     return;
   }
   const axis = currentAxis();
   const itemLi = a => '<li class="art-item' + (a.id===activeId ? ' active' : '') + '"' +
-    (isEditor ? ' draggable="true"' : '') + ' data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>';
+    (isEditor ? ' draggable="true"' : '') + ' data-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + '</li>';
   let html = '';
+  // Na mobilu je rozbalená jen kategorie s otevřeným článkem, na počítači všechny – pokud je uživatel sám nepřepnul.
+  const isOpen = (catId, items)=> (catId in catOpen) ? catOpen[catId] : (!isMobile() || items.some(a=>a.id === activeId));
+  const chev = '<span class="cat-chev">▼</span>';
   axis.cats.forEach(cat=>{
     if(!isEditor && role.allowedCats.indexOf(cat.id) === -1) return;
-    const items = articles.filter(a=>a.section===sectionId && (a[axis.field]||[]).indexOf(cat.id) !== -1);
+    const items = articles.filter(a=>a.section===sectionId && (a[axis.field]||[]).indexOf(cat.id) !== -1 &&
+      (isEditor || articleVisibleToRole(a, role)));
     if(!isEditor && !items.length) return;
-    html += '<div class="cat-group" data-catgroup="' + cat.id + '">' +
+    const count = '<span class="cat-count">' + items.length + '</span>';
+    html += '<div class="cat-group' + (isOpen(cat.id, items) ? '' : ' closed') + '" data-catgroup="' + cat.id + '">' +
       (isEditor
-        ? '<div class="cat-label-row"><input class="cat-label-edit" data-cat-rename2="' + cat.id + '" value="' + escapeHtml(cat.label) + '"><button class="cat-del-x" title="Smazat kategorii" data-cat-del2="' + cat.id + '">×</button></div>'
-        : '<div class="cat-label">' + escapeHtml(cat.label) + '</div>') +
+        ? '<div class="cat-label-row"><button class="cat-chev-btn" data-cat-toggle="' + cat.id + '" title="Rozbalit / sbalit">' + chev + '</button><input class="cat-label-edit" data-cat-rename2="' + cat.id + '" value="' + escapeHtml(cat.label) + '">' + count + '<button class="cat-del-x" title="Smazat kategorii" data-cat-del2="' + cat.id + '">×</button></div>'
+        : '<div class="cat-label cat-toggle" data-cat-toggle="' + cat.id + '">' + chev + '<span>' + escapeHtml(cat.label) + '</span>' + count + '</div>') +
       '<ul class="art-list">' + items.map(itemLi).join('') + '</ul></div>';
   });
   if(isEditor){
@@ -757,7 +894,15 @@ function renderCatList(){
   }
   $('catList').innerHTML = html || '<div class="status">' + (isEditor ? 'V téhle sekci zatím nejsou žádné kategorie.' : 'Pro tvoji roli zatím nejsou povolené žádné kategorie v téhle sekci.') + '</div>';
   $('catList').querySelectorAll('[data-open]').forEach(el=>{
-    el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
+    el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); scrollToMainOnMobile(); };
+  });
+  $('catList').querySelectorAll('[data-cat-toggle]').forEach(el=>{
+    el.onclick = ()=>{
+      const g = el.closest('.cat-group');
+      const nowOpen = g.classList.contains('closed');
+      g.classList.toggle('closed', !nowOpen);
+      catOpen[el.dataset.catToggle] = nowOpen;
+    };
   });
   if(!isEditor) return;
 
@@ -883,6 +1028,242 @@ function openFromHash(){
   return true;
 }
 
+/* ---------- značky Nové / Upraveno (pro každý prohlížeč zvlášť) ---------- */
+function artBadge(a){
+  const seen = loadJSON('kb-seen') || {};
+  if(!(a.id in seen)) return '<span class="badge-new">Nové</span>';
+  if((a.updatedAt || '') > (seen[a.id] || '')) return '<span class="badge-new upd">Upraveno</span>';
+  return '';
+}
+function markSeen(a){
+  const seen = loadJSON('kb-seen') || {};
+  if(seen[a.id] === (a.updatedAt || '')) return false;
+  seen[a.id] = a.updatedAt || '';
+  saveJSON('kb-seen', seen);
+  return true;
+}
+function fmtUpdated(v){
+  if(!v) return '';
+  const p = String(v).slice(0, 10).split('-');
+  return p.length === 3 ? parseInt(p[2], 10) + '. ' + parseInt(p[1], 10) + '. ' + p[0] : v;
+}
+
+/* ---------- obsah (rozcestník) u dlouhých článků ---------- */
+function buildToc(body){
+  const entries = [];
+  const used = {};
+  Array.from(body.children).forEach(el=>{
+    let label = '', main = false;
+    const tx = (el.textContent || '').trim();
+    if(el.tagName === 'H3'){ label = tx; main = true; }
+    else if(el.tagName === 'DIV'){
+      const m = tx.match(/^(.{3,70}?)\s[–-]\s/);
+      if(m){
+        const base = m[1].replace(/\s*\(.*?\)\s*/g, ' ').trim();
+        if(base === base.toUpperCase() && /[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]{3}/.test(base)){
+          label = m[1];
+          if(used[label]){ const c = tx.indexOf(':'); if(c > 0 && c < 60) label = tx.slice(0, c); }
+        }
+      }
+    }
+    if(label){ used[label] = true; entries.push({el: el, label: label, main: main}); }
+  });
+  if(entries.length < 5) return;
+  // VELKÁ PÍSMENA → běžné psaní (DOUBLE ESPRESSO → Double espresso)
+  const nice = t => (t === t.toUpperCase()) ? t.charAt(0) + t.slice(1).toLowerCase() : t;
+  const groups = [];
+  entries.forEach((e, i)=>{
+    if(e.main || !groups.length) groups.push({head: e.main ? i : -1, items: []});
+    if(!e.main) groups[groups.length - 1].items.push(i);
+  });
+  let html = '<summary>Obsah článku</summary>';
+  groups.forEach(g=>{
+    html += '<div class="toc-group">';
+    if(g.head !== -1) html += '<div class="toc-group-title" data-toc="' + g.head + '">' + escapeHtml(entries[g.head].label) + '</div>';
+    if(g.items.length) html += '<div class="toc-items">' + g.items.map(i=>
+      '<span class="toc-item" data-toc="' + i + '">' + escapeHtml(nice(entries[i].label)) + '</span>'
+    ).join('<span class="toc-sep">·</span>') + '</div>';
+    html += '</div>';
+  });
+  const toc = document.createElement('details');
+  toc.className = 'toc';
+  if(!isMobile()) toc.open = true;
+  toc.innerHTML = html;
+  body.parentNode.insertBefore(toc, body);
+  toc.querySelectorAll('[data-toc]').forEach(b=>{
+    b.onclick = ()=>{ entries[parseInt(b.dataset.toc, 10)].el.scrollIntoView({behavior:'smooth', block:'start'}); };
+  });
+}
+
+/* ---------- zvětšení obrázku po kliknutí ---------- */
+function bindLightbox(body){
+  body.querySelectorAll('img').forEach(img=>{
+    if(img.closest('.video-thumb')) return;
+    img.onclick = ()=>{
+      const box = document.createElement('div');
+      box.className = 'lightbox';
+      box.innerHTML = '<img alt=""><button class="lightbox-close" aria-label="Zavřít">×</button>';
+      box.querySelector('img').src = img.src;
+      const close = ()=>{ box.remove(); document.removeEventListener('keydown', onKey); };
+      const onKey = e=>{ if(e.key === 'Escape') close(); };
+      box.onclick = close;
+      document.addEventListener('keydown', onKey);
+      document.body.appendChild(box);
+    };
+  });
+}
+
+/* ---------- předchozí / další článek v kategorii ---------- */
+function categorySiblings(art){
+  const isEditor = MODE === 'editor';
+  const role = isEditor ? null : currentRole();
+  const axes = SECTION_AXES[art.section] || [];
+  const axisOrder = axes.slice().sort((x, y)=> (x.id === axisId ? -1 : 0) - (y.id === axisId ? -1 : 0));
+  for(const ax of axisOrder){
+    const cat = ax.cats.find(c=>(art[ax.field] || []).indexOf(c.id) !== -1);
+    if(!cat) continue;
+    const list = articles.filter(a=>a.section === art.section && (a[ax.field] || []).indexOf(cat.id) !== -1 &&
+      (isEditor || (role && articleVisibleToRole(a, role))));
+    return {cat: cat, list: list, idx: list.findIndex(a=>a.id === art.id)};
+  }
+  return null;
+}
+function prevNextHtml(art){
+  const sib = categorySiblings(art);
+  if(!sib || sib.idx === -1 || sib.list.length < 2) return '';
+  const prev = sib.list[sib.idx - 1], next = sib.list[sib.idx + 1];
+  return '<div class="pn-nav">' +
+    (prev ? '<button class="pn-btn" data-pn="' + prev.id + '"><span class="pn-dir">← Předchozí</span><span class="pn-title">' + escapeHtml(prev.title) + '</span></button>' : '') +
+    (next ? '<button class="pn-btn next" data-pn="' + next.id + '"><span class="pn-dir">Další →</span><span class="pn-title">' + escapeHtml(next.title) + '</span></button>' : '') +
+    '</div><div class="pn-pos">' + escapeHtml(sib.cat.label) + ' · ' + (sib.idx + 1) + ' z ' + sib.list.length + '</div>';
+}
+function openArticle(id){
+  const a = articles.find(x=>x.id === id);
+  if(!a) return;
+  if(!canLeaveEdit()) return;
+  activeId = id;
+  if(a.section !== sectionId){ sectionId = a.section; axisId = currentAxes()[0].id; }
+  editing = false;
+  videoOpen = false;
+  view = 'article';
+  render();
+  $('main').scrollIntoView({block:'start'});
+}
+
+/* ---------- drobečková navigace ---------- */
+function breadcrumbHtml(art){
+  const sec = SECTIONS.find(x=>x.id === art.section);
+  const sib = categorySiblings(art);
+  const sep = '<span class="crumb-sep">›</span>';
+  return '<nav class="crumbs" aria-label="Kde jsem">' +
+    '<button class="crumb" data-crumb="home">Úvod</button>' + sep +
+    (sec ? '<button class="crumb" data-crumb="section">' + escapeHtml(sec.label.replace(/^\S+\s/, '')) + '</button>' : '') +
+    (sib ? sep + '<button class="crumb" data-crumb="cat" data-cat="' + sib.cat.id + '">' + escapeHtml(sib.cat.label) + '</button>' : '') +
+    '</nav>';
+}
+// Klik na sekci nebo kategorii otevře seznam (na mobilu na něj vyjede a kategorii rozbalí)
+function bindBreadcrumb(art){
+  $('main').querySelectorAll('[data-crumb]').forEach(b=>{
+    b.onclick = ()=>{
+      const kind = b.dataset.crumb;
+      if(kind === 'home'){ goHome(); return; }
+      if(kind === 'cat') catOpen[b.dataset.cat] = true;
+      renderCatList();
+      const target = kind === 'cat' ? $('catList').querySelector('[data-catgroup="' + b.dataset.cat + '"]') : $('sectionSwitch');
+      (target || $('catList')).scrollIntoView({behavior:'smooth', block:'start'});
+    };
+  });
+}
+
+/* ---------- úvodní stránka ---------- */
+const HOME_TILES = [
+  {ico:'☕', lbl:'Kávovar a káva', dsc:'Obsluha kávovaru a recepty na kávu', id:'napoje_kava'},
+  {ico:'🥤', lbl:'Ostatní nápoje', dsc:'Teplé, studené i alkoholické nápoje', id:'napoje_studene'},
+  {ico:'🍦', lbl:'Zmrzlina', dsc:'Míchání, točení a velikosti', id:'michani'},
+  {ico:'🎂', lbl:'Objednávky dortů', dsc:'Postup v systému krok za krokem', id:'objednavani_dortu_detail'},
+  {ico:'🍰', lbl:'Vitrína', dsc:'Doplňování a uspořádání', id:'vitrina_doplnovani'},
+  {ico:'💳', lbl:'Kasa a peníze', dsc:'Pokladna, poukazy, slevy', id:'kasa_penize'},
+  {ico:'🌅', lbl:'Ráno a večer', dsc:'Otevření a zavření provozu', id:'ranni_vecerni'},
+  {ico:'🛟', lbl:'Když se něco pokazí', dsc:'Rychlá pomoc v nestandardní situaci', section:'troubleshooting'}
+];
+function goHome(){
+  if(!canLeaveEdit()) return;
+  editing = false;
+  view = 'home';
+  activeId = null;
+  render();
+  $('main').scrollIntoView({block:'start'});
+}
+function renderHome(){
+  const isEditor = MODE === 'editor';
+  const role = isEditor ? null : currentRole();
+  let html = '<div class="home-hello">Vítej ve znalostní bázi Sladké dílny</div>';
+  if(!isEditor && !role){
+    html += '<div class="home-sub">Nejdřív si nahoře vyber <b>svou roli</b> – pak tu uvidíš návody, které se týkají tvé práce.</div>';
+    $('main').innerHTML = html;
+    return;
+  }
+  html += '<div class="home-sub">Vyber téma, nebo použij hledání vlevo nahoře.</div>';
+  const visible = a => isEditor || articleVisibleToRole(a, role);
+  const tiles = HOME_TILES.filter(t=>{
+    if(t.section) return articles.some(a=>a.section === t.section && visible(a));
+    const a = articles.find(x=>x.id === t.id);
+    return a && visible(a);
+  });
+  if(tiles.length){
+    html += '<div class="home-tiles">' + tiles.map((t, i)=>
+      '<button class="home-tile" data-tile="' + i + '"><span class="ico">' + t.ico + '</span><span class="lbl">' + escapeHtml(t.lbl) + '</span><span class="dsc">' + escapeHtml(t.dsc) + '</span></button>'
+    ).join('') + '</div>';
+  }
+  const pool = articles.filter(visible);
+  const changed = pool.filter(a=>artBadge(a));
+  let listTitle = 'Nové a upravené od tvé poslední návštěvy';
+  let list = changed;
+  if(!list.length){
+    listTitle = 'Naposledy upravené';
+    list = pool.filter(a=>a.updatedAt).sort((x, y)=> String(y.updatedAt).localeCompare(String(x.updatedAt))).slice(0, 5);
+  }
+  if(list.length){
+    html += '<div class="home-h">' + listTitle + '</div><ul class="home-list">' + list.map(a=>
+      '<li data-home-open="' + a.id + '"><span>' + escapeHtml(a.title) + artBadge(a) + '</span><span class="when">' + escapeHtml(fmtUpdated(a.updatedAt)) + '</span></li>'
+    ).join('') + '</ul>';
+  }
+  $('main').innerHTML = html;
+  $('main').querySelectorAll('[data-tile]').forEach(b=>{
+    b.onclick = ()=>{
+      const t = tiles[parseInt(b.dataset.tile, 10)];
+      if(t.section){
+        sectionId = t.section;
+        axisId = currentAxes()[0].id;
+        const first = articles.find(a=>a.section === t.section && visible(a));
+        if(first) openArticle(first.id); else render();
+      } else openArticle(t.id);
+    };
+  });
+  $('main').querySelectorAll('[data-home-open]').forEach(li=>{ li.onclick = ()=>openArticle(li.dataset.homeOpen); });
+}
+
+/* ---------- hledání: ukázka textu ---------- */
+function plainText(html){
+  const d = document.createElement('div');
+  d.innerHTML = String(html || '').replace(/<img[^>]*>/g, ' ').replace(/<\/(div|h3|li|p)>/g, ' ');
+  return (d.textContent || '').replace(/\s+/g, ' ').trim();
+}
+function searchSnippet(a, q){
+  const t = plainText(a.body);
+  const i = t.toLowerCase().indexOf(q);
+  if(i === -1) return '';
+  const from = Math.max(0, i - 40), to = Math.min(t.length, i + q.length + 60);
+  return '<span class="search-snippet">' + (from > 0 ? '…' : '') + escapeHtml(t.slice(from, i)) +
+    '<mark>' + escapeHtml(t.slice(i, i + q.length)) + '</mark>' + escapeHtml(t.slice(i + q.length, to)) + (to < t.length ? '…' : '') + '</span>';
+}
+
+// Na mobilu je seznam článků nad článkem – po výběru článku sjeď na něj
+function isMobile(){ return window.matchMedia('(max-width:760px)').matches; }
+function scrollToMainOnMobile(){
+  if(isMobile()) $('main').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
 function renderMain(){
   const isEditor = MODE === 'editor';
   const art = articles.find(a=>a.id===activeId);
@@ -923,21 +1304,26 @@ function renderMain(){
       '</ul></div>'
     : '';
   $('main').innerHTML =
+    breadcrumbHtml(art) +
     '<div class="art-title">' + escapeHtml(art.title) + '</div>' +
-    (art.updatedAt ? '<div class="art-updated">Poslední úprava: ' + escapeHtml(art.updatedAt) + '</div>' : '') +
+    (art.updatedAt ? '<div class="art-updated">Poslední úprava: ' + escapeHtml(fmtUpdated(art.updatedAt)) + '</div>' : '') +
     '<div class="art-tags">' + tagsHtml + '</div>' +
     '<div class="art-body">' + (art.body || '') + '</div>' +
     videoBlockHtml(art.videoUrl) +
     relatedHtml +
+    prevNextHtml(art) +
     '<div class="row"><button class="btn" id="printBtn">🖨️ Tisk</button>' +
     (isEditor ? '<button class="btn" id="editBtn">Upravit</button><button class="btn ghost" id="historyBtn">🕘 Historie</button><button class="btn red" id="delBtn">Smazat</button>' : '') +
     '</div>';
+  bindBreadcrumb(art);
   const thumb = $('videoThumb');
   if(thumb) thumb.onclick = ()=>{ videoOpen = true; renderMain(); };
   const artBody = document.querySelector('#main .art-body');
-  if(artBody) bindInlineVideos(artBody);
+  if(artBody){ bindInlineVideos(artBody); buildToc(artBody); bindLightbox(artBody); }
+  $('main').querySelectorAll('[data-pn]').forEach(b=>{ b.onclick = ()=>openArticle(b.dataset.pn); });
+  if(markSeen(art)) renderCatList();
   document.querySelectorAll('.related-box [data-open]').forEach(el=>{
-    el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; render(); };
+    el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; render(); scrollToMainOnMobile(); };
   });
   $('printBtn').onclick = ()=>{
     document.body.classList.add('printing');
@@ -1194,7 +1580,7 @@ function bindEditForm(art){
     art.body = $('f-body').innerHTML;
     art.videoUrl = $('f-video').value.trim();
     art.related = Array.from(document.querySelectorAll('[data-related]:checked')).map(el=>el.value);
-    art.updatedAt = new Date().toISOString().slice(0,10);
+    art.updatedAt = new Date().toISOString();
     if(art.isNew){ delete art.isNew; articles.push(art); }
     const ok = saveArticles();
     if(ok){
@@ -1420,11 +1806,18 @@ function renderHelpMain(){
     (isEditor ? '' : '<li>Nahoře vlevo si vyber <b>svou roli</b> – uvidíš návody, které se týkají tvé práce.</li>') +
     '<li>Přepínej sekce <b>Postupy</b>, <b>Firemní wiki</b> a <b>Troubleshooting</b>.</li>' +
     '<li>U Postupů můžeš procházet <b>podle postupu</b> (jak jdeš zaškolením) nebo <b>podle manuálu</b> (kapitoly provozního manuálu).</li>' +
-    '<li><b>Hledání</b> prohledá názvy i texty všech článků.</li>' +
+    '<li><b>Hledání</b> prohledá názvy i texty všech článků a ukáže, kde se hledané slovo v textu vyskytuje.</li>' +
+    '<li>Značka <b>Nové</b> nebo <b>Upraveno</b> v seznamu upozorní na články, které se změnily od tvé poslední návštěvy. Po otevření článku zmizí.</li>' +
     '</ul>' +
     '<h3>V článku</h3><ul>' +
     '<li><b>🖨️ Tisk</b> vytiskne jen samotný článek.</li>' +
     '<li>Video v článku spustíš kliknutím na náhled.</li>' +
+    '<li>U dlouhých článků je nahoře <b>Obsah článku</b> – kliknutím skočíš na danou část.</li>' +
+    '<li>Obrázek zvětšíš kliknutím, zavřeš ho dalším kliknutím.</li>' +
+    '<li>Dole pod článkem přejdeš na <b>předchozí / další</b> článek ve stejné kategorii – hodí se při zaškolení.</li>' +
+    '<li>Kliknutím na nadpis <b>Znalostní báze</b> se vrátíš na úvodní stránku.</li>' +
+    '<li>Nad nadpisem článku vidíš, kde jsi (<b>Úvod › Postupy › Kategorie</b>). Kliknutím na kategorii se vrátíš do seznamu.</li>' +
+    '<li>Kategorie v seznamu sbalíš nebo rozbalíš kliknutím na jejich název.</li>' +
     '<li>Dole najdeš <b>Souvisí s</b> – další články k tématu.</li>' +
     '</ul>' +
     '<h3>Aktuálnost</h3><ul>' +
@@ -1447,6 +1840,8 @@ function renderHelpMain(){
       '</ul>' +
       '<h3>Role</h3><ul>' +
       '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
+      '<li><b>🏷️ QR štítky</b> – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
+      '<li>Přepínač Editor/Čtenář vidí jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
       '</ul>' +
       '<h3>Uložit a publikovat</h3><ul>' +
       '<li><b>Uložit</b> ukládá jen do tohoto prohlížeče – ostatní změny zatím nevidí.</li>' +
@@ -1460,13 +1855,76 @@ function renderHelpMain(){
   $('backToArticles3').onclick = ()=>{ view = 'article'; render(); };
 }
 
+/* ---------- QR štítky k vytištění (odkaz rovnou na článek) ---------- */
+let qrSelected = [];
+let qrLibState = '';   // '' | 'loading' | 'ok' | 'error'
+function loadQrLib(cb){
+  if(qrLibState === 'ok') return cb();
+  if(qrLibState === 'loading') return;
+  qrLibState = 'loading';
+  const sc = document.createElement('script');
+  sc.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+  sc.onload = ()=>{ qrLibState = 'ok'; cb(); };
+  sc.onerror = ()=>{ qrLibState = 'error'; cb(); };
+  document.head.appendChild(sc);
+}
+function qrSvg(text){
+  const q = qrcode(0, 'M');
+  q.addData(text);
+  q.make();
+  return q.createSvgTag(4, 16);   // okraj (tichá zóna) je nutný pro spolehlivé načtení
+}
+function renderQrMain(){
+  const base = location.origin + location.pathname;
+  let html = '<div class="no-print"><div class="art-title">QR štítky</div>' +
+    '<div class="field-hint">Zaškrtni články, vytiskni a nalep štítky na místo, kde se postup používá (kávovar, stroj na zmrzlinu, kasa…). Zaměstnanec namíří fotoaparát telefonu na kód a otevře se mu rovnou daný článek. Doporučujeme samolepicí papír nebo zalaminovat.</div>' +
+    '<div class="qr-pick">' + SECTIONS.map(sec=>{
+      const list = articles.filter(a=>a.section === sec.id);
+      if(!list.length) return '';
+      return '<div class="field-label">' + escapeHtml(sec.label) + '</div>' + list.map(a=>
+        '<label><input type="checkbox" data-qr="' + a.id + '"' + (qrSelected.indexOf(a.id) !== -1 ? ' checked' : '') + '> ' + escapeHtml(a.title) + '</label>'
+      ).join('');
+    }).join('') + '</div>' +
+    '<div class="row"><button class="btn" id="qrPrintBtn"' + (qrSelected.length ? '' : ' disabled') + '>🖨️ Vytisknout štítky (' + qrSelected.length + ')</button>' +
+    '<button class="btn ghost" id="backFromQr">Zpět na návody</button></div></div>';
+  if(qrSelected.length){
+    if(qrLibState === 'ok'){
+      html += '<div class="qr-sheet">' + qrSelected.map(id=>{
+        const a = articles.find(x=>x.id === id);
+        if(!a) return '';
+        return '<div class="qr-label"><div class="qr-img">' + qrSvg(base + '#' + id) + '</div>' +
+          '<div><div class="qr-name">' + escapeHtml(a.title) + '</div><div class="qr-hint">Naskenuj telefonem – návod ve znalostní bázi Sladké dílny</div></div></div>';
+      }).join('') + '</div>';
+    } else if(qrLibState === 'error'){
+      html += '<div class="status">Nepodařilo se načíst generátor QR kódů (je potřeba internet). Zkus to znovu.</div>';
+    } else {
+      html += '<div class="status">Připravuji QR kódy…</div>';
+      loadQrLib(()=>{ if(view === 'qr') renderQrMain(); });
+    }
+  }
+  $('main').innerHTML = html;
+  document.querySelectorAll('[data-qr]').forEach(cb=>{
+    cb.onchange = ()=>{
+      const id = cb.dataset.qr;
+      qrSelected = qrSelected.filter(x=>x !== id);
+      if(cb.checked) qrSelected.push(id);
+      if(qrLibState === 'error') qrLibState = '';
+      renderQrMain();
+    };
+  });
+  $('qrPrintBtn').onclick = ()=>{ window.print(); };
+  $('backFromQr').onclick = ()=>{ view = 'article'; render(); };
+}
+
 function render(){
   renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
-  if(view === 'roles') renderRolesMain();
+  if(view === 'home') renderHome();
+  else if(view === 'roles') renderRolesMain();
   else if(view === 'help') renderHelpMain();
   else if(view === 'history') renderHistoryMain();
+  else if(view === 'qr') renderQrMain();
   else renderMain();
 }
 
@@ -1479,8 +1937,10 @@ $('modeToggleBtn').onclick = ()=>{
   applyMode();
   render();
 };
-$('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'help'; render(); };
-$('rolesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'roles'; editingRoleId = null; render(); };
+$('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'help'; render(); scrollToMainOnMobile(); };
+$('homeLink').onclick = ()=>{ goHome(); };
+$('qrBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'qr'; render(); scrollToMainOnMobile(); };
+$('rolesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'roles'; editingRoleId = null; render(); scrollToMainOnMobile(); };
 $('addBtn').onclick = ()=>{
   if(!canLeaveEdit()) return;
   activeId = uid();
@@ -1493,6 +1953,7 @@ $('addBtn').onclick = ()=>{
   renderCatList();
   $('main').innerHTML = editFormHtml(blank);
   bindEditForm(blank);
+  scrollToMainOnMobile();
 };
 
 $('publishBtn').onclick = ()=>{ publishToGitHub(); };
