@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.41 -->
+<!-- v2.42 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -240,6 +240,9 @@
   .te-top{display:flex;justify-content:space-between;align-items:flex-start;}
   .te-ico{font-size:24px;line-height:1;background:none;border:1px dashed var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;min-width:40px;}
   .te-ico:hover{border-color:var(--caramel);background:#fff;}
+  .te-ico img{width:40px;height:40px;object-fit:contain;display:block;}
+  .home-tile .tile-img{width:56px;height:56px;object-fit:contain;display:block;}
+  .pick-img{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
   .te-tools{display:flex;gap:2px;opacity:.35;}
   .tile-e:hover .te-tools, .tile-e:focus-within .te-tools{opacity:1;}
   @media (hover:none){ .te-tools{opacity:1;} }
@@ -534,7 +537,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.41';
+const APP_VERSION = 'v2.42';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -782,6 +785,13 @@ async function publishToGitHub(){
         }
       }
     });
+    HOME.tiles.forEach(t=>{
+      const m = String(t.img || '').match(/^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/);
+      if(m && imgMap[t.img] === undefined){
+        imgMap[t.img] = '';
+        found.push({dataUrl: t.img, ext: (m[1] === 'jpeg' ? 'jpg' : m[1]), b64: m[2]});
+      }
+    });
     for(let i = 0; i < found.length; i++){
       $('status').textContent = 'Nahrávám obrázky ' + (i + 1) + '/' + found.length + '…';
       const f = found[i];
@@ -804,7 +814,7 @@ async function publishToGitHub(){
       troubleshootCats: TROUBLESHOOT_CATS,
       customSections: CUSTOM_SECTIONS,
       baseSections: BASE_SECTION_STATE,
-      home: HOME,
+      home: Object.assign({}, HOME, {tiles: HOME.tiles.map(t=> (t.img && imgMap[t.img]) ? Object.assign({}, t, {img: imgMap[t.img]}) : t)}),
       branches: BRANCHES,
       roles: roles,
       seedAll: articles.map(a=>{
@@ -964,6 +974,30 @@ function resizeImage(file, maxDim, quality){
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Malý obrázek pro dlaždici: průhledné obrázky (PNG, SVG, WebP, GIF) zůstanou PNG, fotky JPEG
+function resizeTileImage(file, maxDim){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('read failed'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>reject(new Error('image load failed'));
+      img.onload = ()=>{
+        let w = img.naturalWidth || img.width || maxDim, h = img.naturalHeight || img.height || maxDim;
+        const k = Math.min(1, maxDim / Math.max(w, h));
+        if(/svg/.test(file.type)) { const k2 = maxDim / Math.max(w, h); w = Math.round(w * k2); h = Math.round(h * k2); }
+        else { w = Math.round(w * k); h = Math.round(h * k); }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(/jpe?g/.test(file.type) ? canvas.toDataURL('image/jpeg', 0.88) : canvas.toDataURL('image/png'));
       };
       img.src = reader.result;
     };
@@ -1742,7 +1776,7 @@ function renderHomeEditor(){
   H.tiles.forEach((t, i)=>{
     const bad = t.section ? !sectionExists(t.section) : !articles.some(x=>x.id === t.id);
     html += '<div class="home-tile tile-e' + (icoPick === i ? ' picking' : '') + '">' +
-      '<div class="te-top"><button class="te-ico" data-ico-open="' + i + '" title="Změnit ikonu">' + escapeHtml(t.ico || '+') + '</button>' +
+      '<div class="te-top"><button class="te-ico" data-ico-open="' + i + '" title="Změnit ikonu nebo obrázek">' + (t.img ? '<img src="' + escapeHtml(t.img) + '" alt="">' : escapeHtml(t.ico || '+')) + '</button>' +
         '<span class="te-tools"><button data-t-up="' + i + '" title="Posunout dopředu">←</button><button data-t-down="' + i + '" title="Posunout dozadu">→</button><button data-t-del="' + i + '" title="Smazat dlaždici">✕</button></span></div>' +
       '<input class="lbl hin" data-t="' + i + ',lbl" value="' + escapeHtml(t.lbl || '') + '" placeholder="Název dlaždice">' +
       '<textarea class="dsc hin" data-t="' + i + ',dsc" rows="2" placeholder="Krátký popis">' + escapeHtml(t.dsc || '') + '</textarea>' +
@@ -1750,7 +1784,11 @@ function renderHomeEditor(){
         '<select data-t-target="' + i + '" title="Kam dlaždice vede">' + (bad ? '<option value="" selected>– vyber, kam vede –</option>' : '') + tileTargetOptions(t) + '</select>' +
         '<button class="te-go" data-t-go="' + i + '" title="Otevřít článek, kam dlaždice vede">Otevřít</button></div>' +
     '</div>';
-    if(icoPick === i) html += '<div class="te-pick">' + icoPickerHtml() + '</div>';
+    if(icoPick === i) html += '<div class="te-pick"><div class="pick-img">' +
+      '<button type="button" class="btn ghost" id="tileImgBtn">🖼 Vybrat obrázek z počítače…</button>' +
+      (t.img ? '<button type="button" class="btn ghost" id="tileImgDel">✕ Odebrat obrázek</button>' : '') +
+      '<input type="file" id="tileImgInput" accept="image/*" style="display:none;"></div>' +
+      '<div class="field-hint">Nebo vyber ikonu:</div>' + icoPickerHtml() + '</div>';
   });
   html += '<button class="home-tile tile-add-e" id="tAdd"><span class="ico">+</span><span class="lbl">Přidat dlaždici</span></button></div>' +
     '<div class="field-hint">Nadpis, texty i ikony upravíš kliknutím přímo na ně. Ukládá se hned – na web to pošleš tlačítkem Publikovat na web.</div>';
@@ -1788,8 +1826,23 @@ function renderHomeEditor(){
   });
   $('main').querySelectorAll('[data-ico-cat]').forEach(b=>{ b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderHomeEditor(); }; });
   $('main').querySelectorAll('[data-ico]').forEach(b=>{
-    b.onclick = ()=>{ H.tiles[icoPick].ico = b.dataset.ico; icoPick = -1; saveHome(); renderHomeEditor(); };
+    b.onclick = ()=>{ H.tiles[icoPick].ico = b.dataset.ico; delete H.tiles[icoPick].img; icoPick = -1; saveHome(); renderHomeEditor(); };
   });
+  if($('tileImgBtn')){
+    $('tileImgBtn').onclick = ()=>$('tileImgInput').click();
+    $('tileImgInput').onchange = async ()=>{
+      const file = $('tileImgInput').files[0];
+      $('tileImgInput').value = '';
+      if(!file || icoPick === -1) return;
+      try{
+        H.tiles[icoPick].img = await resizeTileImage(file, 160);
+        icoPick = -1;
+        saveHome();
+        renderHomeEditor();
+      }catch(e){ $('status').textContent = 'Obrázek se nepodařilo načíst. Zkus jiný soubor (PNG, JPG, SVG).'; }
+    };
+  }
+  if($('tileImgDel')) $('tileImgDel').onclick = ()=>{ delete H.tiles[icoPick].img; icoPick = -1; saveHome(); renderHomeEditor(); };
   const swap = (i, j)=>{ if(j < 0 || j >= H.tiles.length) return; icoPick = -1; const x = H.tiles[i]; H.tiles[i] = H.tiles[j]; H.tiles[j] = x; saveHome(); renderHomeEditor(); };
   $('main').querySelectorAll('[data-t-up]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tUp, +b.dataset.tUp - 1); });
   $('main').querySelectorAll('[data-t-down]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tDown, +b.dataset.tDown + 1); });
@@ -1869,7 +1922,7 @@ function renderHome(){
   });
   if(tiles.length){
     html += '<div class="home-tiles">' + tiles.map((t, i)=>
-      '<button class="home-tile" data-tile="' + i + '"><span class="ico">' + escapeHtml(t.ico || '') + '</span><span class="lbl">' + escapeHtml(t.lbl) + '</span><span class="dsc">' + escapeHtml(t.dsc) + '</span></button>'
+      '<button class="home-tile" data-tile="' + i + '">' + (t.img ? '<img class="tile-img" src="' + escapeHtml(t.img) + '" alt="">' : '<span class="ico">' + escapeHtml(t.ico || '') + '</span>') + '<span class="lbl">' + escapeHtml(t.lbl) + '</span><span class="dsc">' + escapeHtml(t.dsc) + '</span></button>'
     ).join('') + '</div>';
   }
   html += homeListsHtml(visible, false);
@@ -2824,7 +2877,7 @@ function renderHelpMain(){
       '<li><b>🏪 Pobočky</b> (dole v panelu) – seznam poboček. U článku zaškrtneš, pro které pobočky platí. Odstavce, které platí jen pro jednu pobočku, označ a v liště nástrojů vyber <b>🏪 Jen pro pobočku…</b>; blok zrušíš stejnou nabídkou (✕ Zrušit blok).</li>' +
       '<li><b>📎 Přidat přílohu</b> v úpravě článku nahraje PDF nebo Excel. Soubory jsou veřejně dostupné, nedávej sem citlivé dokumenty.</li>' +
       '<li>Pod dlaždicemi na úvodu zaškrtneš, které sekce se ukážou jako <b>seznam článků</b>.</li>' +
-      '<li><b>Úvodní stránku</b> upravíš přímo na ní: klikni do nadpisu, názvu nebo popisu dlaždice a piš. Kliknutím na ikonu ji změníš, dole v dlaždici vybereš, kam vede, šipkami ← → měníš pořadí. Prázdná čárkovaná dlaždice přidá novou. Ukládá se hned.</li>' +
+      '<li><b>Úvodní stránku</b> upravíš přímo na ní: klikni do nadpisu, názvu nebo popisu dlaždice a piš. Kliknutím na ikonu ji změníš – nebo tam dáš vlastní obrázek z počítače (🖼 Vybrat obrázek…, nejlépe PNG s průhledným pozadím nebo SVG), dole v dlaždici vybereš, kam vede, šipkami ← → měníš pořadí. Prázdná čárkovaná dlaždice přidá novou. Ukládá se hned.</li>' +
       '<li><b>🔖 QR štítky</b> (dole v panelu) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
       '<li>Novou sekci přidáš tlačítkem <b>+</b> v liště pod sekcemi. Sekci přejmenuješ ✎ (kliknutím na ikonu změníš i ikonu) nebo smažeš ✕ v její hlavičce v panelu (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
       '<li>Přepínání editor/čtenář najdeš pod <b>✏️ / 👤</b> dole v liště – vidí ho jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
