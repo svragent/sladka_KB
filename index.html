@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.30 -->
+<!-- v2.31 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -184,6 +184,14 @@
   .cat-group.closed .art-list{display:none;}
   .cat-count{font-weight:600;color:var(--cocoa-soft);font-size:10.5px;letter-spacing:0;}
   .cat-chev-btn{border:none;background:transparent;cursor:pointer;padding:0 2px;line-height:1;}
+  .log-entry{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:10px 14px;margin-top:10px;}
+  .log-head{font-size:13px;margin-bottom:4px;color:var(--cocoa-soft);}
+  .log-head b{color:var(--cocoa);}
+  .log-line{font-size:13px;line-height:1.6;}
+  .log-label{font-weight:700;color:var(--caramel-deep);}
+  .log-sep{margin:0 6px;color:var(--line);}
+  .log-art{background:none;border:none;padding:0;font:inherit;color:var(--caramel-deep);text-decoration:underline;cursor:pointer;text-align:left;}
+  .log-preview{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px;}
   .crumbs{font-size:12px;color:var(--cocoa-soft);margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;}
   .crumb{background:none;border:none;padding:0;font:inherit;color:var(--caramel-deep);cursor:pointer;}
   .crumb:hover{text-decoration:underline;}
@@ -395,6 +403,7 @@
         <button class="backup-btn" id="qrBtn">🏷️ QR štítky k vytištění</button>
       </div>
       <div class="backup-row" id="cardRow" style="display:none;margin-top:6px;">
+        <button class="backup-btn" id="logBtn">🕘 Historie změn</button>
         <a class="backup-btn" id="cardLink" href="karta/" style="text-align:center;text-decoration:none;">👥 Karta zaměstnance</a>
       </div>
       <div class="status" id="status"></div>
@@ -416,7 +425,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.30';
+const APP_VERSION = 'v2.31';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1972,17 +1981,142 @@ function snapshotChanges(prev, cur){
   if(prev.related !== cur.related) ch.push('související');
   return ch;
 }
+async function fetchCommits(path){
+  const url = 'https://api.github.com/repos/' + GH_REPO + '/commits?path=' + path + '&per_page=30';
+  let token = null;
+  try{ token = localStorage.getItem('kb-gh-token'); }catch(e){}
+  let res = token ? await fetch(url, {headers:{'Accept':'application/vnd.github+json', 'Authorization':'Bearer ' + token}, cache:'no-store'}) : null;
+  if(!res || !res.ok) res = await fetch(url, {headers:{'Accept':'application/vnd.github+json'}, cache:'no-store'});
+  if(!res.ok) throw new Error('commits');
+  return await res.json();
+}
+async function fetchVersion(sha, path){
+  const raw = await fetch('https://raw.githubusercontent.com/' + GH_REPO + '/' + sha + '/' + path);
+  if(!raw.ok) return null;
+  return parseDataJs(await raw.text());
+}
+
+/* ---------- celková historie změn (log) ---------- */
+let logData = null;   // {loading, progress, error, entries:[{date, who, lines:[], arts:[{id,title,snap}]}], openKey}
+function catMapOf(data){
+  const m = {};
+  ['postupCats','manualCats','wikiCats','troubleshootCats'].forEach(k=>(data[k] || []).forEach(c=>{ m[c.id] = c.label; }));
+  (data.customSections || []).forEach(cs=>(cs.cats || []).forEach(c=>{ m[c.id] = c.label; }));
+  return m;
+}
+function sectionNamesOf(data){
+  const base = {sop:'📋 Postupy (SOP)', wiki:'🏢 Firemní wiki', troubleshooting:'🛟 Troubleshooting'};
+  const bs = data.baseSections || {renamed:{}, deleted:[]};
+  const m = {};
+  Object.keys(base).forEach(k=>{ if((bs.deleted || []).indexOf(k) === -1) m[k] = (bs.renamed || {})[k] || base[k]; });
+  (data.customSections || []).forEach(cs=>{ m[cs.id] = cs.label; });
+  return m;
+}
+function diffKbData(prev, cur){
+  const lines = [], arts = [];
+  const P = {}, C = {};
+  (prev.seedAll || []).forEach(a=>{ P[a.id] = a; });
+  (cur.seedAll || []).forEach(a=>{ C[a.id] = a; });
+  const added = [], removed = [], changed = [];
+  Object.keys(C).forEach(id=>{
+    if(!P[id]){ added.push(C[id]); return; }
+    const ch = snapshotChanges(articleSnapshot(P[id]), articleSnapshot(C[id]));
+    if(ch.length) changed.push({a: C[id], ch: ch});
+  });
+  Object.keys(P).forEach(id=>{ if(!C[id]) removed.push(P[id]); });
+  if(added.length) lines.push({label:'Přidáno', items: added.map(a=>({id:a.id, text:a.title}))});
+  if(changed.length) lines.push({label:'Upraveno', items: changed.map(x=>({id:x.a.id, text:x.a.title + ' (' + x.ch.join(', ') + ')'}))});
+  if(removed.length) lines.push({label:'Smazáno', items: removed.map(a=>({text:a.title}))});
+  added.concat(changed.map(x=>x.a)).forEach(a=>arts.push({id:a.id, title:a.title, snap:articleSnapshot(a)}));
+  // kategorie
+  const pc = catMapOf(prev), cc = catMapOf(cur), catLines = [];
+  Object.keys(cc).forEach(id=>{ if(!(id in pc)) catLines.push('nová „' + cc[id] + '“'); else if(pc[id] !== cc[id]) catLines.push('„' + pc[id] + '“ → „' + cc[id] + '“'); });
+  Object.keys(pc).forEach(id=>{ if(!(id in cc)) catLines.push('smazaná „' + pc[id] + '“'); });
+  if(catLines.length) lines.push({label:'Kategorie', items: catLines.map(t=>({text:t}))});
+  // sekce
+  const ps = sectionNamesOf(prev), csn = sectionNamesOf(cur), secLines = [];
+  Object.keys(csn).forEach(id=>{ if(!(id in ps)) secLines.push('nová ' + csn[id]); else if(ps[id] !== csn[id]) secLines.push(ps[id] + ' → ' + csn[id]); });
+  Object.keys(ps).forEach(id=>{ if(!(id in csn)) secLines.push('smazaná ' + ps[id]); });
+  if(secLines.length) lines.push({label:'Sekce', items: secLines.map(t=>({text:t}))});
+  // role
+  const pr = {}, cr = {}, roleLines = [];
+  (prev.roles || []).forEach(r=>{ pr[r.id] = r; });
+  (cur.roles || []).forEach(r=>{ cr[r.id] = r; });
+  Object.keys(cr).forEach(id=>{
+    if(!pr[id]) roleLines.push('nová „' + cr[id].label + '“');
+    else if(pr[id].label !== cr[id].label) roleLines.push('„' + pr[id].label + '“ → „' + cr[id].label + '“');
+    else if((pr[id].allowedCats || []).slice().sort().join() !== (cr[id].allowedCats || []).slice().sort().join()) roleLines.push('„' + cr[id].label + '“ – změna viditelných kategorií');
+  });
+  Object.keys(pr).forEach(id=>{ if(!cr[id]) roleLines.push('smazaná „' + pr[id].label + '“'); });
+  if(roleLines.length) lines.push({label:'Role', items: roleLines.map(t=>({text:t}))});
+  return {lines: lines, arts: arts};
+}
+async function loadLog(){
+  logData = {loading: true, progress: '', error: '', entries: [], openKey: ''};
+  render();
+  try{
+    const commits = (await fetchCommits(GH_FILE)).reverse();
+    let prev = null;
+    const entries = [];
+    for(let i = 0; i < commits.length; i++){
+      if(view !== 'log') return;
+      logData.progress = (i + 1) + '/' + commits.length;
+      renderLogMain();
+      const data = await fetchVersion(commits[i].sha, GH_FILE);
+      if(!data || !Array.isArray(data.seedAll)) continue;
+      const c = commits[i];
+      const e = {date: c.commit.author.date, who: (c.author && c.author.login) || c.commit.author.name, lines: [], arts: []};
+      if(!prev){ e.lines = [{label:'Výchozí stav', items:[{text:data.seedAll.length + ' článků'}]}]; }
+      else { const d = diffKbData(prev, data); e.lines = d.lines; e.arts = d.arts; }
+      if(e.lines.length) entries.push(e);
+      prev = data;
+    }
+    if(view !== 'log') return;
+    logData.entries = entries.reverse();
+    logData.loading = false;
+  }catch(err){
+    logData.loading = false;
+    logData.error = 'Historii se nepodařilo načíst z GitHubu. Zkus to za chvíli znovu.';
+  }
+  if(view === 'log') renderLogMain();
+}
+function renderLogMain(){
+  if(view !== 'log' || !logData) return;
+  let html = '<div class="art-title">Historie změn</div>' +
+    '<div class="field-hint">Všechny publikace znalostní báze (posledních 30), od nejnovější. U každé je vidět, co se od předchozí publikace změnilo. Kliknutím na článek zobrazíš jeho tehdejší podobu. Nepublikované úpravy z prohlížeče tu nejsou.</div>';
+  if(logData.loading) html += '<div class="status">Načítám historii… ' + logData.progress + '</div>';
+  else if(logData.error) html += '<div class="status">' + escapeHtml(logData.error) + '</div>';
+  else if(!logData.entries.length) html += '<div class="status">Zatím žádné publikované změny.</div>';
+  else html += logData.entries.map((e, ei)=>{
+    const d = new Date(e.date);
+    const when = d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    let h = '<div class="log-entry"><div class="log-head"><b>' + when + '</b> · ' + escapeHtml(e.who) + '</div>';
+    e.lines.forEach(l=>{
+      h += '<div class="log-line"><span class="log-label">' + escapeHtml(l.label) + ':</span> ' + l.items.map(it=>{
+        const art = it.id && e.arts.find(a=>a.id === it.id);
+        return art ? '<button class="log-art" data-log="' + ei + ':' + it.id + '">' + escapeHtml(it.text) + '</button>' : '<span>' + escapeHtml(it.text) + '</span>';
+      }).join('<span class="log-sep">·</span>') + '</div>';
+    });
+    e.arts.forEach(a=>{
+      if(logData.openKey === ei + ':' + a.id){
+        h += '<div class="log-preview"><div class="field-label" style="margin-top:0">' + escapeHtml(a.snap.title) + ' – podoba z této publikace</div><div class="art-body">' + a.snap.body + '</div></div>';
+      }
+    });
+    return h + '</div>';
+  }).join('');
+  html += '<div class="row"><button class="btn ghost" id="backFromLog">Zpět na návody</button></div>';
+  $('main').innerHTML = html;
+  $('main').querySelectorAll('[data-log]').forEach(b=>{
+    b.onclick = ()=>{ logData.openKey = (logData.openKey === b.dataset.log) ? '' : b.dataset.log; renderLogMain(); };
+  });
+  $('backFromLog').onclick = ()=>{ view = 'article'; logData = null; render(); };
+}
+
 async function loadHistory(artId){
   historyData = {artId: artId, loading: true, error: '', versions: [], openIdx: -1};
   render();
   try{
-    const headers = {'Accept': 'application/vnd.github+json'};
-    let token = null;
-    try{ token = localStorage.getItem('kb-gh-token'); }catch(e){}
-    if(token) headers['Authorization'] = 'Bearer ' + token;
-    const res = await fetch('https://api.github.com/repos/' + GH_REPO + '/commits?path=' + GH_FILE + '&per_page=30', {headers: headers, cache: 'no-store'});
-    if(!res.ok) throw new Error('commits');
-    const commits = (await res.json()).reverse(); // od nejstarší
+    const commits = (await fetchCommits(GH_FILE)).reverse(); // od nejstarší
     let prev = null;
     const versions = [];
     for(let i = 0; i < commits.length; i++){
@@ -2088,7 +2222,7 @@ function renderHelpMain(){
       '<li><b>+ Nový článek</b> se po uložení objeví v <b>Nezařazeno</b>. Do kategorie ho přetáhni myší, stejně tak měníš pořadí.</li>' +
       '<li>Název kategorie přepíšeš kliknutím do něj. <b>×</b> kategorii smaže (klikni dvakrát). Novou přidáš polem <b>+ Nová kategorie</b>.</li>' +
       '<li>Článek smažeš tlačítkem <b>Smazat</b> (klikni dvakrát).</li>' +
-      '<li><b>🕘 Historie</b> ukáže, kdo a kdy článek změnil a jak vypadal dřív (podle publikací).</li>' +
+      '<li><b>🕘 Historie</b> pod článkem ukáže, kdo a kdy článek změnil a jak vypadal dřív. <b>🕘 Historie změn</b> dole vlevo ukáže všechny publikace za celou znalostní bázi (články, kategorie, sekce, role).</li>' +
       '</ul>' +
       '<h3>Úprava textu</h3><ul>' +
       '<li><b>B</b>, <b>Nadpis</b>, <b>Odrážka</b> – zvýrazněné tlačítko je zapnuté, druhým kliknutím ho vypneš.</li>' +
@@ -2189,6 +2323,7 @@ function render(){
   else if(view === 'roles') renderRolesMain();
   else if(view === 'help') renderHelpMain();
   else if(view === 'history') renderHistoryMain();
+  else if(view === 'log') renderLogMain();
   else if(view === 'qr') renderQrMain();
   else renderMain();
 }
@@ -2208,6 +2343,7 @@ $('homeBtn').onclick = ()=>{ goHome(); };
 $('bnHome').onclick = ()=>{ goHome(); };
 $('bnSearch').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); setTimeout(()=>$('searchInput').focus(), 250); };
 $('bnList').onclick = ()=>{ const t = $('sectionSwitch'); window.scrollTo({top: t.getBoundingClientRect().top + window.scrollY - 10, behavior:'smooth'}); };
+$('logBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'log'; loadLog(); scrollToMainOnMobile(); };
 $('qrBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'qr'; render(); scrollToMainOnMobile(); };
 $('rolesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'roles'; editingRoleId = null; render(); scrollToMainOnMobile(); };
 $('addBtn').onclick = ()=>{
