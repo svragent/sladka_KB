@@ -200,7 +200,6 @@
         <select class="f-select" id="roleSelect"></select>
       </div>
       <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
-      <button class="plain-btn" id="catsBtn" style="display:none;">🏷️ Spravovat kategorie</button>
 
       <input class="search-box" id="searchInput" type="text" placeholder="🔍 Hledat ve všech článcích…">
       <div class="section-switch" id="sectionSwitch"></div>
@@ -285,7 +284,7 @@ let axisId = 'postup';
 let activeId = null;
 let editing = false;
 let videoOpen = false;
-let view = 'article';    // 'article' | 'roles' | 'cats'
+let view = 'article';    // 'article' | 'roles'
 let editingRoleId = null;
 let readerRoleId = null;
 let searchQuery = '';
@@ -444,7 +443,6 @@ function applyMode(){
   $('addBtn').style.display = isEditor ? 'block' : 'none';
   $('backupRow').style.display = isEditor ? 'flex' : 'none';
   $('rolesBtn').style.display = isEditor ? 'block' : 'none';
-  $('catsBtn').style.display = isEditor ? 'block' : 'none';
   $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
   if(!isEditor) renderRoleSelect();
   $('status').textContent = 'Offline verze – data se ukládají jen v tomto prohlížeči. Pro přenos použij zálohu.';
@@ -775,30 +773,13 @@ function referencedImageIndexes(content){
 
 function uid(){ return 'a' + Date.now() + Math.random().toString(36).slice(2,7); }
 
-function tagBoxHtml(field, selected){
-  const cats = FIELD_CATS[field];
-  return '<div class="tag-box">' + cats.map(c=>
-    '<label class="tag-check"><input type="checkbox" data-tag="' + field + '" value="' + c.id + '"' +
-    ((selected||[]).indexOf(c.id)!==-1 ? ' checked' : '') + '> ' + escapeHtml(c.label) + '</label>'
-  ).join('') + '</div>';
-}
-
-function sectionTagsHtml(sec, art){
-  return SECTION_AXES[sec].map(axis=>
-    '<div class="field-label">' + escapeHtml(axis.label) + '</div>' +
-    '<div class="field-hint">' + escapeHtml(axis.hint) + '</div>' +
-    tagBoxHtml(axis.field, art[axis.field])
-  ).join('');
-}
-
 function editFormHtml(art){
   const sec = art.section || 'sop';
   return '<div class="field-label">Název</div>' +
     '<input class="f-title" id="f-title" value="' + escapeHtml(art.title||'') + '">' +
     '<div class="field-label">Sekce</div>' +
-    '<div class="field-hint">Do které části znalostní báze článek patří – mění, jaké kategorie si dole vybereš.</div>' +
+    '<div class="field-hint">Do které části znalostní báze článek patří.</div>' +
     '<select class="f-select" id="f-section">' + SECTIONS.map(s=>'<option value="' + s.id + '"' + (s.id===sec ? ' selected' : '') + '>' + escapeHtml(s.label) + '</option>').join('') + '</select>' +
-    '<div id="sectionTagsArea">' + sectionTagsHtml(sec, art) + '</div>' +
     '<div class="field-label">Obsah</div>' +
     '<div class="field-hint">Napiš text, vyber ho a klikni na tučně/nadpis/odrážku (tlačítkem "Normální" zrušíš formátování zpátky). Obrázek vlož tlačítkem 🖼️, nebo ho sem rovnou vlož (Ctrl+V) – obrázek v textu smažeš kliknutím na něj.</div>' +
     '<div class="fmt-toolbar">' +
@@ -816,7 +797,7 @@ function editFormHtml(art){
     '<div class="field-label">Související články</div>' +
     '<div class="field-hint">Zaškrtni články, které se čtenáři nabídnou jako „Souvisí s“ dole u tohoto článku.</div>' +
     relatedBoxHtml(art) +
-    '<div class="field-hint" style="margin-top:10px">Aby čtenáři návod viděli, musí mít zaškrtnutou aspoň jednu jeho kategorii povolenou u své role (viz „Spravovat role“). Kategorie os SOP upravíš v „Spravovat kategorie“.</div>' +
+    '<div class="field-hint" style="margin-top:10px">Aby čtenáři návod viděli, musí být přetažený aspoň do jedné kategorie povolené u své role (viz „Spravovat role“).</div>' +
     '<div class="row"><button class="btn" id="saveBtn">Uložit</button><button class="btn ghost" id="cancelBtn">Zrušit</button></div>';
 }
 
@@ -831,10 +812,6 @@ function relatedBoxHtml(art){
 
 function bindEditForm(art){
   if(!art.images) art.images = [];
-  const sectionSel = $('f-section');
-  sectionSel.onchange = ()=>{
-    $('sectionTagsArea').innerHTML = sectionTagsHtml(sectionSel.value, art);
-  };
 
   const bodyEl = $('f-body');
 
@@ -925,9 +902,6 @@ function bindEditForm(art){
     art.section = $('f-section').value;
     art.body = $('f-body').innerHTML;
     art.videoUrl = $('f-video').value.trim();
-    SECTION_AXES[art.section].forEach(axis=>{
-      art[axis.field] = Array.from(document.querySelectorAll('[data-tag="' + axis.field + '"]:checked')).map(el=>el.value);
-    });
     art.related = Array.from(document.querySelectorAll('[data-related]:checked')).map(el=>el.value);
     art.updatedAt = new Date().toISOString().slice(0,10);
     if(art.isNew){ delete art.isNew; articles.push(art); }
@@ -1035,78 +1009,11 @@ function renderRolesMain(){
   $('backToArticles').onclick = ()=>{ view = 'article'; render(); };
 }
 
-/* ---------- kategorie (jen editor) ---------- */
-function catsAxisSectionHtml(key){
-  const ax = EDITABLE_AXES[key];
-  let html = '<div class="field-label">' + escapeHtml(ax.label) + '</div>';
-  html += ax.cats.map(c=>
-    '<div class="role-row">' +
-      '<input class="f-title" data-cat-rename="' + key + ':' + c.id + '" value="' + escapeHtml(c.label) + '" style="font-size:13px;font-weight:400;font-family:inherit;flex:1;margin-right:8px;">' +
-      '<button class="btn red" data-cat-del="' + key + ':' + c.id + '">Smazat</button>' +
-    '</div>'
-  ).join('');
-  html += '<div class="row"><input class="f-title" id="newCat-' + key + '" placeholder="Nová kategorie" style="flex:1;font-size:13px;font-weight:400;font-family:inherit;"><button class="btn" data-cat-add="' + key + '">Přidat</button></div>';
-  return html;
-}
-
-function renderCatsMain(){
-  let html = '<div class="art-title">Kategorie</div>' +
-    '<div class="field-hint">Úprava kategorií pro všechny čtyři osy. Přejmenování nezmění zařazení existujících článků; smazání kategorie ji odebere ze všech článků i rolí, které ji používaly.</div>' +
-    catsAxisSectionHtml('postup') +
-    catsAxisSectionHtml('manual') +
-    catsAxisSectionHtml('wiki') +
-    catsAxisSectionHtml('troubleshooting') +
-    '<div class="row"><button class="btn ghost" id="backToArticles2">Zpět na návody</button></div>';
-  $('main').innerHTML = html;
-
-  document.querySelectorAll('[data-cat-rename]').forEach(inp=>{
-    inp.onchange = ()=>{
-      const [key, id] = inp.dataset.catRename.split(':');
-      const cat = EDITABLE_AXES[key].cats.find(c=>c.id===id);
-      if(cat){
-        cat.label = inp.value.trim() || cat.label;
-        inp.value = cat.label;
-        saveEditableCats(key);
-      }
-    };
-  });
-  document.querySelectorAll('[data-cat-del]').forEach(b=>{
-    b.onclick = ()=>{
-      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Opravdu?'; return; }
-      const [key, id] = b.dataset.catDel.split(':');
-      const ax = EDITABLE_AXES[key];
-      const idx = ax.cats.findIndex(c=>c.id===id);
-      if(idx !== -1) ax.cats.splice(idx, 1);
-      articles.forEach(a=>{
-        if(a[ax.field]){ a[ax.field] = a[ax.field].filter(t=>t!==id); }
-      });
-      roles.forEach(r=>{ r.allowedCats = r.allowedCats.filter(t=>t!==id); });
-      saveEditableCats(key);
-      saveArticles();
-      saveRoles();
-      renderCatsMain();
-    };
-  });
-  document.querySelectorAll('[data-cat-add]').forEach(b=>{
-    b.onclick = ()=>{
-      const key = b.dataset.catAdd;
-      const input = $('newCat-' + key);
-      const name = input.value.trim();
-      if(!name) return;
-      EDITABLE_AXES[key].cats.push({id:uid(), label:name});
-      saveEditableCats(key);
-      renderCatsMain();
-    };
-  });
-  $('backToArticles2').onclick = ()=>{ view = 'article'; render(); };
-}
-
 function render(){
   renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
   if(view === 'roles') renderRolesMain();
-  else if(view === 'cats') renderCatsMain();
   else renderMain();
 }
 
@@ -1119,7 +1026,6 @@ $('modeToggleBtn').onclick = ()=>{
   render();
 };
 $('rolesBtn').onclick = ()=>{ view = 'roles'; editingRoleId = null; render(); };
-$('catsBtn').onclick = ()=>{ view = 'cats'; render(); };
 $('addBtn').onclick = ()=>{
   activeId = uid();
   editing = true;
@@ -1211,4 +1117,3 @@ init();
 </script>
 </body>
 </html>
-```
