@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karta zaměstnance</title>
+<!-- v3.2 -->
+<style>
+  :root{
+    --cream:#F7EFE0;
+    --paper:#FFFDF8;
+    --cocoa:#3B2A20;
+    --cocoa-soft:#6B5744;
+    --caramel:#B9793A;
+    --caramel-deep:#8F5A24;
+    --cherry:#A63446;
+    --honey:#C98B1F;
+    --sage:#5B7B52;
+    --sky:#4B6E8C;
+    --line:#E7D9BE;
+    --line-soft:#F0E5CE;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--cocoa);
+    font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:14px;
+  }
+  h1,h2,h3{font-family:Georgia,"Iowan Old Style",serif;margin:0;}
+  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+  @media (max-width:760px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{border-right:none;border-bottom:1px solid var(--line);}
+    .main{padding:20px 14px 60px;}
+  }
+  .sidebar{background:var(--paper);border-right:1px solid var(--line);padding:20px 16px;}
+  .sidebar h1{font-size:19px;line-height:1.25;}
+  .sidebar .sub{color:var(--cocoa-soft);font-size:12px;margin-top:4px;margin-bottom:12px;}
+  .mode-badge{
+    display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;
+    margin-bottom:14px;background:var(--line-soft);color:var(--caramel-deep);
+    border:1px solid transparent;cursor:pointer;font-family:inherit;
+  }
+  .mode-badge:hover{border-color:var(--caramel);}
+  .mode-badge.employee{background:#DCE6F0;color:#2F4E6B;}
+  .mode-badge.employee:hover{border-color:#6B8CAE;}
+  .emp-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .emp-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;
+  }
+  .emp-item:hover{background:var(--line-soft);}
+  .emp-item.active{background:var(--cream);border-color:var(--caramel);}
+  .emp-item .nm{font-weight:600;}
+  .add-btn{
+    margin-top:14px;width:100%;padding:9px;border-radius:8px;
+    border:1.5px dashed var(--caramel);background:transparent;color:var(--caramel-deep);
+    font-weight:600;cursor:pointer;font-size:13px;
+  }
+  .add-btn:hover{background:var(--line-soft);}
+  .add-form{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .add-form input{
+    font-family:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line);
+    border-radius:6px;background:var(--paper);color:var(--cocoa);
+  }
+  .add-form .row{display:flex;gap:6px;}
+  .add-form button{flex:1;padding:7px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;}
+  .add-form .confirm{background:var(--caramel);color:#fff;}
+  .add-form .cancel{background:var(--line-soft);color:var(--cocoa-soft);}
+  .backup-row{display:flex;gap:6px;margin-top:12px;}
+  .backup-btn{
+    flex:1;padding:7px 4px;border-radius:6px;border:1px solid var(--line);
+    background:var(--paper);color:var(--cocoa-soft);font-size:11px;cursor:pointer;
+  }
+  .backup-btn:hover{background:var(--line-soft);}
+  .mode-btn{
+    margin-top:16px;width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);
+    background:var(--paper);color:var(--cocoa);font-size:12px;font-weight:600;cursor:pointer;
+  }
+  .mode-btn:hover{background:var(--line-soft);}
+  .mode-note{font-size:10.5px;color:var(--cocoa-soft);margin-top:10px;line-height:1.4;}
+  .version-tag{font-size:9.5px;color:var(--line);margin-top:16px;text-align:right;user-select:none;}
+  .badges-row{display:flex;gap:6px;margin:1px 0 5px;flex-wrap:wrap;}
+  .badge-ico{font-size:16px;line-height:1;cursor:default;}
+  .badge-num{font-size:9px;font-weight:700;color:var(--cocoa-soft);margin-left:1px;vertical-align:middle;}
+  .emp-badge{font-size:13px;flex-shrink:0;margin-left:6px;}
+
+  .title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .search-input{
+    width:100%;font-family:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line);
+    border-radius:6px;background:var(--paper);color:var(--cocoa);margin-bottom:8px;
+  }
+  .help-btn{
+    width:22px;height:22px;border-radius:50%;border:1px solid var(--caramel);
+    background:var(--paper);color:var(--caramel-deep);font-weight:700;font-size:12px;
+    cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,sans-serif;padding:0;
+  }
+  .help-btn:hover{background:var(--line-soft);}
+  .help-overlay{
+    position:fixed;inset:0;background:rgba(59,42,32,.45);z-index:50;
+    display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;
+  }
+  .help-modal{
+    background:var(--paper);border-radius:14px;max-width:560px;width:100%;
+    padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  .help-modal h2{font-size:18px;margin-bottom:4px;}
+  .help-sub{font-size:12px;color:var(--cocoa-soft);margin-bottom:16px;}
+  .help-modal h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--caramel-deep);margin:16px 0 6px;font-family:-apple-system,sans-serif;font-weight:700;}
+  .help-modal h3:first-of-type{margin-top:0;}
+  .help-modal p{font-size:13px;line-height:1.55;color:var(--cocoa);margin:0 0 4px;}
+
+  #printArea{display:none;}
+  @media print{
+    body > *:not(#printArea){display:none !important;}
+    #printArea{display:block !important;color:#222;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:13px;}
+    #printArea h1{font-family:Georgia,serif;font-size:20px;margin:0 0 4px;}
+    #printArea .pr-group{margin-top:12px;break-inside:avoid;}
+    #printArea .pr-group b{font-size:13px;}
+    #printArea ul{margin:4px 0 0 18px;padding:0;}
+    #printArea li{margin-bottom:2px;}
+  }
+  .main{padding:26px 30px 60px;max-width:760px;}
+  .empty-state{color:var(--cocoa-soft);padding-top:60px;text-align:center;}
+  .stamp{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:64px;height:64px;border-radius:50%;border:2px solid currentColor;
+    font-family:Georgia,serif;font-weight:700;font-size:11px;
+    text-transform:uppercase;letter-spacing:.04em;text-align:center;
+    transform:rotate(-6deg);line-height:1.15;flex-shrink:0;
+  }
+  .photo-wrap{position:relative;width:64px;height:64px;flex-shrink:0;}
+  .photo-wrap img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line);display:block;}
+  .photo-wrap input[type=file]{display:none;}
+  .photo-label{
+    position:absolute;bottom:-4px;right:-4px;background:var(--paper);border:1px solid var(--line);
+    border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+    font-size:11px;cursor:pointer;
+  }
+  .card-head{display:flex;gap:16px;align-items:center;margin-bottom:22px;}
+  .card-head .fields{flex:1;min-width:0;}
+  .card-head input, select.level-select{
+    font-family:inherit;font-size:14px;border:none;border-bottom:1px solid var(--line);
+    background:transparent;padding:3px 2px;color:var(--cocoa);width:100%;margin-bottom:4px;
+  }
+  .card-head input:focus, select:focus{outline:none;border-bottom-color:var(--caramel);}
+  .name-input{font-family:Georgia,serif;font-size:20px;font-weight:700;border-bottom:none!important;}
+  div.name-input{margin-bottom:4px;}
+  .meta-row{display:flex;gap:14px;font-size:12px;color:var(--cocoa-soft);flex-wrap:wrap;}
+  .meta-row label{display:flex;flex-direction:column;gap:2px;}
+  .wage-line{margin-top:6px;font-size:12px;color:var(--caramel-deep);font-weight:600;}
+
+  section.block{
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:18px;
+  }
+  section.block h2{
+    font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--cocoa-soft);
+    margin-bottom:10px;font-family:-apple-system,sans-serif;font-weight:700;
+  }
+  .progress-bar{height:6px;border-radius:3px;background:var(--line-soft);overflow:hidden;margin-bottom:14px;display:flex;}
+  .progress-seg{height:100%;transition:width .2s;}
+
+  .group-label{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--caramel-deep);margin:14px 0 6px;letter-spacing:.04em;}
+  .group-label:first-child{margin-top:0;}
+  .item{border-bottom:1px solid var(--line-soft);}
+  .item:last-child{border-bottom:none;}
+  .item-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:8px 4px;cursor:pointer;user-select:none;
+  }
+  .item-row .txt{font-size:13px;}
+  .chev{display:inline-block;width:14px;color:var(--cocoa-soft);font-size:11px;}
+  .chip{
+    display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;
+    background:var(--line-soft);color:var(--cocoa-soft);margin-left:4px;vertical-align:1px;
+  }
+  .chip.ok{background:#DCEAD4;color:#3E5C36;}
+  .state-pill{
+    font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    padding:4px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;
+  }
+  .s0{background:#EDEAE2;color:var(--cocoa-soft);}
+  .s1{background:#F6E3B4;color:#7A5A0E;}
+  .s2{background:#DCEAD4;color:#3E5C36;}
+  .s3{background:#DCE6F0;color:#2F4E6B;}
+
+  .item-detail{padding:2px 4px 14px 18px;}
+  .dl{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--cocoa-soft);margin:10px 0 4px;letter-spacing:.04em;}
+  .guide-input{
+    width:100%;font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;
+    padding:8px;background:var(--paper);color:var(--cocoa);min-height:56px;resize:vertical;
+  }
+  .guide-view{font-size:13px;line-height:1.5;background:var(--cream);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere;}
+  .guide-view a{color:var(--caramel-deep);}
+  .muted{color:var(--cocoa-soft);font-size:12px;}
+  .read-row{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:13px;cursor:pointer;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+  .btn{
+    background:var(--caramel);color:#fff;border:none;border-radius:8px;
+    padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;
+  }
+  .btn.ghost{background:var(--line-soft);color:var(--cocoa-soft);}
+  .btn.red{background:var(--cherry);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .link-btn{
+    margin-top:10px;background:none;border:none;color:var(--cocoa-soft);
+    font-size:11px;text-decoration:underline;cursor:pointer;padding:0;display:block;
+  }
+  .quiz{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper);margin-top:8px;}
+  .q{margin-bottom:12px;}
+  .qt{font-weight:600;font-size:13px;margin-bottom:4px;}
+  .opt{display:flex;gap:8px;align-items:flex-start;padding:3px 0;font-size:13px;cursor:pointer;}
+  .draft-note{font-size:11px;color:#7A5A0E;background:#FBF1DA;border-radius:6px;padding:6px 8px;margin-bottom:10px;}
+  .rev-opt{padding:6px 9px;border-radius:6px;font-size:13px;margin:3px 0;background:var(--line-soft);color:var(--cocoa-soft);}
+  .rev-correct{background:#DCEAD4;color:#2F4A28;font-weight:600;}
+  .rev-wrong{background:#F7DDE0;color:#7A2233;font-weight:600;}
+  .result{padding:9px 12px;border-radius:8px;font-size:13px;margin-top:6px;}
+  .result.ok{background:#DCEAD4;color:#3E5C36;}
+  .result.fail{background:#F7DDE0;color:#8A2A3A;}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--cocoa-soft);margin-bottom:10px;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  .banner{border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.45;}
+  .banner.ok{background:#DCEAD4;color:#3E5C36;}
+  .banner.yellow{background:#F6E3B4;color:#6A4E0C;}
+  .banner.red{background:#F7DDE0;color:#8A2A3A;font-weight:600;}
+  .bonus-summary{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--cream);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px;
+  }
+  .bonus-summary b{font-family:Georgia,serif;font-size:16px;}
+  .vio-form{display:grid;grid-template-columns:1fr 150px;gap:8px;margin:14px 0 8px;}
+  .vio-form select,.vio-form input{
+    font-family:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line);
+    border-radius:6px;background:var(--paper);color:var(--cocoa);min-width:0;
+  }
+  .vio-form .full{grid-column:1 / -1;}
+  .vio-row{display:flex;gap:8px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
+  .vio-row:last-child{border-bottom:none;}
+  .vio-main{flex:1;min-width:0;overflow-wrap:anywhere;}
+  .vio-date{font-size:11px;color:var(--cocoa-soft);}
+  .badge{font-size:10px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:12px;white-space:nowrap;}
+  .badge.y{background:#F6E3B4;color:#7A5A0E;}
+  .badge.r{background:#F7DDE0;color:#8A2A3A;}
+  .badge.x{background:#EDEAE2;color:var(--cocoa-soft);}
+
+  .note-form{display:flex;gap:8px;margin-bottom:10px;}
+  .note-form textarea{
+    flex:1;font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;
+    padding:8px;resize:vertical;min-height:38px;
+  }
+  .note-form button{background:var(--caramel);color:#fff;border:none;border-radius:8px;padding:0 16px;font-weight:600;cursor:pointer;font-size:13px;}
+  .note-item{padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:13px;overflow-wrap:anywhere;}
+  .note-item:last-child{border-bottom:none;}
+  .note-date{font-size:10.5px;color:var(--cocoa-soft);margin-bottom:2px;}
+  .danger-link{color:var(--cherry);font-size:11px;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--caramel);outline-offset:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="title-row">
+      <h1>Karta zaměstnance</h1>
+      <button class="help-btn" id="helpBtn" title="Nápověda" aria-label="Nápověda">?</button>
+    </div>
+    <div class="sub">Digitální adaptační checklist</div>
+    <button type="button" class="mode-badge" id="modeLabel" title="Kliknutím přepneš roli"></button>
+    <input class="search-input" id="empSearch" placeholder="Hledat zaměstnance…" autocomplete="off">
+    <button class="link-btn" id="sortToggle" style="margin:0 0 8px;text-align:left"></button>
+    <ul class="emp-list" id="empList"></ul>
+    <button class="add-btn" id="addBtn">+ Přidat zaměstnance</button>
+    <div class="add-form" id="addForm" style="display:none;">
+      <input id="newNameInput" placeholder="Jméno zaměstnance" autocomplete="off">
+      <div class="row">
+        <button class="confirm" id="confirmAdd">Přidat</button>
+        <button class="cancel" id="cancelAdd">Zrušit</button>
+      </div>
+    </div>
+    <div class="backup-row" id="backupRow">
+      <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
+      <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <button class="mode-btn" id="reportBtn">✉ Report e-mailem</button>
+    <button class="mode-btn" id="publishBtn" style="display:none">☁ Publikovat na web</button>
+    <div class="version-tag" id="versionTag"></div>
+    <div class="mode-note" id="modeHint"></div>
+    <div class="mode-note" id="modeNote"></div>
+  </div>
+  <div class="main" id="main">
+    <div class="empty-state">Vyber zaměstnance vlevo, nebo přidej nového.</div>
+  </div>
+</div>
+
+<div class="help-overlay" id="helpOverlay" style="display:none">
+  <div class="help-modal" id="helpModalBox"></div>
+</div>
+
+<div id="printArea"></div>
+
+<!-- NAČTENÍ DAT ZE SOUBORU data.js (verze pro GitHub) -->
+<script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
+
+<script>
+/* ==================== KONFIGURACE ==================== */
+const APP_VERSION = 'v3.2';
+
+// Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
+const KB_URL = 'https://svragent.github.io/sladka_KB/';
+const KB_LINKS = {
+  logistika:[["uvod","Úvod – co je Sladká dílna"], ["zasady_fungovani","Zásady fungování"], ["desatero","Desatero Sladké dílny"], ["prostory","Prostory cukrárny"]],
+  nandavani:[["nandavani","Nandávání zákusků & debaras nádobí"]],
+  ranni_vecerni:[["ranni_vecerni","Ranní příprava a večerní úklid"]],
+  vitrina:[["vitrina_doplnovani","Doplňování vitríny"]],
+  kasa:[["kasa_penize","Kasa a peníze"], ["poukazy","Poukazy"]],
+  tocenim:[["tocenim","Točení a velikosti zmrzliny"]],
+  kavovar:[["kavovar","Kávovar – obsluha a základní nápoje"], ["napoje_kava","Nápojový manuál – káva"]],
+  system:[["system","Systém – objednávání a výdej dortů"], ["objednavani_dortu_detail","Objednávání dortu se zákazníkem – detailní postup"]],
+  michani:[["michani","Míchání zmrzliny"]],
+  mytistroj:[["mytistroj","Mytí a skládání stroje na zmrzlinu"]],
+  limonady:[["limonady","Vaření limonád, svařáku a horké čokolády"]]
+};
+
+const LEVELS = {
+  novacek:{label:"Nováček", base:140, bonus:28},
+  pokrocily:{label:"Pokročilý", base:150, bonus:30},
+  expert:{label:"Expert", base:160, bonus:32}
+};
+
+const CHECKLIST_GROUPS = [
+  {group:"Vstupní logistika", items:[
+    ["logistika","Logistika (mail, smlouva, chaty, …) a co je Sladká dílna"]
+  ]},
+  {group:"Nováček", items:[
+    ["nandavani","Nandávání & debaras nádobí"],
+    ["ranni_vecerni","Ranní příprava & večerní úklid"],
+    ["vitrina","Doplňování vitríny"],
+    ["kasa","Kasa"],
+    ["tocenim","Točení zmrzliny"],
+    ["test1","TEST – Nováček"]
+  ]},
+  {group:"Pokročilý", items:[
+    ["kavovar","Kávovar"],
+    ["system","Systém (objednávky, výdej)"],
+    ["michani","Míchání zmrzliny"],
+    ["test2","TEST – Pokročilý"]
+  ]},
+  {group:"Expert", items:[
+    ["mytistroj","Mytí a skládání stroje na zmrzlinu"],
+    ["limonady","Vaření limonád"]
+  ]}
+];
+const ALL_ITEM_IDS = [];
+CHECKLIST_GROUPS.forEach(g=>g.items.forEach(it=>ALL_ITEM_IDS.push(it[0])));
+
+// Stavy položek: 0 čeká, 1 dohled, 2 samostatně, 3 čeká na splnění testu
+const STATES = {0:"čeká", 1:"dohled", 2:"samostatně", 3:"čeká na test"};
+const CYCLE = [0,3,1,2];            // pořadí při ručním klikání na stav
+const RANK  = {0:0, 3:1, 1:2, 2:3}; // "jak daleko" stav je (pro posun po testu)
+
+const EXPECTATIONS = [
+  ["vstricnost","Vstřícnost k zákazníkům","Ochota, úsměv, trpělivost, pozitivní tón hlasu."],
+  ["tym","Týmová práce","Dbát pokynů vedoucích, přijímat zpětnou vazbu, pomáhat nováčkům."],
+  ["prioritizace","Prioritizace","Nově příchozí zákazník ► nápoje ► debaras ► doplňování."],
+  ["efektivita","Efektivita","Když není třeba obsloužit zákazníka, aktivně se věnovat práci dle manuálu."],
+  ["dochvilnost","Dochvilnost","Být převlečený ještě před začátkem směny."],
+  ["komunikace","Komunikace","Účast na poradách, sledování chatu, včasné požadavky, umí si říct o pomoc."],
+  ["zajem","Zájem o obor","Základní postupy výroby dortů, zmrzliny, původ a zpracování kávy."],
+  ["dresscode","Dresscode","Culík/drdol, tričko/halenka bez výstřihu a odhalených zad/břicha. Čistá obuv."],
+  ["procesy","Pracovní procesy","Svědomité dodržování dohodnutých pracovních postupů."]
+];
+const CATEGORIES = EXPECTATIONS.map(e=>({id:e[0],name:e[1],desc:e[2]})).concat([{id:"jine",name:"Jiné",desc:""}]);
+
+const VIOLATION_DAYS = 30;   // po kolik dní platí žlutá; druhý prohřešek v tomto okně = červená
+const DAY = 86400000;
+
+// Výchozí návody (vedoucí je může v appce přepsat; ukládají se sdíleně pro všechny zaměstnance)
+const DEFAULT_GUIDES = {
+  logistika:"Přečti si v manuálu kapitoly Úvod, Prostory a Zásady fungování a Desatero Sladké dílny.",
+  nandavani:"Manuál: kapitola Obsluha (Nandávání) a Úklid a sklízení stolů.",
+  ranni_vecerni:"Manuál: kapitoly Start dne a Konec dne; dokument Úkoly ráno + večer.",
+  vitrina:"Manuál: kapitola Vitrína (doplňování podle FIFO, uspořádání pater, čistota).",
+  kasa:"Manuál: kapitoly Peníze a Poukazy.",
+  tocenim:"Manuál: kapitola Zmrzlina – velikost zmrzlin a točení.",
+  kavovar:"Nápojový manuál: kapitola Káva.",
+  system:"Manuál: kapitola Objednávání dortu se zákazníkem.",
+  michani:"Manuál: kapitola Zmrzlina – míchání a ovládání tuhosti.",
+  mytistroj:"Manuál: kapitola Konec dne – mytí stroje na zmrzlinu.",
+  limonady:"Manuál: kapitola Jak se to vaří? (limonády, svařák, horká čokoláda)."
+};
+
+// TESTY – všechny otázky jsou tady na jednom místě. Upravuj přímo tento blok.
+// correct = pořadí správné odpovědi (počítá se od 0). passPct = kolik % je potřeba (nebo passMin = minimální počet správných).
+// onPass = do jakého stavu se položka posune po splnění (1 dohled, 2 samostatně).
+// draft:true zobrazí upozornění, že jde o koncept ke kontrole.
+const TESTS = {
+  logistika:{
+    title:"Co je Sladká dílna", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Co je podle úvodu manuálu v cukrárně nejdůležitější?",
+       options:["Jen dorty a káva","Lidé – zákazníci i tým","Rychlost obsluhy za každou cenu"], correct:1},
+      {q:"Co nabízíme zákazníkům?",
+       options:["Jen to, co bychom si sami dali na talíř nebo do sklenice","Vždy to, co se nejrychleji prodá","To, co zbylo z předchozího dne"], correct:0},
+      {q:"Kolik členů posádky musí být minimálně na place?",
+       options:["Nezáleží na tom, když v cukrárně nikdo není","Nejméně dva","Alespoň jeden"], correct:2},
+      {q:"Kdy smím používat osobní telefon?",
+       options:["Kdykoli je klid","U kasy, pokud nejsou zákazníci","Jen v zázemí, když potřebuji vyřídit něco důležitého"], correct:2},
+      {q:"Smíme jíst před zákazníky?",
+       options:["Ano, když nikdo nečeká na obsluhu","Ne, před zákazníky nikdy nejíme","Ano, ale jen zákusky"], correct:1},
+      {q:"Co najdeš v kanceláři?",
+       options:["Osobní věci na uskladnění","Zástěru a cedulku „školím se“","Nic, kancelář je jen pro vedoucí"], correct:1},
+      {q:"V jakém oblečení chodíme na směnu?",
+       options:["V libovolném pohodlném","V tmavém, ideálně černé triko a černé legíny/šortky","Ve firemním tričku jakékoli barvy"], correct:1},
+      {q:"Co najdeš v chladícím boxu?",
+       options:["Mléko, citrusy na limonády, dorty na objednávku, pečené nanuky, makronky","Jen mléko","Jen dorty na objednávku"], correct:0},
+      {q:"K čemu je určená doplňovací „bílá“ lednice?",
+       options:["Na dezerty","Na koláče a kusy dortů","Na nápoje"], correct:0},
+      {q:"K čemu je určená doplňovací „prosklená“ lednice?",
+       options:["Na dezerty","Na koláče a kusy dortů","Na nápoje"], correct:1},
+      {q:"Co uděláš, když jdeš vyzvednout objednaný dort a nemůžeš ho v boxu najít?",
+       options:["Rovnou řeknu zákazníkovi, že dort nemáme","Podívám se do lednice, zeptám se ve výrobě, zkusím to znovu, a teprve pak informuji zákazníka","Zákazníkovi dort prostě nedám"], correct:1},
+      {q:"Kdo je majitelka/zakladatelka Sladké dílny?",
+       options:["Iryna Jamborova","Martina Krausová","Petra Stejskalová"], correct:0}
+    ]
+  },
+  test1:{
+    title:"Test nováčka – postup na další level", passMin:15, onPass:2, draft:true,
+    todo:"Z původního testu zatím chybí 4 otázky na složení produktů (nanuk, cake pop, bezlepkové, Zlatý Belgický, kremrole) – doplnit podle desek pod kasou. Původní práh 18 z 22 je tady 15 z 18.",
+    questions:[
+      {q:"Jaké jsou hlavní priority práce na place a v jakém pořadí?",
+       options:["Obsluha zákazníků → úklid placu a barové plochy → doplnění vitríny → ostatní činnosti",
+                "Doplnění vitríny → obsluha zákazníků → úklid → ostatní činnosti",
+                "Úklid → doplnění vitríny → obsluha zákazníků → ostatní činnosti"], correct:0},
+      {q:"Co děláš, když právě nikoho neobsluhuješ?",
+       options:["Opřu se o pult a podívám se do mobilu",
+                "Sklízím a utírám stoly, doplňuji suroviny, skládám krabice a věnuji se práci podle manuálu",
+                "Počkám, až mě někdo osloví"], correct:1},
+      {q:"Proč nikdy nenecháváme prázdný krám?",
+       options:["Protože kasu smí obsluhovat jen jeden člověk",
+                "Protože kávovar se nesmí nechat bez dozoru",
+                "Aby zákazník po vstupu nenašel prázdný bar – na place musí být vždy alespoň jeden člen posádky"], correct:2},
+      {q:"Jak to funguje s příchodem a čipováním?",
+       options:["Při příchodu se čipnu hned po vstupu, při odchodu až po převlečení",
+                "Při příchodu se čipnu až po převlečení do pracovního (se zástěrou), při odchodu po dokončení práce a teprve potom se jdu převlékat",
+                "Čipuju kdykoli, hlavně ať to stihnu do konce směny"], correct:1},
+      {q:"Co znamená metoda FIFO při doplňování vitríny?",
+       options:["First in, first out – starší dozadu a čerstvější dopředu, aby se novější nikdy neprodávaly dřív než starší",
+                "First in, first out – čerstvější dozadu, aby vypadaly lépe",
+                "Nejdřív prodáváme to, co se prodává nejlépe"], correct:0},
+      {q:"Kdy doplňuješ zákusky okamžitě a kdy to může počkat?",
+       options:["Vždy okamžitě, jakmile chybí 1 kus",
+                "Nikdy, doplňuje jen kuchyň",
+                "Okamžitě, když na tácu chybí 4 a více kusů; při 1–3 kusech až když není fronta a mám čas"], correct:2},
+      {q:"Jak mají být dorty ve vitríně otočené?",
+       options:["Zadní stranou, aby byly vidět vrstvy",
+                "Řezem k zákazníkovi a se správnou cedulkou",
+                "Na otočení ani cedulku nezáleží"], correct:1},
+      {q:"Zákusek nevypadá čerstvě (oschlé ovoce, ošklivá poleva). Co uděláš?",
+       options:["Nedám ho do vitríny, vrátím ho do kuchyně a poradím se s cukrářkou o opravě nebo předělání",
+                "Dám ho dozadu na tác, ať se prodá jako poslední",
+                "Přikryju ho čerstvým ovocem a prodám ho"], correct:0},
+      {q:"K čemu je určená širší lopatka na nandávání?",
+       options:["Na všechny porcovky","Na chlebíčky","Pouze na Pavlovu"], correct:2},
+      {q:"Kdy smíš brát zákusky rukama?",
+       options:["Kdykoli, ruce si stejně myju",
+                "Jen při doplňování do vitríny, čistýma rukama a když zákusek nepoškodím; zákazníkovi nandávám vždy nástrojem",
+                "Nikdy, ani při doplňování"], correct:1},
+      {q:"Poškodil/a jsi dort nebo zákusek. Co uděláš?",
+       options:["Odnesu ho do kuchyně na resuscitaci – většinou to jde zachránit",
+                "Vyhodím ho a nic neříkám",
+                "Vystavím ho ve vitríně vzadu"], correct:0},
+      {q:"Jaký je správný postup, když si zákazník dává zákusky TADY + nápoje?",
+       options:["Nejdřív zákusky, na nápoje se zákazníka zeptám až po zaplacení",
+                "Nápoje nechám na zákazníkovi, ať si je vyzvedne sám",
+                "Nechám si nahlásit nápoje a předám je kolegovi (vytištěné s označením „tady“ a číslem, které zákazník položí na stůl); zákusky dám na bílý talíř s ubrouskem a vidličkou, zákazník si je odnese sám, nápoje mu donesu"], correct:2},
+      {q:"Jak se představíš při telefonátu a co uděláš, když neznáš odpověď?",
+       options:["Řeknu jen „Prosím?“ a hovor co nejdřív ukončím",
+                "„Dobrý den, cukrárna Sladká dílna ČAKOVICE“; když odpověď neznám, přiznám to a předám hovor kolegovi/kolegyni",
+                "Řeknu první odpověď, která mě napadne, ať zákazník nečeká"], correct:1},
+      {q:"Jak komunikuješ se zákazníkem, když se něco komplikuje (čekání, změna objednávky)?",
+       options:["Vlídně a s úsměvem, otevřeně mu vysvětlím situaci a nabídnu řešení; když si nejsem jistý/á, zeptám se kolegy",
+                "Rychle a stroze, ať to máme z krku",
+                "Vyhnu se mu a nechám to na kolegovi"], correct:0},
+      {q:"Jak správně odnášíš špinavé nádobí do kuchyně?",
+       options:["Nosím každý talíř zvlášť, ať se nic nerozbije",
+                "Do kuchyně chodím jen s prázdnýma rukama",
+                "Nikdy s minimem nádobí (třeba s jedním talířem), nosím ho na platu; menší množství dočasně odložím za roh na průhlednou lednici a cestou zpět beru čisté nádobí na plac"], correct:2},
+      {q:"Co patří do večerního úklidu vitríny?",
+       options:["Jen vyleštit přední sklo",
+                "Od cca 17:30 přeskládat zákusky na čisté tácy, po 18:00 je uklidit do lednic a vypnout chlazení a světlo, vitríny vytřít a vyleštit a nechat dvířka přes noc otevřená",
+                "Zavřít dvířka, vypnout světlo a odejít"], correct:1},
+      {q:"Jak třídíme odpad a kam patří směsný odpad z placu?",
+       options:["Směsný odpad z placu patří na dvorek do černé popelnice, papír do modré; plast a sklo se nosí do popelnic mimo cukrárnu",
+                "Všechen odpad patří do jedné popelnice",
+                "Směsný odpad do modré popelnice, papír do černé"], correct:0},
+      {q:"Máte něco bez laktózy?",
+       options:["Ano, všechny dorty",
+                "Ne, nic takového nemáme",
+                "Bezlaktózový dort lze objednat jen ovocný světlý nebo ovocný tmavý"], correct:2}
+    ]
+  },
+  test2:{
+    title:"Test pokročilého", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Nad kolik °C se mléko při šlehání nesmí zbytečně přehřívat?",
+       options:["45 °C","65 °C","85 °C"], correct:1},
+      {q:"Jak dlouho maximálně louhujeme zelený čaj?",
+       options:["3–5 minut","10 minut","Maximálně 1 minutu"], correct:2},
+      {q:"Které zmrzliny jsou sorbet?",
+       options:["Vanilková a čokoládová","Ovocné","Kokosová a karamelová"], correct:1},
+      {q:"Zmrzlina je příliš tuhá. Co uděláš?",
+       options:["Snížím stupeň chlazení","Zvýším stupeň chlazení","Vypnu stroj"], correct:0},
+      {q:"Kolik gramů má malá zmrzlina?",
+       options:["120 g","60 g","80 g"], correct:2},
+      {q:"Který čaj se podává bez sítka uvnitř (zbytek se sítky)?",
+       options:["Černý","Zelený","Mátový"], correct:1},
+      {q:"Jaká je teplota vody na zelený čaj?",
+       options:["80 stupňů","100 stupňů","60 stupňů"], correct:0},
+      {q:"Kolik gramů prášku matchy se prosívá na jednu přípravu?",
+       options:["1 g","2 g","5 g"], correct:1},
+      {q:"Na jakou teplotu se zalévá matcha vodou?",
+       options:["Vroucí (100 °C)","Max 80 °C","Studenou vodou"], correct:1},
+      {q:"Jak dlouho trvá extrakce double espressa (doppia)?",
+       options:["10–15 sekund","25–28 sekund","45 sekund"], correct:1},
+      {q:"Kolik shotů kávy je v cappuccinu?",
+       options:["Jeden","Dva","Podle velikosti"], correct:0},
+      {q:"Kolik shotů kávy je ve vídeňské kávě?",
+       options:["Jeden","Dva","Žádný"], correct:0}
+    ]
+  },
+  nandavani:{
+    title:"Nandávání a debaras nádobí", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Jakým nástrojem nabíráš Pavlovu?",
+       options:["Zaoblenými kleštěmi","Širší lopatkou","Užší lopatkou a rovnými kleštěmi"], correct:1},
+      {q:"Jak bereš pečené nanuky a cake popy?",
+       options:["Za tyčku, nedotýkám se zákusku","Rukou zespodu","Lopatkou"], correct:0},
+      {q:"Kam patří kelímky od Tiramisu/panna cotty po dojedení?",
+       options:["Vyhodím je do koše","Nosím je na myčku, nevyhazuji je","Nechám je na stole pro dalšího zákazníka"], correct:1},
+      {q:"Kolik špinavého nádobí minimálně nosím do kuchyně najednou?",
+       options:["Nikdy nechodím jen s jedním kusem, např. talířem","Stačí jeden talíř, hlavně chodit často","Na množství nezáleží"], correct:0},
+      {q:"Co dělám s dřevěnými tácky od zákusků?",
+       options:["Nosím je na myčku jako ostatní nádobí","Otřu je hadříkem a vrátím zpět do poličky","Vyhodím je"], correct:1},
+      {q:"Od kolika kusů balíme zákusky s sebou do krabičky místo papíru?",
+       options:["Od 2 kusů","Od 4 kusů","Od 6 kusů"], correct:1},
+      {q:"Jak servírujeme běžný zákusek na talíř?",
+       options:["Nápisem od zákazníka, ubrousek vpravo","Nápisem směrem k zákazníkovi, ubrousek vlevo a vidlička na něm","Bez ubrousku, jen s vidličkou vedle"], correct:1},
+      {q:"Na čem servírujeme Tiramisu nebo panna cottu?",
+       options:["Na bílém talíři s vidličkou","Na černém ubrousku se lžičkou","Na dřevěném tácku"], correct:1},
+      {q:"Čím vždy odnášíme (debarasujeme) nádobí ze stolů?",
+       options:["Rukama, kolik uneseme","Vždy s platem","Kýblem"], correct:1},
+      {q:"Co uděláš, když vidíš, že zákazník od stolu odchází?",
+       options:["Počkám, až mě osloví kolega","Jdu sklidit nádobí a stůl otřu","Nechám stůl tak, uklidí to jiná směna"], correct:1},
+      {q:"Jakým nástrojem bereš chlebíčky?",
+       options:["Rukama","Zaoblenými kleštěmi určenými jen na slané výrobky","Širší lopatkou"], correct:1},
+      {q:"Kolik kousků se vejde do velkého tácku s velkým papírem při balení s sebou?",
+       options:["2–3 ks","4–5 ks","8–10 ks"], correct:1}
+    ]
+  },
+  ranni_vecerni:{
+    title:"Ranní příprava a večerní úklid", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Co uděláš hned ráno s kávovarem a vitrínou na chlebíčky?",
+       options:["Necháš je vypnuté do příchodu prvního zákazníka","Zapneš je, ať se stihnou nahřát/nachladit","Zapneš jen kávovar"], correct:1},
+      {q:"Jaký je ranní depozit v pokladně?",
+       options:["1000 Kč","3000 Kč","5000 Kč"], correct:1},
+      {q:"V kolik hodin večer začínáme skládat dezerty na čisté tácy?",
+       options:["17:30","19:00","Až po zavíračce"], correct:0},
+      {q:"Co uděláš v 18:00, i když je zrovna fronta?",
+       options:["Počkám, až fronta skončí","Začnu zanášet trvanlivější dezerty z vitríny do lednice","Zavřu vitrínu"], correct:1},
+      {q:"Kde je klíček od kasy po zhasnutí na konci směny?",
+       options:["V kase","Pod tiskárnou","U vedoucího doma"], correct:1},
+      {q:"Co se dělá ráno se židlemi a stoly?",
+       options:["Nic, zůstávají jak jsou","Sundají se všechny židle a stoly se otřou hadrem","Jen se osprchují venku"], correct:1},
+      {q:"Co se ráno kontroluje/aktualizuje u Foodory?",
+       options:["Nic, řeší to centrála","Dostupnost položek","Jen platby"], correct:1},
+      {q:"Kam se večer dávají dorty, které se neprodaly?",
+       options:["Zůstávají ve vitríně přes noc","Zanesou se holkám za roh na stůl","Vyhodí se"], correct:1},
+      {q:"Kam se dávají špinavé utěrky na konci dne?",
+       options:["Do červeného pytle u kanceláře, a připraví se nové","Nechají se u kávovaru","Vyperou se hned na place"], correct:0},
+      {q:"Co se při večerním úklidu doplňuje podle FIFO (kromě vitríny)?",
+       options:["Lednice na chlazené nápoje a nápojová polička","Jen kasa","Jen dětský koutek"], correct:0},
+      {q:"Co zkontroluješ u příruční lednice před odchodem?",
+       options:["Nic, není potřeba","Že je dozavřená","Že je prázdná"], correct:1},
+      {q:"Co se má stát s ledovačem s lopatkou venku před odchodem?",
+       options:["Nechá se otevřený","Zavře se","Odnese se dovnitř"], correct:1}
+    ]
+  },
+  vitrina:{
+    title:"Doplňování vitríny", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Jak funguje metoda FIFO při doplňování vitríny?",
+       options:["Čerstvější dozadu, starší dopředu","Starší dozadu, čerstvější dopředu","Na pořadí nezáleží"], correct:1},
+      {q:"Kdy doplňuješ tác akutně?",
+       options:["Když chybí 1 kus","Když chybí 4 a více kusů","Jen na požádání vedoucí"], correct:1},
+      {q:"Kolik druhů dortu maximálně dáváme na jeden tác?",
+       options:["Max 2, výjimečně 3","Vždy jen 1","Kolik se vejde"], correct:0},
+      {q:"Jak mají být dorty ve vitríně otočené?",
+       options:["Zadní stranou k zákazníkovi","Řezem k zákazníkovi, se správnou cedulkou","Na tom nezáleží"], correct:1},
+      {q:"Co uděláš, když je tác určený na doplnění špinavý?",
+       options:["Doplním na něj rovnou","Nejdřív ho očistím","Použiju jiný tác a špinavý nechám tak"], correct:1},
+      {q:"Kolik rumových koulí je na jednom tácku?",
+       options:["6","9","12"], correct:1},
+      {q:"Jaké je pravidlo pro doplňování cake pops?",
+       options:["Doplňují se jednou barvou","Vždy MIX barev na tácku","Na barvě nezáleží"], correct:1},
+      {q:"Kolik táců je ve třetím patře vitríny?",
+       options:["2","4","6"], correct:1},
+      {q:"Kde je umístěná Pavlova ve spodním patře?",
+       options:["Vepředu, ať je hned vidět","Vzadu za dalšími dorty","Mimo vitrínu"], correct:1},
+      {q:"Kde je u porcovek/větrníků umístěná cedulka na tácku?",
+       options:["Na kraji","Na středu tácku","Cedulka se nedává"], correct:1},
+      {q:"Kdo připravuje vitrínu ráno?",
+       options:["Cukrářky","Plac","Vedoucí sama"], correct:0},
+      {q:"Co pustíš ráno u vitríny hned po kontrole cedulek?",
+       options:["Světlo","Větrák na chlazení","Hudbu"], correct:1}
+    ]
+  },
+  kasa:{
+    title:"Kasa", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Kdo počítá a uzavírá pokladnu?",
+       options:["Kdokoli na směně","Vedoucí","Účetní"], correct:1},
+      {q:"Přijímáme stravenky?",
+       options:["Ano, vždy","Ne, ale lze platit stravenkovou kartou (ne vždy funguje)","Ano, ale jen v hotovosti"], correct:1},
+      {q:"Jaká je minimální hodnota poukazu?",
+       options:["100 Kč","200 Kč","500 Kč"], correct:1},
+      {q:"Jaká je zaměstnanecká sleva na vše?",
+       options:["10 %","20 %","30 %"], correct:1},
+      {q:"Jak dlouho platí poukaz od vystavení?",
+       options:["6 měsíců","1 rok","Neomezeně"], correct:1},
+      {q:"Kam se markuje zbylá částka, kterou zákazník doplácí po odečtení poukazu?",
+       options:["Pod položku „doplatek“","Jako nová položka se stejným názvem","Nikam, jen se řekne nahlas"], correct:0},
+      {q:"Kde v systému vytváříš nový poukaz?",
+       options:["V administraci, sekce Aktivní poukazy","Přímo na kase tlačítkem Poukaz","Poukazy vytváří jen centrála"], correct:0},
+      {q:"Co znamená v kase „ODPIS“?",
+       options:["Zboží se nedá prodat kvůli špatné kvalitě/stáří","Zákusek spadl nebo se zničil a nejde opravit","Zákazník zboží reklamoval"], correct:1},
+      {q:"Co znamená v kase „VYŘAZENO“?",
+       options:["Zboží se nedá prodat kvůli špatné kvalitě/nestabilitě/stáří","Zákusek spadl a rozbil se","Zákazník ho vrátil"], correct:0},
+      {q:"Co se stane, když je cena, kterou má zákazník platit, nižší než hodnota poukazu?",
+       options:["Zbytek se vrátí v hotovosti","Peníze se nevrací","Zbytek se připíše na příště"], correct:1},
+      {q:"Jak může zákazník doplatit rozdíl mezi cenou a hodnotou poukazu?",
+       options:["Jen hotově","Hotově nebo kartou","Jen kartou"], correct:1},
+      {q:"Od kdy se počítá roční platnost poukazu?",
+       options:["Od data vystavení","Od prvního použití","Od konce měsíce"], correct:0}
+    ]
+  },
+  tocenim:{
+    title:"Točení zmrzliny", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Kolik gramů má malá zmrzlina?",
+       options:["60 g","80 g","120 g"], correct:1},
+      {q:"Jak vytočíš velkou zmrzlinu (120 g)?",
+       options:["Jedna otočka a špička","Dvě otočky a špička","Tři otočky"], correct:1},
+      {q:"Kolik velkých zmrzlin se vejde do velkého termoboxu?",
+       options:["Až 3","Až 5","Až 10"], correct:1},
+      {q:"Zmrzlina je příliš tuhá/zmrzlá, co uděláš?",
+       options:["Zvýším stupeň chlazení","Snížím stupeň chlazení","Vypnu stroj"], correct:1},
+      {q:"Jak dáš stroj večer do nočního režimu?",
+       options:["Vypnu ho úplně ze zásuvky","Stisknu symbol skleničky a vločky","Nechám ho běžet jako přes den"], correct:1},
+      {q:"Které zmrzliny patří mezi SORBET?",
+       options:["Vanilková a čokoládová","Ovocné (malinová, jahodová, mango&maracuja, černý rybíz)","Kokosová a karamelová"], correct:1},
+      {q:"Kolik gramů má „baby“ zmrzlina?",
+       options:["40 g","60 g","100 g"], correct:1},
+      {q:"Co uděláš, když u míchané zmrzliny teče jen jedna příchuť?",
+       options:["Sníž stupeň chlazení a toč se zapnutým tlačítkem SET, pak vrať na výrobu","Vypni stroj a zavolej vedoucího","Přidej vodu do stroje"], correct:0},
+      {q:"Zmrzlinovač při točení praská a je zavzdušněný. Co je první krok?",
+       options:["Rovnou odpojit trubku bez zastavení","U problémové zmrzliny dát páku dolů a zmáčknout STOP","Vypnout celý stroj ze zásuvky"], correct:1},
+      {q:"Zmrzlina vůbec neteče, je zamrzlá. Co se udělá s čerpadlem?",
+       options:["Vyndá se, rozebere, umyje a promaže vazelínou","Nechá se ve stroji a jen se počká","Vymění se za nové"], correct:0},
+      {q:"Jak upravuješ stupeň chlazení?",
+       options:["Stiskneš SET+ZMRZLINA a šipečkou nahoru/dolů, max o 5 stupňů","Otočíš velkým knoflíkem vzadu","Vypneš a znovu zapneš stroj"], correct:0},
+      {q:"Kolik otoček má „malá“ zmrzlina (80 g)?",
+       options:["Jedna otočka a špička","Dvě otočky","Bez otočky, jen špička"], correct:0}
+    ]
+  },
+  kavovar:{
+    title:"Kávovar", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Kolik shotů kávy je v espressu?",
+       options:["Jeden","Dva","Půl"], correct:0},
+      {q:"Na kolik °C se nesmí zbytečně přehřívat mléko při šlehání?",
+       options:["45 °C","65 °C","85 °C"], correct:1},
+      {q:"Jaký je rozdíl mezi cappuccinem a flat white v množství pěny?",
+       options:["Cappuccino má víc pěny (1–2 cm), flat white skoro žádnou (0,5 cm)","Je to stejné","Flat white má víc pěny"], correct:0},
+      {q:"Kolik shotů je v double espressu (doppiu)?",
+       options:["Jeden","Dva","Tři"], correct:1},
+      {q:"Kdy se do americana přidává mléko?",
+       options:["Vždy automaticky","Jen na vyžádání zákazníka","Nikdy"], correct:1},
+      {q:"Co má espresso macchiatto navíc oproti espressu?",
+       options:["Přidá se voda","Přidají se dvě lžičky lesklé pěny","Přidá se cukr"], correct:1},
+      {q:"Jak se připravuje latte macchiatto, aby vznikly tři pruhy?",
+       options:["Mléko se nalije lehce pod okraj a nechá odstát, pak se pomalu nalije shot","Všechno se smíchá najednou","Mléko se šlehá se shotem dohromady"], correct:0},
+      {q:"Jak se připravuje turecká káva?",
+       options:["V kávovaru jako espresso","Namele se přímo do sklenice a pomalu zalije horkou vodou","Připraví se z instantní kávy"], correct:1},
+      {q:"Kdy nalévám zákazníkovi mléko do kávy s sebou?",
+       options:["Nikdy, mléko se nalévá vždy předem","Přímo před ním, ať může říct, kdy je dost","Jen na požádání vedoucí"], correct:1},
+      {q:"Kolik shotů kávy je v espresso lungu?",
+       options:["Jeden","Dva","Žádný"], correct:0},
+      {q:"Kam se u espresso lunga (mimo verzi s sebou) přidává horká voda?",
+       options:["Přímo do kávy","Vždy zvlášť do konvičky","Vůbec se nepřidává"], correct:1},
+      {q:"Jaká pěna je typická pro cappuccino?",
+       options:["Krásná lesklá pěna, doplněná do plna (1–2 cm)","Skoro žádná pěna","Studená napěněná pěna"], correct:0}
+    ]
+  },
+  system:{
+    title:"Systém – objednávky a výdej", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Jaké bezlaktózové dorty lze objednat?",
+       options:["Jakýkoli dort bez šlehačky","Jen ovocný světlý nebo ovocný tmavý","Bezlaktózové nejdou objednat"], correct:1},
+      {q:"Jaká je minimální cena figurky na dort?",
+       options:["150 Kč","350 Kč","700 Kč"], correct:1},
+      {q:"Kdy objednáš u Saši figurku vzhledem k termínu dortu?",
+       options:["Týden předem","Den předem","Objedná se automaticky"], correct:0},
+      {q:"Kolik speciálních/svatebních dortů maximálně na jeden den?",
+       options:["1","3","Neomezeně"], correct:1},
+      {q:"Co uděláš, když ti systém nedovolí zadat nestandardní požadavek na dort?",
+       options:["Řeknu zákazníkovi, že to nejde","Zavolám cukrářce Nadě","Objednávku zruším"], correct:1},
+      {q:"Jak založíš běžnou objednávku dortu v adminu?",
+       options:["OBJEDNÁVKY → VYTVOŘIT, zaškrtnu BĚŽNÁ OBJEDNÁVKA","Rovnou zavolám na centrálu","Napíšu zákazníkovi SMS"], correct:0},
+      {q:"Jak založíš objednávku dortu na zítra?",
+       options:["Stejně jako běžnou, jen zaškrtnu NA ZÍTRA (nabídka je limitovaná)","Na zítra nejde nic objednat","Musí to řešit jen vedoucí"], correct:0},
+      {q:"Co dostane zákazník e-mailem po vytvoření objednávky?",
+       options:["Nic, jen SMS","Potvrzovací e-mail s číslem objednávky","Fakturu bez čísla"], correct:1},
+      {q:"O co požádáš zákazníka navíc, když chce dort platit QR kódem nebo kartou?",
+       options:["O nic navíc","O fakturační údaje","O rodné číslo"], correct:1},
+      {q:"Co zaškrtneš, když zákazník platí dort na místě hned při objednání?",
+       options:["Nic, platba se řeší až při vyzvednutí","OZNAČIT OBJEDNÁVKU ZA ZAPLACENOU","NA ZÍTRA"], correct:1},
+      {q:"Kam odkážeš zákazníka, který chce svatební dort?",
+       options:["Na e-shop, kolonka SVATBY","Musí přijít osobně vyplnit formulář na place","Svatební dorty neděláme"], correct:0},
+      {q:"Kolik posledních čísel objednávky bude zákazník potřebovat při vyzvednutí?",
+       options:["Poslední 2","Poslední 3","Celé číslo"], correct:1}
+    ]
+  },
+  michani:{
+    title:"Míchání zmrzliny", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Kolik vody se používá na vanilkovou zmrzlinu?",
+       options:["2 litry","4 litry","6 litrů"], correct:1},
+      {q:"Co se musí udělat po namíchání, než se zmrzlina leje do stroje?",
+       options:["Rovnou lít do stroje","Dát do chladu alespoň 15 minut a cedit přes síto","Nechat 2 hodiny mimo lednici"], correct:1},
+      {q:"Kolik druhů pyré je v malinové zmrzlině?",
+       options:["Jen malinové","2x malinové a 1x jahodové","3x malinové"], correct:1},
+      {q:"Z kolika dávek normálně mícháme zmrzlinu, pokud vedoucí neřekne jinak?",
+       options:["Z jedné","Vždy ze dvou","Podle počasí"], correct:0},
+      {q:"Co se musí udělat hned po přisypání sáčku báze do vody?",
+       options:["Nechat 10 minut stát","Ihned pořádně rozmíchat","Přidat led"], correct:1},
+      {q:"Kolik vody se používá na čokoládovou zmrzlinu?",
+       options:["2 litry","4 litry","6 litrů"], correct:1},
+      {q:"Kolik druhů pyré je ve zmrzlině mango&maracuja?",
+       options:["2x mangové, 1x mučenkové","Jen mangové","2x mučenkové, 1x mangové"], correct:0},
+      {q:"Kolik vody se používá na zmrzlinu z černého rybízu?",
+       options:["3,2 litru","4,8 litru","6 litrů"], correct:0},
+      {q:"Co navíc obsahuje jogurtová zmrzlina kromě Jogurt top soft?",
+       options:["Nic navíc","2 kg řeckého jogurtu","Smetanu"], correct:1},
+      {q:"Čím se míchá kokosová zmrzlina?",
+       options:["Soft kokos a voda","Kokosové mléko a smetana","Kokosový sirup"], correct:0},
+      {q:"Jaká je hmotnost pytle báze na slaný karamel?",
+       options:["1,5 kg","2 kg","2,5 kg"], correct:1},
+      {q:"Co se dělá se sítem hned po scezení zmrzlinové směsi?",
+       options:["Nechá se namočené do druhého dne","Hned se umyje – stačí opláchnout","Vyhodí se"], correct:1}
+    ]
+  },
+  mytistroj:{
+    title:"Mytí a skládání stroje na zmrzlinu", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Co se děje s bílými poklopy stroje večer?",
+       options:["Nechají se tak, jak jsou","Umyjí se","Vyhodí se"], correct:1},
+      {q:"Mícháme zmrzlinové směsi dopředu na noc?",
+       options:["Ano, ušetří to čas ráno","Ne, lepší je míchat čerstvé ráno","Jen o víkendu"], correct:1},
+      {q:"Čím se ve zmrzlinové sezóně zakrývají kornoutky přes noc?",
+       options:["Ničím","Igelitovým pytlem","Utěrkou"], correct:1},
+      {q:"Co se dělá s vaničkou od zmrzliny při večerním úklidu?",
+       options:["Nechá se ve stroji","Umyje se a vrátí zpět","Vyhodí se"], correct:1},
+      {q:"Co dalšího se při večerním úklidu vyndá, kromě mytí stroje?",
+       options:["Lopatka na nabírání ledu","Kasa","Mlýnek na kávu"], correct:0},
+      {q:"Jak se otírá stroj na zmrzlinu zvenku?",
+       options:["Neotírá se, jen se umyjí poklopy","Otře se ze všech stran, nerez ideálně speciálním přípravkem","Stačí ho opláchnout vodou"], correct:1},
+      {q:"Co se v letní sezóně navíc čistí spolu se strojem na zmrzlinu?",
+       options:["Šlehač na mléko a odkapávač na zmrzlinu","Jen šlehač na mléko","Nic navíc"], correct:0},
+      {q:"Kam se doplňují kornoutky na zmrzlinu?",
+       options:["Jen do krabice na stole","Do krabice na stole i do záložní krabice","Nikam se nedoplňují dopředu"], correct:1},
+      {q:"Co se ze zásuvky vypojuje na konci dne (mimo stroj na zmrzlinu)?",
+       options:["Rychlovarná konvice, mlýnek a šlehač na mléko","Jen kasa","Nic se nevypojuje"], correct:0},
+      {q:"Jak se stroj na zmrzlinu uvádí večer do nočního režimu?",
+       options:["Vypnutím ze zásuvky","Stisknutím symbolu skleničky a vločky","Sám se přepne po hodině nečinnosti"], correct:1},
+      {q:"Co se stane s odkapávačem na zmrzlinu v letní sezóně při úklidu?",
+       options:["Nechá se tak, jak je","Omyje se","Vyhodí se a nahradí novým"], correct:1},
+      {q:"Co se udělá s vaničkou od zmrzliny po umytí?",
+       options:["Nechá se okapat venku přes noc","Umyje se a vrátí zpět","Nechá se v myčce do rána"], correct:1}
+    ]
+  },
+  limonady:{
+    title:"Vaření limonád", passPct:80, onPass:2, display:10, draft:true,
+    questions:[
+      {q:"Kdy se do malinové limonády přidává citronová šťáva?",
+       options:["Hned na začátku","Až po vychladnutí","Během vaření"], correct:1},
+      {q:"Jak dlouho maximálně necháváme zázvor odležet ve vařící vodě?",
+       options:["5 minut","30 minut","2 hodiny"], correct:1},
+      {q:"Kolik cukru krupice je v malinové limonádě?",
+       options:["250 g","750 g","1,5 kg"], correct:1},
+      {q:"Co se dělá se zázvorem před zalitím vodou?",
+       options:["Rozmixuje se celý i se slupkou","Oloupe se a nakrájí najemno","Nastrouhá se na hrubo"], correct:1},
+      {q:"Co se dělá s malinovou směsí po rozmixování?",
+       options:["Ihned se plní do lahví","Přecedí se přes cedník","Nechá se syrová"], correct:1},
+      {q:"Kolik červeného vína se dává do várnice na svařák?",
+       options:["2 litry","5 litrů","10 litrů"], correct:1},
+      {q:"V jakém pořadí se připravuje svařák do várnice?",
+       options:["Víno se nahřeje, pak se přidá cukr a koření a promíchá","Nejdřív se smíchá cukr s kořením, pak se zalije vínem za studena","Všechno se dá dohromady najednou a povaří"], correct:0},
+      {q:"Kolik mixu čokolády se dává do várnice na horkou čokoládu?",
+       options:["300 g","700 g","1,5 kg"], correct:1},
+      {q:"Jak se horká čokoláda do várnice na závěr dodělá?",
+       options:["Nechá se tak, jak je","Promixuje se tyčovým mixérem","Přecedí se přes cedník"], correct:1},
+      {q:"Co je „Irčin mixér“ u zázvorové limonády?",
+       options:["Speciální stroj na drcení ledu","Alternativní postup, kdy se zázvor rozmixuje s trochou vody a pak přidá zbytek","Značka mixéru na limonády"], correct:1},
+      {q:"Kolik smetany je v receptu na horkou čokoládu do várnice?",
+       options:["0,5 litru","1 litr","2 litry"], correct:1},
+      {q:"Čím se na závěr promíchá svařák ve várnici?",
+       options:["Tyčovým mixérem","Vařečkou","Metličkou"], correct:1}
+    ]
+  }
+};
+
+/* ==================== STAV ==================== */
+let employees = [];   // [{id,name}]
+let activeId = null;
+let activeData = null;
+let guides = {};      // sdílené návody {itemId: text}
+let openItemId = null;
+let quiz = null;      // {id, result|null, preview}
+let reviewId = null;  // id položky, u které vedoucí vidí odpovědi zaměstnance
+let MODE = 'leader';  // 'leader' | 'employee' – jen přepínač pohledu, ne zabezpečení
+let sidebarSort = 'name';  // 'name' | 'progress'
+try{ if(localStorage.getItem('sidebar-sort') === 'progress') sidebarSort = 'progress'; }catch(e){}
+let searchTerm = '';
+try{ if(localStorage.getItem('ui-mode') === 'employee') MODE = 'employee'; }catch(e){}
+const hasCloud = (typeof window.storage !== 'undefined');
+
+const $ = id => document.getElementById(id);
+const empListEl = $('empList');
+const mainEl = $('main');
+
+function uid(){ return 'e' + Date.now() + Math.random().toString(36).slice(2,7); }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+// Vybere, které otázky z banky testu T se v tomto pokusu zobrazí (náhodně, pokud je banka
+// větší než T.display) a vrátí pole jejich indexů v T.questions – v tomto pořadí se zobrazí.
+function pickSelIdx(T){
+  const all = T.questions.map((_, i) => i);
+  if(T.display && T.display < T.questions.length) return shuffle(all).slice(0, T.display);
+  return all;
+}
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function linkify(s){
+  return escapeHtml(s)
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+    .replace(/\n/g, '<br>');
+}
+
+/* ==================== DATUMY ==================== */
+function todayStr(){
+  const n = new Date();
+  return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
+}
+function toDay(s){ const p = String(s).split('-').map(Number); return Date.UTC(p[0], p[1]-1, p[2]); }
+function fmtMs(ms){ const d = new Date(ms); return d.getUTCDate() + '. ' + (d.getUTCMonth()+1) + '. ' + d.getUTCFullYear(); }
+function fmtStr(s){ return fmtMs(toDay(s)); }
+
+/* ==================== ÚLOŽIŠTĚ ==================== */
+async function kvGet(key){
+  if(hasCloud){
+    try{ const r = await window.storage.get(key, true); return r ? JSON.parse(r.value) : null; }
+    catch(e){ return null; }
+  }
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+  catch(e){ return null; }
+}
+async function kvSet(key, val){
+  const json = JSON.stringify(val);
+  if(hasCloud){ await window.storage.set(key, json, true); }
+  else { localStorage.setItem(key, json); markUnpublished(); }
+}
+async function kvDel(key){
+  if(hasCloud){ try{ await window.storage.delete(key, true); }catch(e){} }
+  else { localStorage.removeItem(key); markUnpublished(); }
+}
+
+/* ==================== PUBLIKOVÁNÍ NA GITHUB ==================== */
+// Data se čtou z karta/data.js. Změny se ukládají do prohlížeče a tlačítkem Publikovat se zapíšou na GitHub.
+const GH_REPO = 'svragent/sladka_KB';
+const GH_FILE = 'karta/data.js';
+const onWeb = !hasCloud && (typeof CARD_DATA !== 'undefined');
+function lsGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+function lsSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){} }
+function fmtStamp(iso){
+  const d = new Date(iso);
+  return d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+function updatePublishStatus(){
+  if(!onWeb) return;
+  $('modeNote').textContent = lsGet('card-unpublished') === '1'
+    ? 'Máš nepublikované změny – klikni na ☁ Publikovat na web.'
+    : 'Vše je publikované.';
+}
+function markUnpublished(){
+  if(!onWeb) return;
+  lsSet('card-unpublished', '1');
+  updatePublishStatus();
+}
+// Při startu: vezmi data z webu, pokud v prohlížeči nejsou nepublikované změny
+function syncFromWeb(){
+  if(!onWeb) return;
+  const webAt = CARD_DATA.publishedAt || '';
+  const localAt = lsGet('card-published-at') || '';
+  const hasLocal = lsGet('employees-index') !== null;
+  const useLocal = hasLocal && (lsGet('card-unpublished') === '1' || localAt > webAt);
+  if(useLocal) return;
+  try{
+    Object.keys(localStorage).filter(k=>k === 'employees-index' || k === 'guides' || k.indexOf('employee:') === 0)
+      .forEach(k=>localStorage.removeItem(k));
+    localStorage.setItem('employees-index', JSON.stringify(CARD_DATA.employees || []));
+    localStorage.setItem('guides', JSON.stringify(CARD_DATA.guides || {}));
+    Object.keys(CARD_DATA.data || {}).forEach(id=>localStorage.setItem('employee:' + id, JSON.stringify(CARD_DATA.data[id])));
+  }catch(e){}
+  lsSet('card-unpublished', '0');
+  lsSet('card-base-published-at', webAt);
+}
+function toBase64Utf8(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for(let i = 0; i < bytes.length; i += 32768){
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+  }
+  return btoa(bin);
+}
+async function publishToGitHub(){
+  let token = lsGet('kb-gh-token');   // stejný token jako ve znalostní bázi
+  if(!token){
+    token = (prompt('Vlož GitHub token (uloží se jen v tomto prohlížeči):') || '').trim();
+    if(!token) return;
+    lsSet('kb-gh-token', token);
+  }
+  const btn = $('publishBtn');
+  btn.disabled = true;
+  $('modeNote').textContent = 'Publikuji…';
+  const url = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_FILE;
+  const headers = {'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'};
+  try{
+    const getRes = await fetch(url + '?ref=main', {headers: headers, cache: 'no-store'});
+    if(getRes.status === 401 || getRes.status === 403) throw new Error('auth');
+    let sha = null, remoteAt = '';
+    if(getRes.ok){
+      const info = await getRes.json();
+      sha = info.sha;
+      if(info.content){
+        const bytes = Uint8Array.from(atob(info.content.replace(/\s/g, '')), c=>c.charCodeAt(0));
+        const m = new TextDecoder().decode(bytes).match(/"publishedAt":\s*"([^"]*)"/);
+        if(m) remoteAt = m[1];
+      }
+    } else if(getRes.status !== 404){
+      throw new Error('get');
+    }
+    // Ochrana proti přepsání: publikoval mezitím někdo jiný?
+    const baseAt = lsGet('card-base-published-at') || '';
+    if(baseAt && remoteAt && remoteAt > baseAt){
+      if(!confirm('Na webu je novější verze, kterou mezitím publikoval někdo jiný (' + fmtStamp(remoteAt) + ').\n\nKdyž budeš pokračovat, jeho změny se PŘEPÍŠOU tvými.\n\nOpravdu publikovat?')){
+        $('modeNote').textContent = 'Publikace zrušena – na webu je novější verze. Ulož si zálohu svých změn a domluv se, kdo co upravoval.';
+        btn.disabled = false;
+        return;
+      }
+    }
+    const publishedAt = new Date().toISOString();
+    const data = {};
+    for(const e of employees){ data[e.id] = await loadEmployee(e.id); }
+    const payload = {publishedAt: publishedAt, employees: employees, data: data, guides: guides};
+    const text = 'const CARD_DATA = ' + JSON.stringify(payload, null, 1) + ';\n';
+    const body = {message: 'Karta – publikace ' + publishedAt.slice(0, 16).replace('T', ' '), content: toBase64Utf8(text), branch: 'main'};
+    if(sha) body.sha = sha;
+    const putRes = await fetch(url, {method: 'PUT', headers: headers, body: JSON.stringify(body)});
+    if(putRes.status === 401 || putRes.status === 403) throw new Error('auth');
+    if(!putRes.ok) throw new Error('put');
+    lsSet('card-published-at', publishedAt);
+    lsSet('card-base-published-at', publishedAt);
+    lsSet('card-unpublished', '0');
+    $('modeNote').textContent = 'Publikováno. Ostatním se změny ukážou do pár minut po obnovení stránky.';
+  }catch(e){
+    if(e.message === 'auth'){
+      try{ localStorage.removeItem('kb-gh-token'); }catch(err){}
+      $('modeNote').textContent = 'Publikace selhala: neplatný token nebo chybí oprávnění. Při dalším pokusu zadej token znovu.';
+    } else {
+      $('modeNote').textContent = 'Publikace selhala (síť nebo GitHub). Zkus to znovu.';
+    }
+  }
+  btn.disabled = false;
+}
+
+async function loadIndex(){ employees = (await kvGet('employees-index')) || []; }
+async function saveIndex(){ await kvSet('employees-index', employees); }
+async function loadGuides(){ guides = Object.assign({}, DEFAULT_GUIDES, (await kvGet('guides')) || {}); }
+async function saveGuides(){ await kvSet('guides', guides); }
+async function loadEmployee(id){ return normalize(await kvGet('employee:' + id)); }
+async function saveEmployee(data){ await kvSet('employee:' + data.id, data); }
+async function deleteEmployee(id){ await kvDel('employee:' + id); }
+
+// Doplní chybějící pole (i u dat z verze 1) – nic nemaže.
+function normalize(d){
+  if(!d) return d;
+  if(!d.checklist) d.checklist = {};
+  ALL_ITEM_IDS.forEach(id=>{ if(typeof d.checklist[id] !== 'number') d.checklist[id] = 0; });
+  if(!d.learn) d.learn = {};
+  if(!d.violations) d.violations = [];
+  if(!d.notes) d.notes = [];
+  if(d.monthly && !d.v1migrated){
+    // Ve verzi 1 se u karet neukládalo datum, proto je nepřevádíme na prohřešky (30denní pravidlo by bylo zkreslené).
+    const old = EXPECTATIONS.filter(e=>d.monthly[e[0]] === 1 || d.monthly[e[0]] === 2)
+      .map(e=>e[1] + (d.monthly[e[0]] === 2 ? ' (červená)' : ' (žlutá)'));
+    if(old.length){
+      d.notes.push({date:todayStr(), author:'systém',
+        text:'Převod z verze 1: v měsíčním hodnocení byly zapsány karty: ' + old.join(', ') +
+             '. Datum nebylo uloženo – pokud mají platit, zapiš je ručně jako prohřešek se správným datem.'});
+    }
+    d.v1migrated = true;
+  }
+  return d;
+}
+
+function blankEmployee(name){
+  const checklist = {};
+  ALL_ITEM_IDS.forEach(id=>checklist[id] = 0);
+  return {
+    id:uid(), name:name || "Nový zaměstnanec", phone:"", startDate:"",
+    level:"novacek", checklist, learn:{}, violations:[], notes:[], photo:null
+  };
+}
+function ensureLearn(d, id){
+  if(!d.learn[id]) d.learn[id] = {read:false, passed:false, score:null};
+  return d.learn[id];
+}
+
+/* ==================== PROHŘEŠKY (30denní okno) ==================== */
+// Každý prohřešek má datum. Druhý (a další) prohřešek do 30 dnů od nějakého dřívějšího = červená.
+// Prohřešek zapsaný jako "red" je červená rovnou. Žlutá platí 30 dnů od data.
+function evaluateViolations(list){
+  const sorted = list.slice().sort((a,b)=> (toDay(a.date) - toDay(b.date)) || String(a.id).localeCompare(String(b.id)));
+  const out = [];
+  sorted.forEach(v=>{
+    let sev;
+    if(v.type === 'red') sev = 'red';
+    else sev = out.some(p=> toDay(v.date) - toDay(p.date) <= VIOLATION_DAYS * DAY) ? 'red' : 'yellow';
+    out.push(Object.assign({}, v, {sev}));
+  });
+  const today = toDay(todayStr());
+  const reds = out.filter(v=>v.sev === 'red');
+  const active = out.filter(v=>v.sev === 'yellow' && (today - toDay(v.date)) <= VIOLATION_DAYS * DAY);
+  let until = null;
+  if(active.length) until = Math.max.apply(null, active.map(v=>toDay(v.date))) + VIOLATION_DAYS * DAY;
+  return {list:out, reds, active, until, bonusPct: reds.length ? 0 : (active.length ? 50 : 100)};
+}
+function catName(id){ const c = CATEGORIES.find(x=>x.id === id); return c ? c.name : id; }
+
+/* ==================== FOTKA ==================== */
+function resizeImage(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('read failed'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>reject(new Error('image load failed'));
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ==================== VYKRESLENÍ ==================== */
+async function renderList(){
+  // Data každého zaměstnance se stejně musí načíst kvůli odznaku v seznamu,
+  // takže z nich rovnou počítáme i pořadí pro řazení "podle postupu".
+  const withData = await Promise.all(employees.map(async e=>{
+    const d = (e.id === activeId && activeData) ? activeData : normalize(await loadEmployee(e.id));
+    const done = d ? ALL_ITEM_IDS.filter(id => d.checklist[id] === 2).length : 0;
+    const badge = d ? topBadgeIcon(d) : '';
+    return {e, done, badge};
+  }));
+  if(sidebarSort === 'progress'){
+    withData.sort((a, b) => b.done - a.done || a.e.name.localeCompare(b.e.name, 'cs'));
+  } else {
+    withData.sort((a, b) => a.e.name.localeCompare(b.e.name, 'cs'));
+  }
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = term ? withData.filter(x => x.e.name.toLowerCase().includes(term)) : withData;
+  empListEl.innerHTML = '';
+  if(term && !filtered.length){
+    const li = document.createElement('li');
+    li.className = 'muted';
+    li.style.cssText = 'padding:8px 2px;list-style:none;';
+    li.textContent = 'Nikdo nenalezen.';
+    empListEl.appendChild(li);
+  }
+  filtered.forEach(x=>{
+    const li = document.createElement('li');
+    li.className = 'emp-item' + (x.e.id === activeId ? ' active' : '');
+    li.innerHTML = '<span class="nm">' + escapeHtml(x.e.name) + '</span>' +
+      (x.badge ? '<span class="emp-badge">' + x.badge + '</span>' : '');
+    li.onclick = ()=>selectEmployee(x.e.id);
+    empListEl.appendChild(li);
+  });
+  const sortBtn = $('sortToggle');
+  if(sortBtn){
+    sortBtn.textContent = sidebarSort === 'name'
+      ? 'Řadit: abecedně (přepnout na postup)'
+      : 'Řadit: podle postupu (přepnout na abecedu)';
+  }
+}
+
+function applyMode(){
+  const leader = MODE === 'leader';
+  const lbl = $('modeLabel');
+  lbl.textContent = (leader ? 'Režim: Vedoucí' : 'Režim: Zaměstnanec') + ' ⇄';
+  lbl.className = 'mode-badge' + (leader ? '' : ' employee');
+  $('addBtn').style.display = leader ? 'block' : 'none';
+  $('addForm').style.display = 'none';
+  $('backupRow').style.display = leader ? 'flex' : 'none';
+  $('reportBtn').style.display = leader ? 'block' : 'none';
+  $('modeHint').textContent = leader
+    ? 'Klikni na roli nahoře pro přepnutí. Režim Zaměstnanec skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení – kdokoli může přepnout zpět.'
+    : 'Klikni na roli nahoře pro přepnutí zpět. Tady může zaměstnanec číst návody, zaškrtávat přečtení a dělat testy.';
+}
+
+function itemHtml(id, label, d, leader){
+  const st = d.checklist[id];
+  const L = d.learn[id] || {};
+  const open = (openItemId === id);
+  const chips = (L.read ? '<span class="chip">přečteno</span>' : '') +
+                (L.passed ? '<span class="chip ok">test ' + L.score + ' %</span>' : '');
+  return '<div class="item">' +
+    '<div class="item-row" data-toggle="' + id + '">' +
+      '<span class="txt"><span class="chev">' + (open ? '▾' : '▸') + '</span>' + escapeHtml(label) + ' ' + chips + '</span>' +
+      '<span class="state-pill s' + st + '"' + (leader ? ' data-cycle="' + id + '" title="Klikni pro změnu stavu" style="cursor:pointer"' : '') + '>' + STATES[st] + '</span>' +
+    '</div>' +
+    (open ? detailHtml(id, d, leader) : '') +
+  '</div>';
+}
+
+function detailHtml(id, d, leader){
+  const L = d.learn[id] || {read:false, passed:false, score:null};
+  const g = guides[id] || '';
+  const T = TESTS[id];
+  let h = '<div class="item-detail">';
+  h += '<div class="dl">Návod</div>';
+  if(KB_LINKS[id]){
+    h += '<div class="row" style="margin:0 0 8px">' + KB_LINKS[id].map(l=>
+      '<a class="btn" style="text-decoration:none" href="' + KB_URL + '#' + l[0] + '" target="sladka_kb">📖 ' + escapeHtml(l[1]) + '</a>'
+    ).join('') + '</div>';
+  }
+  if(leader){
+    h += '<textarea class="guide-input" data-guide="' + id + '" placeholder="Text návodu nebo odkaz (např. https://…)">' + escapeHtml(g) + '</textarea>';
+    if(/https?:\/\//.test(g)) h += '<div class="guide-view" style="margin-top:6px">' + linkify(g) + '</div>';
+  } else {
+    h += g ? '<div class="guide-view">' + linkify(g) + '</div>' : '<div class="muted">Návod zatím není vyplněn.</div>';
+  }
+  h += '<label class="read-row"><input type="checkbox" data-read="' + id + '"' + (L.read ? ' checked' : '') + '> Návod jsem si přečetl/a</label>';
+  if(T){
+    const canStart = leader || !g || L.read;
+    h += '<div class="dl">Test: ' + escapeHtml(T.title) + '</div>';
+    if(!leader){
+      if(L.passed) h += '<div class="result ok">Splněno (' + L.score + ' %).</div>';
+      else if(L.score !== null && L.score !== undefined) h += '<div class="muted">Poslední pokus: ' + L.score + ' % (potřeba ' + needText(T) + ').</div>';
+    } else {
+      h += '<div class="muted">Náhled otázek pro vedoucího – vyhodnocení se neukládá do karty zaměstnance.</div>';
+      if(L.passed) h += '<div class="muted">Zaměstnanec má test splněný (' + L.score + ' %).</div>';
+      else if(L.score !== null && L.score !== undefined) h += '<div class="muted">Poslední pokus zaměstnance: ' + L.score + ' %.</div>';
+    }
+    if(quiz && quiz.id === id) h += quizHtml(id, leader);
+    else if(leader && reviewId === id && L.answers) h += reviewHtml(id, d);
+    else {
+      h += '<div class="row"><button class="btn" data-start-test="' + id + '"' + (canStart ? '' : ' disabled') + '>' +
+                (leader ? 'Náhled testu' : (L.passed ? 'Zopakovat test' : 'Spustit test')) + '</button>';
+      if(leader && L.answers) h += '<button class="btn ghost" data-review-open="' + id + '">Zobrazit odpovědi zaměstnance</button>';
+      h += (canStart ? '' : '<span class="muted">Nejdřív zaškrtni, že sis přečetl/a návod.</span>') + '</div>';
+    }
+  }
+  if(leader) h += '<button class="link-btn" data-reset-learn="' + id + '">Vynulovat přečtení a test</button>';
+  h += '</div>';
+  return h;
+}
+
+function questionsReviewHtml(questions, answers){
+  return questions.map((q,i)=>{
+    const chosen = answers ? answers[i] : null;
+    return '<div class="q"><div class="qt">' + (i + 1) + '. ' + escapeHtml(q.q) + '</div>' +
+      q.options.map((o,j)=>{
+        const isCorrect = (j === q.correct);
+        const isChosen = (chosen != null && j === chosen);
+        let cls = 'rev-opt';
+        if(isCorrect) cls += ' rev-correct';
+        if(isChosen && !isCorrect) cls += ' rev-wrong';
+        return '<div class="' + cls + '">' + (isChosen ? '● ' : '○ ') + escapeHtml(o) + '</div>';
+      }).join('') +
+    '</div>';
+  }).join('');
+}
+
+function reviewHtml(id, d){
+  const T = TESTS[id];
+  const L = d.learn[id] || {};
+  const answers = L.answers || [];
+  // Starší záznamy (před zavedením rotace otázek) nemají L.questionIdx – u nich se
+  // vždy zobrazovaly všechny otázky v pořadí 0..N, takže identita je správná náhrada.
+  const idx = L.questionIdx || answers.map((_, i) => i);
+  const shownQ = idx.map(i => T.questions[i]).filter(Boolean);
+  let h = '<div class="quiz">';
+  h += '<div class="muted">Odpovědi zaměstnance' + (L.attemptedAt ? ' z ' + fmtStr(L.attemptedAt) : '') +
+       ' – výsledek ' + (L.score != null ? L.score + ' %' : '?') + (L.passed ? ' (splněno).' : ' (nesplněno).') +
+       ' Plná tečka ● = co zaměstnanec zaškrtl, zeleně je vždy správná odpověď.</div>';
+  h += questionsReviewHtml(shownQ, answers);
+  h += '<div class="row"><button class="btn ghost" data-review-close="1">Zavřít</button></div></div>';
+  return h;
+}
+
+function needText(T){ return T.passMin ? (T.passMin + ' správných z ' + T.questions.length) : (T.passPct + ' %'); }
+
+function quizHtml(id, leader){
+  const T = TESTS[id];
+  const r = quiz.result;
+  if(r){
+    const shownQ = r.selIdx.map(i => T.questions[i]);
+    return '<div class="quiz">' +
+      '<div class="result ' + (r.passed ? 'ok' : 'fail') + '"><b>' + r.correct + ' / ' + r.total + ' správně (' + r.pct + ' %)</b> – ' +
+        (r.passed ? 'test splněn.' : 'test nesplněn, potřeba je ' + needText(T) + '.') +
+        (leader ? ' (náhled – neuloženo do karty)' : '') + '</div>' +
+      questionsReviewHtml(shownQ, r.answers) +
+      '<div class="row"><button class="btn" data-quiz-retry="1">Zkusit znovu</button>' +
+      '<button class="btn ghost" data-quiz-close="1">Zavřít</button></div></div>';
+  }
+  const shown = quiz.selIdx.map(i => T.questions[i]);
+  const rotNote = (T.display && T.display < T.questions.length)
+    ? ('<div class="muted">Zobrazeno ' + T.display + ' z ' + T.questions.length + ' otázek, vybraných náhodně – při dalším pokusu se mohou lišit.</div>') : '';
+  return '<div class="quiz">' +
+    (leader ? '<div class="draft-note">Náhled pro vedoucího – odpovědi se nikam neukládají.' + (T.todo ? '<br>' + escapeHtml(T.todo) : '') + '</div>' :
+      (T.draft ? '<div class="draft-note">Koncept otázek podle manuálu – vedoucí ať je před ostrým použitím zkontroluje.' + (T.todo ? '<br>' + escapeHtml(T.todo) : '') + '</div>' : '')) +
+    rotNote +
+    shown.map((q,i)=>
+      '<div class="q"><div class="qt">' + (i+1) + '. ' + escapeHtml(q.q) + '</div>' +
+      q.options.map((o,j)=>'<label class="opt"><input type="radio" name="q' + i + '" value="' + j + '"> <span>' + escapeHtml(o) + '</span></label>').join('') +
+      '</div>').join('') +
+    '<div class="muted" id="quizMsg"></div>' +
+    '<div class="row"><button class="btn" id="quizSubmit">Vyhodnotit</button><button class="btn ghost" data-quiz-close="1">Zavřít</button></div>' +
+  '</div>';
+}
+
+function progressBarHtml(d){
+  const colorByState = {0:'#B8B2A2', 3:'#4B6E8C', 1:'#C98B1F', 2:'#5B7B52'};
+  const w = 100 / ALL_ITEM_IDS.length;
+  return '<div class="progress-bar">' + ALL_ITEM_IDS.map(id=>{
+    return '<div class="progress-seg" style="width:' + w + '%;background:' + colorByState[d.checklist[id]] + '"></div>';
+  }).join('') + '</div>';
+}
+
+// Odznaky se vždy jen ODVOZUJÍ z toho, co appka už zná (checklist, prohřešky) – nic se kvůli nim neukládá.
+function cleanMonthsStreak(violations, startDate){
+  if(!startDate) return 0;  // bez data nástupu nejde poctivě říct, jak dlouho je "bez prohřešku"
+  const startKey = String(startDate).slice(0, 7);
+  const now = new Date();
+  let streak = 0;
+  for(let i = 0; i < 24; i++){
+    const dt = new Date(Date.UTC(now.getFullYear(), now.getMonth() - i, 1));
+    const key = dt.getUTCFullYear() + '-' + String(dt.getUTCMonth() + 1).padStart(2, '0');
+    if(key < startKey) break;  // před nástupem se streak nepočítá
+    if(violations.some(v => String(v.date).slice(0, 7) === key)) break;
+    streak++;
+  }
+  return streak;
+}
+
+function computeBadges(d){
+  const badges = [];
+  const phaseIcons = {'Nováček':'🌱', 'Pokročilý':'☕', 'Expert':'🏆'};
+  CHECKLIST_GROUPS.forEach(g=>{
+    if(!phaseIcons[g.group]) return;
+    if(g.items.every(it => d.checklist[it[0]] === 2)){
+      badges.push({icon: phaseIcons[g.group], title: 'Fáze „' + g.group + '“ dokončena'});
+    }
+  });
+  if(ALL_ITEM_IDS.every(id => d.checklist[id] === 2)){
+    badges.push({icon:'🥇', title:'Celá karta hotová – pracuje samostatně úplně ve všem'});
+  }
+  const streak = cleanMonthsStreak(d.violations || [], d.startDate);
+  if(streak >= 1){
+    badges.push({icon:'🛡️', text:String(streak), title: streak + ' ' + (streak === 1 ? 'měsíc' : (streak < 5 ? 'měsíce' : 'měsíců')) + ' bez prohřešku'});
+  }
+  return badges;
+}
+
+function badgesHtml(d){
+  const badges = computeBadges(d);
+  if(!badges.length) return '';
+  return '<div class="badges-row">' + badges.map(b=>
+    '<span class="badge-ico" title="' + escapeHtml(b.title) + '">' + b.icon + (b.text ? '<span class="badge-num">' + escapeHtml(b.text) + '</span>' : '') + '</span>'
+  ).join('') + '</div>';
+}
+
+function topBadgeIcon(d){
+  const badges = computeBadges(d);
+  if(!badges.length) return '';
+  const priority = ['🥇', '🏆', '☕', '🌱', '🛡️'];
+  for(const p of priority){ const b = badges.find(x => x.icon === p); if(b) return b.icon; }
+  return badges[0].icon;
+}
+
+function printCardHtml(d, leader){
+  const lvl = LEVELS[d.level];
+  const ev = evaluateViolations(d.violations);
+  const cardState = ev.reds.length ? 'ČERVENÁ KARTA' : (ev.active.length ? ('žlutá karta do ' + fmtMs(ev.until)) : 'bez aktivní karty');
+  const badgeTxt = computeBadges(d).map(b => b.icon + (b.text ? ' ' + b.text : '')).join('   ') || '—';
+
+  let h = '<h1>' + escapeHtml(d.name) + '</h1>' +
+    '<div style="color:#666;margin-bottom:10px">Úroveň: ' + lvl.label +
+      (d.startDate ? ' · nástup ' + fmtStr(d.startDate) : '') +
+      (d.phone ? ' · ' + escapeHtml(d.phone) : '') + '</div>' +
+    '<div style="margin-bottom:8px"><b>Odznaky:</b> ' + badgeTxt + '</div>';
+
+  if(leader){
+    const bonusAmount = Math.round(lvl.bonus * (ev.bonusPct / 100));
+    h += '<div style="margin-bottom:8px"><b>Sazba:</b> ' + lvl.base + ' Kč/h + ' + bonusAmount + ' Kč osobní ohodnocení (' + ev.bonusPct + ' %) = ' + (lvl.base + bonusAmount) + ' Kč/h</div>' +
+      '<div style="margin-bottom:8px"><b>Prohřešky:</b> ' + cardState + '</div>';
+  }
+
+  h += CHECKLIST_GROUPS.map(g=>
+    '<div class="pr-group"><b>' + escapeHtml(g.group) + '</b><ul>' +
+    g.items.map(it => '<li>' + escapeHtml(it[1]) + ' — ' + STATES[d.checklist[it[0]]] + '</li>').join('') +
+    '</ul></div>'
+  ).join('');
+
+  if(leader && d.notes.length){
+    h += '<div class="pr-group"><b>Poznámky</b><ul>' +
+      d.notes.map(n => '<li>' + escapeHtml(n.date) + (n.author ? ' · ' + escapeHtml(n.author) : '') + ' — ' + escapeHtml(n.text) + '</li>').join('') +
+      '</ul></div>';
+  }
+
+  h += '<div style="margin-top:16px;color:#999;font-size:11px">Vytištěno ' + fmtStr(todayStr()) + '</div>';
+  return h;
+}
+
+function violationsChartHtml(evList){
+  const now = new Date();
+  const months = [];
+  for(let i = 5; i >= 0; i--){
+    const dt = new Date(Date.UTC(now.getFullYear(), now.getMonth() - i, 1));
+    months.push({
+      key: dt.getUTCFullYear() + '-' + String(dt.getUTCMonth() + 1).padStart(2, '0'),
+      label: String(dt.getUTCMonth() + 1).padStart(2, '0') + '/' + String(dt.getUTCFullYear()).slice(2)
+    });
+  }
+  const counts = {};
+  months.forEach(m => { counts[m.key] = {yellow:0, red:0}; });
+  evList.forEach(v=>{
+    const key = String(v.date).slice(0, 7);
+    if(counts[key]) counts[key][v.sev === 'red' ? 'red' : 'yellow']++;
+  });
+  const totals = months.map(m => counts[m.key].yellow + counts[m.key].red);
+  const max = Math.max(1, Math.max.apply(null, totals));
+  const barW = 24, gap = 12, chartH = 52;
+  const totalW = months.length * (barW + gap);
+  let bars = '';
+  months.forEach((m, i)=>{
+    const c = counts[m.key];
+    const total = c.yellow + c.red;
+    const hY = (c.yellow / max) * chartH;
+    const hR = (c.red / max) * chartH;
+    const x = i * (barW + gap);
+    let y = chartH;
+    if(hR > 0){ y -= hR; bars += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + hR + '" fill="#A63446" rx="2"></rect>'; }
+    if(hY > 0){ y -= hY; bars += '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + hY + '" fill="#C98B1F" rx="2"></rect>'; }
+    if(total === 0){ bars += '<rect x="' + x + '" y="' + (chartH - 2) + '" width="' + barW + '" height="2" fill="#E7D9BE" rx="1"></rect>'; }
+    else { bars += '<text x="' + (x + barW / 2) + '" y="' + (y - 4) + '" font-size="9" fill="#6B5744" text-anchor="middle">' + total + '</text>'; }
+    bars += '<text x="' + (x + barW / 2) + '" y="' + (chartH + 13) + '" font-size="9" fill="#6B5744" text-anchor="middle">' + m.label + '</text>';
+  });
+  return '<div class="dl" style="margin-top:14px">Prohřešky po měsících</div>' +
+    '<svg viewBox="0 0 ' + totalW + ' ' + (chartH + 18) + '" style="width:100%;max-width:260px;height:' + (chartH + 18) + 'px;display:block">' + bars + '</svg>' +
+    '<div class="muted" style="margin-top:2px"><span style="color:#C98B1F;font-weight:700">■</span> žlutá &nbsp; <span style="color:#A63446;font-weight:700">■</span> červená</div>';
+}
+
+function renderMain(resetScroll){
+  const y = window.scrollY;
+  const d = activeData;
+  const leader = MODE === 'leader';
+  const lvl = LEVELS[d.level];
+  const ev = evaluateViolations(d.violations);
+  const bonusAmount = Math.round(lvl.bonus * (ev.bonusPct / 100));
+  const total = lvl.base + bonusAmount;
+
+  const totalItems = ALL_ITEM_IDS.length;
+  const doneItems = ALL_ITEM_IDS.filter(id=>d.checklist[id] === 2).length;
+
+  const stampColor = d.level === 'expert' ? 'var(--cherry)' : d.level === 'pokrocily' ? 'var(--caramel-deep)' : 'var(--sage)';
+  const photoHtml = d.photo
+    ? '<img src="' + d.photo + '" alt="Foto">'
+    : '<div class="stamp" style="color:' + stampColor + '">' + lvl.label + '</div>';
+
+  let html = '';
+
+  if(leader){
+    html += '<div class="card-head">' +
+      '<div class="photo-wrap">' + photoHtml +
+        '<label class="photo-label" title="Nahrát fotku">📷<input type="file" id="photoInput" accept="image/*"></label></div>' +
+      '<div class="fields">' +
+        '<input class="name-input" id="f-name" value="' + escapeHtml(d.name) + '" placeholder="Jméno">' +
+        badgesHtml(d) +
+        '<div class="meta-row">' +
+          '<label>Telefon<input id="f-phone" value="' + escapeHtml(d.phone) + '" placeholder="000 000 000"></label>' +
+          '<label>Datum nástupu<input id="f-start" type="date" value="' + (d.startDate || '') + '"></label>' +
+          '<label>Úroveň<select id="f-level" class="level-select">' +
+            Object.keys(LEVELS).map(k=>'<option value="' + k + '"' + (k === d.level ? ' selected' : '') + '>' + LEVELS[k].label + '</option>').join('') +
+          '</select></label>' +
+        '</div>' +
+        '<div class="wage-line">Sazba: ' + lvl.base + ' Kč/h + ' + bonusAmount + ' Kč osobní ohodnocení (' + ev.bonusPct + ' %) = <b>' + total + ' Kč/h</b></div>' +
+        '<div class="row" style="margin-top:6px">' +
+          '<button class="btn ghost" id="reportOneBtn">✉ Report tohoto zaměstnance</button>' +
+          '<button class="btn ghost" id="printBtn">🖨 Vytisknout kartu</button>' +
+        '</div>' +
+      '</div></div>';
+  } else {
+    html += '<div class="card-head">' +
+      '<div class="photo-wrap">' + photoHtml + '</div>' +
+      '<div class="fields"><div class="name-input">' + escapeHtml(d.name) + '</div>' +
+      badgesHtml(d) +
+      '<div class="meta-row"><span>Úroveň: ' + lvl.label + '</span></div>' +
+      '<div class="row" style="margin-top:6px"><button class="btn ghost" id="printBtn">🖨 Vytisknout kartu</button></div>' +
+      '</div></div>';
+  }
+
+  html += '<section class="block"><h2>Adaptační postup</h2>' +
+    '<div class="legend">' +
+      '<span><span class="dot" style="background:#B8B2A2"></span>čeká na zaučení</span>' +
+      '<span><span class="dot" style="background:#4B6E8C"></span>čeká se na splnění testu</span>' +
+      '<span><span class="dot" style="background:#C98B1F"></span>zaučen, nutný dohled</span>' +
+      '<span><span class="dot" style="background:#5B7B52"></span>pracuje samostatně</span>' +
+    '</div>' +
+    progressBarHtml(d) +
+    '<div class="muted" style="margin-bottom:8px">Klikni na položku pro návod a test.' + (leader ? ' Klikem na stav ho změníš ručně.' : '') + '</div>' +
+    CHECKLIST_GROUPS.map(g=>
+      '<div class="group-label">' + g.group + '</div>' + g.items.map(it=>itemHtml(it[0], it[1], d, leader)).join('')
+    ).join('') +
+  '</section>';
+
+  if(leader){
+    let banner;
+    if(ev.reds.length){
+      const lastRed = ev.reds[ev.reds.length - 1];
+      banner = '<div class="banner red">Červená karta (' + fmtStr(lastRed.date) + ') → dle pravidel následuje ukončení spolupráce.</div>';
+    } else if(ev.active.length){
+      const daysLeft = Math.round((ev.until - toDay(todayStr())) / DAY);
+      const daysWord = daysLeft === 1 ? 'den' : (daysLeft >= 2 && daysLeft <= 4 ? 'dny' : 'dní');
+      const daysNote = daysLeft <= 0 ? ' (končí dnes)' : (' (ještě ' + daysLeft + ' ' + daysWord + ')');
+      banner = '<div class="banner yellow">Žlutá karta platí do ' + fmtMs(ev.until) + daysNote + '. Další prohřešek do tohoto data = červená karta.</div>';
+    } else {
+      banner = '<div class="banner ok">Bez aktivní karty.</div>';
+    }
+    const today = todayStr();
+    const hist = ev.list.slice().reverse().map(v=>{
+      let badge;
+      if(v.sev === 'red') badge = '<span class="badge r">červená</span>';
+      else if((toDay(today) - toDay(v.date)) <= VIOLATION_DAYS * DAY) badge = '<span class="badge y">žlutá</span>';
+      else badge = '<span class="badge x">žlutá – vypršela</span>';
+      return '<div class="vio-row"><div class="vio-main"><div class="vio-date">' + fmtStr(v.date) + ' · ' + escapeHtml(catName(v.category)) + '</div>' +
+        (v.note ? '<div>' + escapeHtml(v.note) + '</div>' : '') + '</div>' + badge +
+        '<button class="danger-link" data-del-vio="' + v.id + '" data-armed="0">Smazat</button></div>';
+    }).join('');
+
+    html += '<section class="block"><h2>Prohřešky a osobní ohodnocení</h2>' + banner +
+      '<div class="bonus-summary"><span>Osobní ohodnocení nyní</span><b>' + ev.bonusPct + ' %</b></div>' +
+      '<div class="vio-form">' +
+        '<select id="vioCat">' + CATEGORIES.map(c=>'<option value="' + c.id + '" title="' + escapeHtml(c.desc) + '">' + escapeHtml(c.name) + '</option>').join('') + '</select>' +
+        '<input id="vioDate" type="date" value="' + today + '" max="' + today + '">' +
+        '<input id="vioNote" class="full" placeholder="Co se stalo (nepovinné)">' +
+      '</div>' +
+      '<div class="row"><button class="btn" id="addVio">Zapsat prohřešek</button>' +
+      '<button class="btn red" id="addVioRed">Zapsat rovnou červenou</button></div>' +
+      '<div class="muted" style="margin-top:8px">Pravidlo: první prohřešek = žlutá (platí ' + VIOLATION_DAYS + ' dní), další do ' + VIOLATION_DAYS + ' dní od předchozího = červená.</div>' +
+      violationsChartHtml(ev.list) +
+      (hist ? '<div class="dl" style="margin-top:14px">Historie</div>' + hist : '') +
+    '</section>';
+
+    html += '<section class="block"><h2>Poznámky</h2>' +
+      '<div class="note-form"><div style="display:flex;flex-direction:column;gap:6px;flex:1;">' +
+        '<input id="noteAuthor" placeholder="Jméno (kdo zapisuje)" style="font-family:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;">' +
+        '<textarea id="noteText" placeholder="Nový záznam…"></textarea></div>' +
+        '<button id="addNote">Přidat</button></div>' +
+      '<div id="notesList">' +
+        (d.notes.slice().reverse().map(n=>
+          '<div class="note-item"><div class="note-date">' + escapeHtml(n.date) + (n.author ? ' · ' + escapeHtml(n.author) : '') + '</div><div>' + escapeHtml(n.text) + '</div></div>').join('')
+          || '<div class="muted">Zatím žádné poznámky.</div>') +
+      '</div></section>' +
+      '<button class="danger-link" id="deleteEmp" data-armed="0">Smazat kartu zaměstnance</button>';
+  }
+
+  mainEl.innerHTML = html;
+  bindMainEvents();
+  window.scrollTo(0, resetScroll ? 0 : y);
+}
+
+async function selectEmployee(id){
+  activeId = id;
+  openItemId = null;
+  quiz = null;
+  reviewId = null;
+  mainEl.innerHTML = '<div class="empty-state">Načítám…</div>';
+  activeData = await loadEmployee(id);
+  if(!activeData){ activeData = blankEmployee('Nový zaměstnanec'); activeData.id = id; }
+  await renderList();
+  renderMain(true);
+}
+
+/* ==================== UDÁLOSTI ==================== */
+async function persist(){
+  try{ await saveEmployee(activeData); }
+  catch(e){ console.error('Uložení selhalo', e); $('modeNote').textContent = 'Uložení selhalo – zkus to znovu nebo si stáhni zálohu.'; }
+}
+
+function bindMainEvents(){
+  const d = activeData;
+  const leader = MODE === 'leader';
+
+  // rozbalení položky
+  mainEl.querySelectorAll('[data-toggle]').forEach(row=>{
+    row.onclick = ()=>{
+      const id = row.dataset.toggle;
+      openItemId = (openItemId === id) ? null : id;
+      if(quiz && quiz.id !== openItemId) quiz = null;
+      if(reviewId && reviewId !== openItemId) reviewId = null;
+      renderMain();
+    };
+  });
+
+  // checkbox "přečteno"
+  mainEl.querySelectorAll('[data-read]').forEach(cb=>{
+    cb.onchange = async ()=>{
+      const id = cb.dataset.read;
+      const L = ensureLearn(d, id);
+      L.read = cb.checked;
+      if(L.read && TESTS[id] && !L.passed && d.checklist[id] === 0) d.checklist[id] = 3;
+      if(!L.read && d.checklist[id] === 3 && !L.passed) d.checklist[id] = 0;
+      await persist();
+      renderMain();
+    };
+  });
+
+  // test
+  mainEl.querySelectorAll('[data-start-test]').forEach(b=>{
+    b.onclick = ()=>{
+      const tid = b.dataset.startTest;
+      quiz = {id:tid, result:null, preview:(MODE==='leader'), selIdx:pickSelIdx(TESTS[tid])};
+      renderMain();
+    };
+  });
+  mainEl.querySelectorAll('[data-quiz-close]').forEach(b=>{
+    b.onclick = ()=>{ quiz = null; renderMain(); };
+  });
+  mainEl.querySelectorAll('[data-quiz-retry]').forEach(b=>{
+    b.onclick = ()=>{ quiz = {id:quiz.id, result:null, preview:quiz.preview, selIdx:pickSelIdx(TESTS[quiz.id])}; renderMain(); };
+  });
+  const submit = $('quizSubmit');
+  if(submit) submit.onclick = async ()=>{
+    const id = quiz.id;
+    const T = TESTS[id];
+    const shownQ = quiz.selIdx.map(i => T.questions[i]);
+    const answers = shownQ.map((q,i)=>{
+      const el = mainEl.querySelector('input[name="q' + i + '"]:checked');
+      return el ? parseInt(el.value, 10) : null;
+    });
+    if(answers.indexOf(null) !== -1){ $('quizMsg').textContent = 'Odpověz prosím na všechny otázky.'; return; }
+    let correct = 0;
+    shownQ.forEach((q,i)=>{ if(answers[i] === q.correct) correct++; });
+    const total = shownQ.length;
+    const pct = Math.round(correct / total * 100);
+    const passed = T.passMin ? correct >= T.passMin : pct >= T.passPct;
+    if(!quiz.preview){
+      const L = ensureLearn(d, id);
+      if(passed){ L.passed = true; L.score = pct; }
+      else if(!L.passed){ L.score = pct; }
+      L.answers = answers.slice();
+      L.questionIdx = quiz.selIdx.slice();
+      L.attemptedAt = todayStr();
+      const cur = d.checklist[id];
+      if(passed){ if(RANK[T.onPass] > RANK[cur]) d.checklist[id] = T.onPass; }
+      else if(cur === 0){ d.checklist[id] = 3; }
+      await persist();
+    }
+    quiz.result = {correct, total, pct, passed, answers: answers.slice(), selIdx: quiz.selIdx.slice()};
+    renderMain();
+  };
+
+  const printBtn = $('printBtn');
+  if(printBtn) printBtn.onclick = ()=>{
+    $('printArea').innerHTML = printCardHtml(d, leader);
+    window.print();
+  };
+
+  if(!leader) return;
+
+  // ruční změna stavu
+  mainEl.querySelectorAll('[data-cycle]').forEach(p=>{
+    p.onclick = async e=>{
+      e.stopPropagation();
+      const id = p.dataset.cycle;
+      d.checklist[id] = CYCLE[(CYCLE.indexOf(d.checklist[id]) + 1) % CYCLE.length];
+      await persist();
+      renderMain();
+    };
+  });
+
+  // návody (sdílené)
+  mainEl.querySelectorAll('[data-guide]').forEach(ta=>{
+    ta.onchange = async ()=>{
+      guides[ta.dataset.guide] = ta.value;
+      try{ await saveGuides(); }catch(e){ console.error('Uložení návodu selhalo', e); }
+      renderMain();
+    };
+  });
+
+  mainEl.querySelectorAll('[data-review-open]').forEach(b=>{
+    b.onclick = ()=>{ reviewId = b.dataset.reviewOpen; quiz = null; renderMain(); };
+  });
+  mainEl.querySelectorAll('[data-review-close]').forEach(b=>{
+    b.onclick = ()=>{ reviewId = null; renderMain(); };
+  });
+
+  mainEl.querySelectorAll('[data-reset-learn]').forEach(b=>{
+    b.onclick = async ()=>{
+      const id = b.dataset.resetLearn;
+      delete d.learn[id];
+      if(d.checklist[id] === 3) d.checklist[id] = 0;
+      quiz = null;
+      if(reviewId === id) reviewId = null;
+      await persist();
+      renderMain();
+    };
+  });
+
+  // hlavička
+  $('f-name').onchange = async e=>{
+    d.name = e.target.value || 'Nový zaměstnanec';
+    await persist();
+    const idx = employees.find(x=>x.id === d.id);
+    if(idx) idx.name = d.name;
+    await saveIndex();
+    await renderList();
+  };
+  $('reportOneBtn').onclick = ()=>{
+    sendReport('Report zaměstnance – ' + d.name + ' – ' + todayStr(), buildSingleReport(d));
+  };
+  $('f-phone').onchange = async e=>{ d.phone = e.target.value; await persist(); };
+  $('f-start').onchange = async e=>{ d.startDate = e.target.value; await persist(); };
+  $('f-level').onchange = async e=>{ d.level = e.target.value; await persist(); renderMain(); };
+  $('photoInput').addEventListener('change', async e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{ d.photo = await resizeImage(file, 300, 0.82); await persist(); renderMain(); }
+    catch(err){ console.error('Zpracování fotky selhalo', err); }
+  });
+
+  // prohřešky
+  const addVio = async type=>{
+    let date = $('vioDate').value || todayStr();
+    if(date > todayStr()) date = todayStr();
+    d.violations.push({id:uid(), date, category:$('vioCat').value, type, note:$('vioNote').value.trim()});
+    await persist();
+    renderMain();
+  };
+  $('addVio').onclick = ()=>addVio('auto');
+  $('addVioRed').onclick = ()=>addVio('red');
+  mainEl.querySelectorAll('[data-del-vio]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      if(btn.dataset.armed !== '1'){ btn.dataset.armed = '1'; btn.textContent = 'Opravdu?'; return; }
+      d.violations = d.violations.filter(v=>v.id !== btn.dataset.delVio);
+      await persist();
+      renderMain();
+    };
+  });
+
+  // poznámky
+  $('addNote').onclick = async ()=>{
+    const text = $('noteText').value.trim();
+    if(!text) return;
+    d.notes.push({date:todayStr(), author:$('noteAuthor').value.trim(), text});
+    await persist();
+    renderMain();
+  };
+
+  // smazání zaměstnance
+  const delBtn = $('deleteEmp');
+  delBtn.onclick = async ()=>{
+    if(delBtn.dataset.armed !== '1'){
+      delBtn.dataset.armed = '1';
+      delBtn.textContent = 'Opravdu smazat? (klikni znovu)';
+      return;
+    }
+    await deleteEmployee(d.id);
+    employees = employees.filter(x=>x.id !== d.id);
+    await saveIndex();
+    activeId = null; activeData = null; openItemId = null; quiz = null;
+    await renderList();
+    mainEl.innerHTML = '<div class="empty-state">Vyber zaměstnance vlevo, nebo přidej nového.</div>';
+  };
+}
+
+/* ==================== SIDEBAR ==================== */
+const addBtn = $('addBtn');
+const addForm = $('addForm');
+const newNameInput = $('newNameInput');
+
+$('empSearch').addEventListener('input', async ()=>{
+  searchTerm = $('empSearch').value;
+  await renderList();
+});
+
+$('sortToggle').onclick = async ()=>{
+  sidebarSort = sidebarSort === 'name' ? 'progress' : 'name';
+  try{ localStorage.setItem('sidebar-sort', sidebarSort); }catch(e){}
+  await renderList();
+};
+
+addBtn.onclick = ()=>{
+  addForm.style.display = 'flex';
+  addBtn.style.display = 'none';
+  newNameInput.value = '';
+  newNameInput.focus();
+};
+$('cancelAdd').onclick = ()=>{ addForm.style.display = 'none'; addBtn.style.display = 'block'; };
+
+async function submitNewEmployee(){
+  const name = newNameInput.value.trim();
+  if(!name){ newNameInput.focus(); return; }
+  const emp = blankEmployee(name);
+  await saveEmployee(emp);
+  employees.push({id:emp.id, name:emp.name});
+  await saveIndex();
+  addForm.style.display = 'none';
+  addBtn.style.display = 'block';
+  await selectEmployee(emp.id);
+}
+$('confirmAdd').onclick = submitNewEmployee;
+newNameInput.addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitNewEmployee(); }
+});
+
+function employeeReportLines(d){
+  const ev = evaluateViolations(d.violations);
+  const totalItems = ALL_ITEM_IDS.length;
+  const doneItems = ALL_ITEM_IDS.filter(id=>d.checklist[id] === 2).length;
+  const cardState = ev.reds.length ? 'ČERVENÁ KARTA' : (ev.active.length ? 'žlutá karta do ' + fmtMs(ev.until) : 'bez karty');
+  const lines = [];
+  lines.push('• ' + d.name + ' (' + LEVELS[d.level].label + ')');
+  lines.push('  Postup: ' + doneItems + '/' + totalItems + ' položek samostatně. Prohřešky: ' + cardState + '.');
+  const testIds = ALL_ITEM_IDS.filter(id=>TESTS[id]);
+  testIds.forEach(id=>{
+    const label = (CHECKLIST_GROUPS.flatMap(g=>g.items).find(it=>it[0] === id) || [id, id])[1];
+    const L = d.learn[id] || {};
+    const stav = L.passed ? ('splněn, ' + L.score + ' %') : (L.score != null ? ('nesplněn, poslední pokus ' + L.score + ' %') : 'zatím neproběhl');
+    lines.push('  - Test „' + label + '“: ' + stav);
+  });
+  return lines;
+}
+
+async function buildFullReport(){
+  const lines = ['Report karet zaměstnanců – ' + fmtStr(todayStr()), ''];
+  for(const e of employees){
+    const d = normalize(await loadEmployee(e.id));
+    if(!d) continue;
+    lines.push.apply(lines, employeeReportLines(d));
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function buildSingleReport(d){
+  const lines = ['Report zaměstnance – ' + fmtStr(todayStr()), ''];
+  lines.push.apply(lines, employeeReportLines(d));
+  return lines.join('\n');
+}
+
+function sendReport(subject, body){
+  if(body.length > 1500){
+    window.prompt('Report je delší, e-mailový odkaz by ho mohl oříznout. Zkopíruj si text (Ctrl+C, Ctrl+A) a vlož do e-mailu s předmětem: ' + subject, body);
+    return;
+  }
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+
+/* ==================== NÁPOVĚDA ==================== */
+function helpContentHtml(){
+  const leader = MODE === 'leader';
+  let h = '<h2>Nápověda</h2>' +
+    '<div class="help-sub">Pohled: ' + (leader ? 'Vedoucí' : 'Zaměstnanec') + '</div>';
+
+  h += '<h3>Adaptační postup</h3>' +
+    '<p>Každá položka checklistu má jeden ze 4 stavů – vidíš ho jako barvu puntíku u položky i jako barvu v pruhu nahoře v kartě: ' +
+    '<b>šedá</b> čeká na zaučení, <b>modrá</b> čeká se na splnění testu, <b>oranžová</b> zaučen/a s dohledem, <b>zelená</b> pracuje samostatně. ' +
+    'Pruh jde v pořadí položek checklistu, takže na první pohled poznáš, ve které části a jak daleko zaměstnanec je.</p>';
+
+  h += '<h3>Návody a testy</h3>' +
+    '<p>Klikni na položku – rozbalí se návod a test. Zaškrtnutím „Návod jsem si přečetl/a“ se test odemkne (pokud položka žádný návod nemá, jde spustit rovnou). ' +
+    'Test má obvykle víc otázek v zásobníku, než kolik se jich naráz zobrazí – při každém pokusu appka vybere jinou náhodnou sadu, aby šel test smysluplně zopakovat. Pro splnění je většinou potřeba 80 % správně.</p>';
+
+  h += '<h3>Odznaky</h3>' +
+    '<p>🌱☕🏆 se objeví, jakmile má zaměstnanec úplně všechny položky jedné fáze (Nováček/Pokročilý/Expert) na „samostatně“ – jen část skupiny nestačí. ' +
+    '🥇 je bonus za kompletně hotovou kartu včetně vstupní logistiky. 🛡️ s číslem ukazuje, kolik měsíců v kuse nemá zaměstnanec žádný prohřešek – počítá se od vyplněného data nástupu, bez něj se štít nezobrazí.</p>';
+
+  if(leader){
+    h += '<h3>Prohřešky</h3>' +
+      '<p>První prohřešek v libovolné kategorii dá žlutou kartu, ta platí 30 dní. Další prohřešek do těch 30 dní od předchozího znamená rovnou červenou kartu (0 % osobní ohodnocení). ' +
+      'Graf pod historií ukazuje počet žlutých a červených karet za posledních 6 měsíců.</p>';
+
+    h += '<h3>Náhled testu vs. odpovědi zaměstnance</h3>' +
+      '<p>„Náhled testu“ jen ukáže, jaké otázky se v testu objevují – nic se tím neukládá ani nemění kartu. „Zobrazit odpovědi zaměstnance“ se objeví až po jeho reálném pokusu a ukáže přesně to, co zaškrtl, se zeleně označenou správnou odpovědí.</p>';
+
+    h += '<h3>Reporty a záloha</h3>' +
+      '<p>„Report e-mailem“ (za všechny) a „Report tohoto zaměstnance“ (na kartě) otevřou e-mail s předvyplněným přehledem – adresáta doplníš sám. ' +
+      '„Uložit zálohu“ a „Nahrát zálohu“ slouží k přenosu dat mezi počítači nebo jako pojistka.</p>';
+
+    h += '<h3>Řazení a role</h3>' +
+      '<p>Seznam vlevo lze řadit abecedně nebo podle postupu. Přepínač Vedoucí/Zaměstnanec dole je jen pohled na appku – žádné heslo ani skutečné zabezpečení, kdokoli u appky si roli může přepnout sám.</p>';
+  } else {
+    h += '<h3>Co tady děláš</h3>' +
+      '<p>V tomhle pohledu appka slouží hlavně ke studiu a testům – projdi si návod, zaškrtni přečtení a udělej test u položky, na které zrovna pracuješ. ' +
+      'Mzdu, prohřešky, poznámky a úpravy karty řeší vedoucí ve svém pohledu.</p>';
+  }
+
+  h += '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn" id="helpCloseBtn">Zavřít</button></div>';
+  return h;
+}
+
+function openHelp(){
+  $('helpModalBox').innerHTML = helpContentHtml();
+  $('helpOverlay').style.display = 'flex';
+  $('helpCloseBtn').onclick = closeHelp;
+}
+function closeHelp(){
+  $('helpOverlay').style.display = 'none';
+}
+$('helpBtn').onclick = openHelp;
+$('helpOverlay').addEventListener('click', e=>{ if(e.target.id === 'helpOverlay') closeHelp(); });
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeHelp(); });
+
+$('reportBtn').onclick = async ()=>{
+  if(!employees.length){ alert('Zatím není žádný zaměstnanec.'); return; }
+  const body = await buildFullReport();
+  sendReport('Report karet zaměstnanců – ' + todayStr(), body);
+};
+
+$('modeLabel').onclick = ()=>{
+  MODE = (MODE === 'leader') ? 'employee' : 'leader';
+  try{ localStorage.setItem('ui-mode', MODE); }catch(e){}
+  quiz = null;
+  reviewId = null;
+  applyMode();
+  if(activeData) renderMain();
+  if($('helpOverlay').style.display === 'flex') openHelp();
+};
+
+// Záloha (nutná u staženého .html, kde se data drží jen v tomto prohlížeči)
+$('exportBtn').onclick = async ()=>{
+  const data = {};
+  for(const e of employees){ data[e.id] = await loadEmployee(e.id); }
+  const payload = JSON.stringify({employees, data, guides}, null, 2);
+  const blob = new Blob([payload], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'karty-zamestnancu-' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+const importFileInput = $('importFile');
+$('importBtn').onclick = ()=>importFileInput.click();
+importFileInput.addEventListener('change', async ()=>{
+  const file = importFileInput.files[0];
+  if(!file) return;
+  try{
+    const parsed = JSON.parse(await file.text());
+    if(!parsed.employees || !parsed.data) throw new Error('neplatný formát');
+    employees = parsed.employees;
+    await saveIndex();
+    for(const id of Object.keys(parsed.data)){ await saveEmployee(normalize(parsed.data[id])); }
+    if(parsed.guides){ guides = Object.assign({}, DEFAULT_GUIDES, parsed.guides); await saveGuides(); }
+    await renderList();
+    if(employees.length) await selectEmployee(employees[0].id);
+    $('modeNote').textContent = 'Záloha nahrána.';
+  }catch(e){
+    $('modeNote').textContent = 'Import se nezdařil – soubor neodpovídá formátu zálohy.';
+  }
+  importFileInput.value = '';
+});
+
+$('modeNote').textContent = hasCloud
+  ? 'Data se ukládají automaticky a jsou sdílená se všemi, kdo mají tento artifact otevřený v Claude.'
+  : 'Tento soubor běží samostatně (offline) – data se ukládají jen v tomto prohlížeči. Pro přenos mezi počítači použij „Uložit zálohu“ a „Nahrát zálohu“.';
+$('publishBtn').onclick = ()=>{ publishToGitHub(); };
+
+(async function init(){
+  syncFromWeb();
+  $('versionTag').textContent = APP_VERSION + (onWeb && CARD_DATA.publishedAt ? ' · data: ' + fmtStamp(CARD_DATA.publishedAt) : '');
+  if(onWeb){ $('publishBtn').style.display = 'block'; updatePublishStatus(); }
+  await loadIndex();
+  await loadGuides();
+  applyMode();
+  await renderList();
+  if(employees.length) await selectEmployee(employees[0].id);
+})();
+</script>
+</body>
+</html>
