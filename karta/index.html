@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v3.7 -->
+<!-- v3.8 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -354,6 +354,7 @@
     </div>
     <button class="mode-btn" id="reportBtn">📅 Měsíční report a uzávěrka</button>
     <button class="mode-btn" id="cfgBtn">⚙ Nastavení karty</button>
+    <button class="mode-btn" id="logBtn">🕘 Historie změn</button>
     <button class="mode-btn" id="publishBtn" style="display:none">☁ Publikovat na web</button>
     <a class="mode-btn" id="kbLink" href="../" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">📚 Znalostní báze</a>
     <div class="version-tag" id="versionTag"></div>
@@ -376,7 +377,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v3.7';
+const APP_VERSION = 'v3.8';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -925,7 +926,10 @@ function applyConfig(){
     ALL_ITEM_IDS.length = 0;
     CHECKLIST_GROUPS.forEach(g=>g.items.forEach(it=>ALL_ITEM_IDS.push(it[0])));
   }
-  if(SETTINGS.levels){
+  if(Array.isArray(SETTINGS.levelList) && SETTINGS.levelList.length){
+    Object.keys(LEVELS).forEach(k=>delete LEVELS[k]);
+    SETTINGS.levelList.forEach(l=>{ LEVELS[l.id] = {label:l.label, base:l.base, bonus:l.bonus, color:l.color || ''}; });
+  } else if(SETTINGS.levels){
     Object.keys(SETTINGS.levels).forEach(k=>{ if(LEVELS[k]) Object.assign(LEVELS[k], SETTINGS.levels[k]); });
   }
   if(Array.isArray(SETTINGS.categories)){
@@ -1117,6 +1121,7 @@ async function deleteEmployee(id){ await kvDel('employee:' + id); }
 // Doplní chybějící pole (i u dat z verze 1) – nic nemaže.
 function normalize(d){
   if(!d) return d;
+  if(!LEVELS[d.level]) d.level = Object.keys(LEVELS)[0];
   if(!d.checklist) d.checklist = {};
   ALL_ITEM_IDS.forEach(id=>{ if(typeof d.checklist[id] !== 'number') d.checklist[id] = 0; });
   if(!d.learn) d.learn = {};
@@ -1255,6 +1260,7 @@ function applyMode(){
   $('backupRow').style.display = leader ? 'flex' : 'none';
   $('reportBtn').style.display = leader ? 'block' : 'none';
   $('cfgBtn').style.display = leader ? 'block' : 'none';
+  $('logBtn').style.display = (leader && onWeb) ? 'block' : 'none';
   $('modeHint').textContent = leader
     ? 'Klikni na roli nahoře pro přepnutí. Režim Zaměstnanec skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení – kdokoli může přepnout zpět.'
     : 'Klikni na roli nahoře pro přepnutí zpět. Tady může zaměstnanec číst návody, zaškrtávat přečtení a dělat testy.';
@@ -1522,7 +1528,7 @@ function renderMain(resetScroll){
   const totalItems = ALL_ITEM_IDS.length;
   const doneItems = ALL_ITEM_IDS.filter(id=>d.checklist[id] === 2).length;
 
-  const stampColor = d.level === 'expert' ? 'var(--cherry)' : d.level === 'pokrocily' ? 'var(--caramel-deep)' : 'var(--sage)';
+  const stampColor = levelColor(d.level);
   const photoHtml = d.photo
     ? '<img src="' + d.photo + '" alt="Foto">'
     : '<div class="stamp" style="color:' + stampColor + '">' + lvl.label + '</div>';
@@ -2291,24 +2297,61 @@ function renderCfgChecklist(msg, kind){
 }
 
 /* ---- Úrovně a sazby ---- */
+const LEVEL_COLORS = {zelena:['Zelená','var(--sage)'], karamel:['Karamelová','var(--caramel-deep)'], vinova:['Vínová','var(--cherry)'], modra:['Modrá','#3E6A8A'], cokolada:['Čokoládová','var(--cocoa)']};
+function levelColor(id){
+  const l = LEVELS[id];
+  if(l && l.color && LEVEL_COLORS[l.color]) return LEVEL_COLORS[l.color][1];
+  return id === 'expert' ? 'var(--cherry)' : id === 'pokrocily' ? 'var(--caramel-deep)' : 'var(--sage)';
+}
+function defaultColorKey(id){ return id === 'expert' ? 'vinova' : id === 'pokrocily' ? 'karamel' : 'zelena'; }
 function renderCfgLevels(msg, kind){
-  if(!cfgWork) cfgWork = JSON.parse(JSON.stringify(LEVELS));
+  if(!cfgWork) cfgWork = Object.keys(LEVELS).map(k=>({id:k, label:LEVELS[k].label, base:LEVELS[k].base, bonus:LEVELS[k].bonus, color:LEVELS[k].color || defaultColorKey(k)}));
   const W = cfgWork;
-  let h = '<div class="muted">Sazba je základní hodinová mzda. Osobní ohodnocení je částka navíc při 100 % – při žluté kartě se vyplácí polovina, při červené nic.</div><div style="margin-top:12px">' +
-    Object.keys(W).map(k=>
-      '<div class="lvl-row"><div class="cfg-field" style="margin:0">Název úrovně<input data-lv="' + k + ',label" value="' + escapeHtml(W[k].label) + '"></div>' +
-      '<div class="cfg-field" style="margin:0">Sazba Kč/h<input type="number" min="0" data-lv="' + k + ',base" value="' + W[k].base + '"></div>' +
-      '<div class="cfg-field" style="margin:0">Ohodnocení Kč/h<input type="number" min="0" data-lv="' + k + ',bonus" value="' + W[k].bonus + '"></div></div>'
-    ).join('') + '</div>' + cfgButtons() + cfgMsgHtml(msg, kind);
+  let h = '<div class="muted">Sazba je základní hodinová mzda. Osobní ohodnocení je částka navíc při 100 % – při žluté kartě se vyplácí polovina, při červené nic. Barva je barva razítka v kolečku zaměstnance. Pořadí určuje, jak se úrovně nabízejí na kartě.</div>' +
+    W.map((l, i)=>
+      '<div class="cl-group"><div class="lvl-row" style="grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr) minmax(0,.8fr) minmax(0,1fr) auto">' +
+      '<div class="cfg-field" style="margin:0">Název úrovně<input data-lv="' + i + ',label" value="' + escapeHtml(l.label) + '"></div>' +
+      '<div class="cfg-field" style="margin:0">Sazba Kč/h<input type="number" min="0" data-lv="' + i + ',base" value="' + l.base + '"></div>' +
+      '<div class="cfg-field" style="margin:0">Ohodnocení Kč/h<input type="number" min="0" data-lv="' + i + ',bonus" value="' + l.bonus + '"></div>' +
+      '<div class="cfg-field" style="margin:0">Barva<select data-lv="' + i + ',color">' + Object.keys(LEVEL_COLORS).map(c=>'<option value="' + c + '"' + (l.color === c ? ' selected' : '') + '>' + LEVEL_COLORS[c][0] + '</option>').join('') + '</select></div>' +
+      '<span class="q-tools" style="align-self:end;padding-bottom:6px"><button class="q-tool" data-l-up="' + i + '">↑</button><button class="q-tool" data-l-down="' + i + '">↓</button><button class="q-tool" data-l-del="' + i + '" title="Smazat úroveň">✕</button></span>' +
+      '</div></div>'
+    ).join('') +
+    '<button class="add-link" id="lvlAdd">+ Přidat úroveň</button>' + cfgButtons() + cfgMsgHtml(msg, kind);
   mainEl.innerHTML = cfgShell(h);
   bindCfgShell();
   mainEl.querySelectorAll('[data-lv]').forEach(el=>{
-    el.oninput = ()=>{ const p = el.dataset.lv.split(','); W[p[0]][p[1]] = p[1] === 'label' ? el.value : (parseInt(el.value, 10) || 0); markWork(); };
+    const handler = ()=>{ const p = el.dataset.lv.split(','); const f = p[1]; W[+p[0]][f] = (f === 'label' || f === 'color') ? el.value : (parseInt(el.value, 10) || 0); markWork(); };
+    el.oninput = handler; el.onchange = handler;
   });
+  const swap = (i, j)=>{ if(j < 0 || j >= W.length) return; const x = W[i]; W[i] = W[j]; W[j] = x; markWork(); renderCfgLevels(); };
+  mainEl.querySelectorAll('[data-l-up]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.lUp, +b.dataset.lUp - 1); });
+  mainEl.querySelectorAll('[data-l-down]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.lDown, +b.dataset.lDown + 1); });
+  mainEl.querySelectorAll('[data-l-del]').forEach(b=>{
+    b.onclick = ()=>{
+      if(W.length <= 1){ $('cfgMsg').className = 'cfg-msg err'; $('cfgMsg').textContent = 'Musí zůstat aspoň jedna úroveň.'; return; }
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
+      W.splice(+b.dataset.lDel, 1); markWork(); renderCfgLevels();
+    };
+  });
+  $('lvlAdd').onclick = ()=>{
+    const last = W[W.length - 1] || {base:140, bonus:28};
+    W.push({id:newId('u'), label:'', base:last.base + 10, bonus:last.bonus + 2, color:'modra'});
+    markWork(); renderCfgLevels();
+    const ins = mainEl.querySelectorAll('[data-lv$=",label"]'); ins[ins.length - 1].focus();
+  };
   $('cfgWCancel').onclick = ()=>{ cfgWork = null; cfgWorkDirty = false; renderCfgLevels('Změny zahozeny.'); };
   $('cfgWSave').onclick = async ()=>{
-    for(const k of Object.keys(W)) if(!String(W[k].label).trim()) return renderCfgLevels('Každá úroveň musí mít název.', 'err');
-    SETTINGS.levels = JSON.parse(JSON.stringify(W));
+    for(const l of W) if(!String(l.label).trim()) return renderCfgLevels('Každá úroveň musí mít název.', 'err');
+    // smazanou úroveň nesmí mít žádný zaměstnanec
+    const removed = Object.keys(LEVELS).filter(k=>!W.some(l=>l.id === k));
+    if(removed.length){
+      const who = [];
+      for(const e of employees){ const d = await loadEmployee(e.id); if(d && removed.indexOf(d.level) !== -1) who.push(e.name + ' (' + LEVELS[d.level].label + ')'); }
+      if(who.length) return renderCfgLevels('Úroveň nejde smazat, mají ji zaměstnanci: ' + who.join(', ') + '. Nejdřív jim na kartě změň úroveň.', 'err');
+    }
+    SETTINGS.levelList = W.map(l=>({id:l.id, label:String(l.label).trim(), base:l.base, bonus:l.bonus, color:l.color}));
+    delete SETTINGS.levels;
     await saveSettings();
     applyConfig();
     cfgWork = null; cfgWorkDirty = false;
@@ -2415,6 +2458,115 @@ async function renderCfgKb(){
   });
 }
 
+/* ==================== HISTORIE ZMĚN (z publikací na GitHubu) ==================== */
+async function fetchCardCommits(){
+  const url = 'https://api.github.com/repos/' + GH_REPO + '/commits?path=' + GH_FILE + '&per_page=30';
+  const token = lsGet('kb-gh-token');
+  let res = token ? await fetch(url, {headers:{'Accept':'application/vnd.github+json', 'Authorization':'Bearer ' + token}, cache:'no-store'}) : null;
+  if(!res || !res.ok) res = await fetch(url, {headers:{'Accept':'application/vnd.github+json'}, cache:'no-store'});
+  if(!res.ok) throw new Error('commits');
+  return await res.json();
+}
+async function fetchCardVersion(sha){
+  const raw = await fetch('https://raw.githubusercontent.com/' + GH_REPO + '/' + sha + '/' + GH_FILE);
+  if(!raw.ok) return null;
+  const t = await raw.text();
+  if(t.indexOf('CARD_DATA') === -1) return null;   // omylem nahraný jiný soubor
+  try{ return JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); }catch(e){ return null; }
+}
+function stLabel(v){ return STATES[v || 0] || String(v); }
+function diffEmployee(p, c){
+  const out = [];
+  if(p.name !== c.name) out.push('jméno „' + p.name + '“ → „' + c.name + '“');
+  if(p.level !== c.level) out.push('úroveň ' + ((LEVELS[p.level] || {}).label || p.level) + ' → ' + ((LEVELS[c.level] || {}).label || c.level));
+  if((p.phone || '') !== (c.phone || '')) out.push('telefon');
+  if((p.startDate || '') !== (c.startDate || '')) out.push('datum nástupu');
+  if((p.photo || '') !== (c.photo || '')) out.push('fotka');
+  const ids = Object.keys(Object.assign({}, p.checklist || {}, c.checklist || {}));
+  ids.forEach(id=>{
+    const a = (p.checklist || {})[id] || 0, b = (c.checklist || {})[id] || 0;
+    if(a !== b) out.push(itemLabel(id) + ': ' + stLabel(a) + ' → ' + stLabel(b));
+  });
+  const lids = Object.keys(Object.assign({}, p.learn || {}, c.learn || {}));
+  lids.forEach(id=>{
+    const a = (p.learn || {})[id] || {}, b = (c.learn || {})[id] || {};
+    if(!a.read && b.read) out.push(itemLabel(id) + ': návod přečten');
+    if(a.read && !b.read) out.push(itemLabel(id) + ': přečtení zrušeno');
+    if(!a.passed && b.passed) out.push(itemLabel(id) + ': test splněn (' + b.score + ' %)');
+    else if(!b.passed && b.score != null && b.score !== a.score) out.push(itemLabel(id) + ': pokus o test ' + b.score + ' %');
+    if(a.passed && !b.passed && b.score == null) out.push(itemLabel(id) + ': test vynulován');
+  });
+  const pv = {}, cv = {};
+  (p.violations || []).forEach(v=>{ pv[v.id] = v; });
+  (c.violations || []).forEach(v=>{ cv[v.id] = v; });
+  Object.keys(cv).forEach(id=>{ if(!pv[id]) out.push('nový prohřešek: ' + catName(cv[id].category) + ' (' + fmtStr(cv[id].date) + ')' + (cv[id].type === 'red' ? ' – rovnou červená' : '')); });
+  Object.keys(pv).forEach(id=>{ if(!cv[id]) out.push('smazán prohřešek: ' + catName(pv[id].category) + ' (' + fmtStr(pv[id].date) + ')'); });
+  const pn = (p.notes || []).length, cn = (c.notes || []).length;
+  if(cn > pn) (c.notes || []).slice(pn).forEach(n=>out.push('poznámka: „' + String(n.text || '').slice(0, 60) + (String(n.text || '').length > 60 ? '…' : '') + '“'));
+  if(cn < pn) out.push('smazané poznámky (' + (pn - cn) + ')');
+  return out;
+}
+function diffCardData(prev, cur){
+  const groups = [];
+  const P = prev.data || {}, C = cur.data || {};
+  const names = {};
+  (prev.employees || []).concat(cur.employees || []).forEach(e=>{ names[e.id] = e.name; });
+  Object.keys(C).forEach(id=>{
+    if(!P[id]){ groups.push({label:(C[id].name || names[id]), items:['nový zaměstnanec']}); return; }
+    const ch = diffEmployee(P[id], C[id]);
+    if(ch.length) groups.push({label:C[id].name || names[id], items:ch});
+  });
+  Object.keys(P).forEach(id=>{ if(!C[id]) groups.push({label:(P[id].name || names[id]), items:['karta smazána']}); });
+  const ps = prev.settings || {}, cs = cur.settings || {}, set = [];
+  if((ps.closedFrom || '') !== (cs.closedFrom || '')) set.push('uzávěrka období – nové období od ' + fmtStr(cs.closedFrom));
+  if((ps.emails || '') !== (cs.emails || '')) set.push('adresy pro report');
+  const parts = [['tests','testy'], ['kbLinks','návody z KB'], ['checklist','checklist'], ['levelList','úrovně a sazby'], ['levels','úrovně a sazby'], ['categories','kategorie prohřešků'], ['violationDays','platnost žluté karty']];
+  const seen = {};
+  parts.forEach(x=>{ if(JSON.stringify(ps[x[0]] || null) !== JSON.stringify(cs[x[0]] || null) && !seen[x[1]]){ seen[x[1]] = 1; set.push('změna nastavení: ' + x[1]); } });
+  if(set.length) groups.push({label:'Nastavení', items:set});
+  return groups;
+}
+async function renderCardLog(){
+  activeId = null; activeData = null;
+  await renderList();
+  const head = '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button><section class="block"><h2>Historie změn</h2>' +
+    '<div class="muted">Všechny publikace karty (posledních 30), od nejnovější. U každé je vidět, co se od předchozí publikace změnilo. Nepublikované změny z prohlížeče tu nejsou.</div>';
+  mainEl.innerHTML = head + '<div class="muted" id="logProgress" style="margin-top:12px">Načítám historii…</div></section>';
+  window.scrollTo(0, 0);
+  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({block:'start'});
+  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  let entries = [];
+  try{
+    const commits = (await fetchCardCommits()).reverse();
+    let prev = null;
+    for(let i = 0; i < commits.length; i++){
+      const pr = $('logProgress');
+      if(!pr) return;   // uživatel mezitím odešel jinam
+      pr.textContent = 'Načítám historii… ' + (i + 1) + '/' + commits.length;
+      const data = await fetchCardVersion(commits[i].sha);
+      if(!data || !Array.isArray(data.employees)) continue;
+      const c = commits[i];
+      const e = {date:c.commit.author.date, who:(c.author && c.author.login) || c.commit.author.name};
+      e.groups = prev ? diffCardData(prev, data) : [{label:'Výchozí stav', items:['počet zaměstnanců: ' + data.employees.length]}];
+      if(e.groups.length) entries.push(e);
+      prev = data;
+    }
+  }catch(err){
+    if($('logProgress')) $('logProgress').textContent = 'Historii se nepodařilo načíst z GitHubu. Zkus to za chvíli znovu.';
+    return;
+  }
+  if(!$('logProgress')) return;
+  entries = entries.reverse();
+  const body = entries.length ? entries.map(e=>{
+    const d = new Date(e.date);
+    const when = d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    return '<div class="hist-item"><div><b>' + when + '</b> · <span class="muted">' + escapeHtml(e.who) + '</span></div>' +
+      e.groups.map(g=>'<div style="margin-top:4px"><b style="color:var(--caramel-deep)">' + escapeHtml(g.label) + ':</b> ' + g.items.map(escapeHtml).join(' · ') + '</div>').join('') + '</div>';
+  }).join('') : '<div class="muted" style="margin-top:12px">Zatím žádné publikované změny.</div>';
+  mainEl.innerHTML = head + body + '</section>';
+  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+}
+
 /* ==================== NÁPOVĚDA ==================== */
 function helpContentHtml(){
   const leader = MODE === 'leader';
@@ -2445,7 +2597,8 @@ function helpContentHtml(){
     h += '<h3>Reporty a záloha</h3>' +
       '<p><b>📅 Měsíční report a uzávěrka</b> ukáže souhrn všech zaměstnanců za období od poslední uzávěrky. Vyplníš adresy (Andrej, účetní – uloží se), tlačítkem „Připravit e-mail“ otevřeš hotový e-mail a tlačítkem „Uzavřít období“ vynuluješ prohřešky pro nový měsíc. Předchozí reporty najdeš dole v „Uzavřená období“. Na fotku zaměstnance klikni přímo na kolečko v hlavičce karty. ' +
       '„Report tohoto zaměstnance“ (na kartě) otevře e-mail s přehledem jednoho zaměstnance. ' +
-      'V <b>⚙ Nastavení karty</b> upravíš testy (otázky, odpovědi, správnou odpověď, kolik je potřeba ke splnění, přidání nového testu), vybereš články ze znalostní báze pro tlačítka 📖, upravíš checklist (skupiny, položky, pořadí, odznaky), úrovně a sazby a kategorie prohřešků včetně doby platnosti žluté karty. Po změnách kartu publikuj. ' +
+      '<b>🕘 Historie změn</b> ukáže všechny publikace karty a co se v nich změnilo (stavy položek, testy, prohřešky, poznámky, nastavení). ' +
+      'V <b>⚙ Nastavení karty</b> upravíš testy (otázky, odpovědi, správnou odpověď, kolik je potřeba ke splnění, přidání nového testu), vybereš články ze znalostní báze pro tlačítka 📖, upravíš checklist (skupiny, položky, pořadí, odznaky), úrovně a sazby (přidat, smazat, pořadí, barva razítka) a kategorie prohřešků včetně doby platnosti žluté karty. Po změnách kartu publikuj. ' +
       '„Uložit zálohu“ a „Nahrát zálohu“ slouží k přenosu dat mezi počítači nebo jako pojistka.</p>';
 
     h += '<h3>Řazení a role</h3>' +
@@ -2473,6 +2626,7 @@ $('helpOverlay').addEventListener('click', e=>{ if(e.target.id === 'helpOverlay'
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeHelp(); });
 
 $('reportBtn').onclick = ()=>{ renderMonthReport(); };
+$('logBtn').onclick = ()=>{ renderCardLog(); };
 $('cfgBtn').onclick = ()=>{ cfgDraft = null; cfgWork = null; cfgWorkDirty = false; renderSettings(); };
 
 $('modeLabel').onclick = ()=>{
