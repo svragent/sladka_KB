@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.18 -->
+<!-- v2.21 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -179,6 +179,11 @@
   }
   .video-block iframe, .video-block video{width:100%;aspect-ratio:16/9;border:none;border-radius:10px;}
   .video-link-btn{display:inline-block;}
+  .rich-editor .kb-video{
+    display:block;margin:10px 0;padding:10px 12px;border:1px dashed var(--caramel);border-radius:8px;
+    background:var(--line-soft);color:var(--cocoa-soft);font-size:13px;cursor:pointer;overflow-wrap:anywhere;
+  }
+  .art-body .video-block{margin:12px 0;}
 
   .role-row{
     display:flex;gap:8px;align-items:center;justify-content:space-between;
@@ -228,7 +233,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.18';
+const APP_VERSION = 'v2.21';
 
 const SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -278,6 +283,8 @@ let view = 'article';    // 'article' | 'roles'
 let editingRoleId = null;
 let readerRoleId = null;
 let searchQuery = '';
+let deepLinkId = null;   // článek otevřený odkazem (např. z Karty zaměstnance) – zobrazí se vždy
+let historyData = null;  // {artId, loading, error, versions, openIdx}
 let editSnapshot = null;
 let MODE = 'editor';     // 'editor' | 'reader' – UI přepínač, bez zabezpečení
 try{ if(localStorage.getItem('kb-mode') === 'reader') MODE = 'reader'; }catch(e){}
@@ -382,6 +389,28 @@ async function publishToGitHub(){
   const url = apiBase + GH_FILE;
   const headers = {'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'};
   try{
+    // Ochrana proti přepsání: publikoval mezitím někdo jiný?
+    const baseAt = loadJSON('kb-base-published-at') || '';
+    const checkRes = await fetch(url + '?ref=main', {headers: headers, cache: 'no-store'});
+    if(checkRes.status === 401 || checkRes.status === 403 || checkRes.status === 404) throw new Error('auth');
+    if(!checkRes.ok) throw new Error('get');
+    const checkInfo = await checkRes.json();
+    let remoteAt = '';
+    if(checkInfo.content){
+      const bytes = Uint8Array.from(atob(checkInfo.content.replace(/\s/g, '')), c=>c.charCodeAt(0));
+      const m = new TextDecoder().decode(bytes).match(/"publishedAt":\s*"([^"]*)"/);
+      if(m) remoteAt = m[1];
+    }
+    if(baseAt && remoteAt && remoteAt > baseAt){
+      const d = new Date(remoteAt);
+      const when = d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+      if(!confirm('Na webu je novější verze, kterou mezitím publikoval někdo jiný (' + when + ').\n\nKdyž budeš pokračovat, jeho změny se PŘEPÍŠOU tvými.\n\nOpravdu publikovat?')){
+        $('status').textContent = 'Publikace zrušena – na webu je novější verze. Ulož si zálohu svých změn a domluv se, kdo co upravoval.';
+        btn.disabled = false;
+        return;
+      }
+    }
+
     // Obrázky vložené v textu nahraj jako samostatné soubory do složky images/
     const imgMap = {};
     const found = [];
@@ -443,6 +472,7 @@ async function publishToGitHub(){
     if(putRes.status === 401 || putRes.status === 403) throw new Error('auth');
     if(!putRes.ok) throw new Error('put');
     saveJSON('kb-published-at', publishedAt);
+    saveJSON('kb-base-published-at', publishedAt);
     setUnpublishedFlag('0');
     $('status').textContent = 'Publikováno. Na webu se změny projeví do pár minut.';
   }catch(e){
@@ -500,6 +530,41 @@ function videoBlockHtml(url){
       '<div class="video-play"><span>▶</span></div></div></div>';
   }
   return '<div class="video-block"><a class="btn video-link-btn" href="' + escapeHtml(v.url) + '" target="_blank" rel="noopener">▶ Přehrát video</a></div>';
+}
+
+// Video vložené kamkoli do textu článku: <div class="kb-video" data-url="…">
+function inlineVideoHtml(url, idx){
+  const v = detectVideo(url);
+  if(!v) return '';
+  if(v.type === 'youtube'){
+    return '<div class="video-block"><div class="video-thumb" data-inline-video="' + idx + '">' +
+      '<img src="https://img.youtube.com/vi/' + v.id + '/hqdefault.jpg" alt="Náhled videa">' +
+      '<div class="video-play"><span>▶</span></div></div></div>';
+  }
+  if(v.type === 'dropbox'){
+    return '<div class="video-block"><div class="video-thumb" data-inline-video="' + idx + '" style="background:var(--cocoa)">' +
+      '<div class="video-play"><span>▶</span></div></div></div>';
+  }
+  return '<div class="video-block"><a class="btn video-link-btn" href="' + escapeHtml(v.url) + '" target="_blank" rel="noopener">▶ Přehrát video</a></div>';
+}
+function bindInlineVideos(container){
+  const urls = [];
+  container.querySelectorAll('.kb-video').forEach(el=>{
+    const url = el.getAttribute('data-url') || '';
+    urls.push(url);
+    const wrap = document.createElement('div');
+    wrap.innerHTML = inlineVideoHtml(url, urls.length - 1);
+    el.replaceWith(...wrap.childNodes);
+  });
+  container.querySelectorAll('[data-inline-video]').forEach(th=>{
+    th.onclick = ()=>{
+      const v = detectVideo(urls[parseInt(th.dataset.inlineVideo, 10)]);
+      if(!v) return;
+      th.outerHTML = (v.type === 'youtube')
+        ? '<iframe src="https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+        : '<video src="' + escapeHtml(v.raw) + '" controls autoplay></video>';
+    };
+  });
 }
 
 /* ---------- obrázky ---------- */
@@ -572,9 +637,12 @@ function init(){
     saveRoles();
     Object.keys(EDITABLE_AXES).forEach(key=>saveEditableCats(key));
     setUnpublishedFlag('0');
+    saveJSON('kb-base-published-at', publishedAt);
   }
 
   if(articles.length) activeId = articles[0].id;
+  openFromHash();
+  window.addEventListener('hashchange', ()=>{ if(openFromHash()) render(); });
   let versionText = APP_VERSION;
   if(publishedAt){
     const d = new Date(publishedAt);
@@ -799,10 +867,26 @@ function renderCatList(){
   };
 }
 
+// Odkaz typu …/#id_clanku otevře rovnou daný článek
+function openFromHash(){
+  const id = decodeURIComponent((location.hash || '').slice(1));
+  const art = id ? articles.find(a=>a.id === id) : null;
+  if(!art) return false;
+  if(!canLeaveEdit()) return false;
+  deepLinkId = id;
+  activeId = id;
+  sectionId = art.section;
+  axisId = currentAxes()[0].id;
+  editing = false;
+  videoOpen = false;
+  view = 'article';
+  return true;
+}
+
 function renderMain(){
   const isEditor = MODE === 'editor';
   const art = articles.find(a=>a.id===activeId);
-  if(!isEditor){
+  if(!isEditor && !(art && art.id === deepLinkId)){
     const role = currentRole();
     if(!role){
       $('main').innerHTML = '<div class="empty-state">Nejdřív si vlevo vyber svou roli.</div>';
@@ -846,10 +930,12 @@ function renderMain(){
     videoBlockHtml(art.videoUrl) +
     relatedHtml +
     '<div class="row"><button class="btn" id="printBtn">🖨️ Tisk</button>' +
-    (isEditor ? '<button class="btn" id="editBtn">Upravit</button><button class="btn red" id="delBtn">Smazat</button>' : '') +
+    (isEditor ? '<button class="btn" id="editBtn">Upravit</button><button class="btn ghost" id="historyBtn">🕘 Historie</button><button class="btn red" id="delBtn">Smazat</button>' : '') +
     '</div>';
   const thumb = $('videoThumb');
   if(thumb) thumb.onclick = ()=>{ videoOpen = true; renderMain(); };
+  const artBody = document.querySelector('#main .art-body');
+  if(artBody) bindInlineVideos(artBody);
   document.querySelectorAll('.related-box [data-open]').forEach(el=>{
     el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; render(); };
   });
@@ -860,6 +946,7 @@ function renderMain(){
   };
   if(isEditor){
     $('editBtn').onclick = ()=>{ editing = true; render(); };
+    $('historyBtn').onclick = ()=>{ view = 'history'; loadHistory(art.id); };
     $('delBtn').onclick = ()=>{
       if($('delBtn').dataset.armed !== '1'){
         $('delBtn').dataset.armed = '1';
@@ -941,6 +1028,7 @@ function editFormHtml(art){
       '<button type="button" class="fmt-btn" id="fmtBullet">Odrážka</button>' +
       '<button type="button" class="fmt-btn" id="fmtClear">Normální</button>' +
       '<button type="button" class="fmt-btn" id="fmtImg">🖼️ Obrázek</button>' +
+      '<button type="button" class="fmt-btn" id="fmtVideo">🎬 Video</button>' +
     '</div>' +
     '<input type="file" id="bodyImgInput" accept="image/*" style="display:none;">' +
     '<div class="art-body rich-editor" id="f-body" contenteditable="true">' + (art.body || '') + '</div>' +
@@ -1035,19 +1123,32 @@ function bindEditForm(art){
     if(existing) existing.remove();
   }
   bodyEl.addEventListener('click', e=>{
-    if(e.target.tagName === 'IMG'){
+    const vid = e.target.closest ? e.target.closest('.kb-video') : null;
+    if(e.target.tagName === 'IMG' || vid){
       removeImgOverlay();
-      const img = e.target;
+      const img = vid || e.target;
       const overlay = document.createElement('button');
       overlay.type = 'button';
       overlay.className = 'img-del-overlay';
-      overlay.textContent = '× Smazat tento obrázek';
+      overlay.setAttribute('contenteditable', 'false');
+      overlay.textContent = vid ? '× Smazat toto video' : '× Smazat tento obrázek';
       overlay.onclick = (ev)=>{ ev.stopPropagation(); img.remove(); overlay.remove(); };
       img.insertAdjacentElement('afterend', overlay);
     } else {
       removeImgOverlay();
     }
   });
+
+  const fmtVideo = $('fmtVideo');
+  if(fmtVideo) fmtVideo.onclick = ()=>{
+    saveRange();
+    const url = (prompt('Vlož odkaz na video (YouTube nebo Dropbox):') || '').trim();
+    if(!url) return;
+    bodyEl.focus();
+    restoreRange();
+    document.execCommand('insertHTML', false,
+      '<div class="kb-video" contenteditable="false" data-url="' + escapeHtml(url) + '">🎬 Video: ' + escapeHtml(url) + '</div><div><br></div>');
+  };
 
   const fmtImg = $('fmtImg');
   const bodyImgInput = $('bodyImgInput');
@@ -1199,6 +1300,117 @@ function renderRolesMain(){
   $('backToArticles').onclick = ()=>{ view = 'article'; render(); };
 }
 
+/* ---------- historie článku (z publikací na GitHubu) ---------- */
+function parseDataJs(text){
+  try{ return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }catch(e){}
+  try{ return new Function(text + ';return INITIAL_DATA;')(); }catch(e){}
+  return null;
+}
+function articleSnapshot(a){
+  if(!a) return null;
+  return {
+    title: a.title || '',
+    body: a.body != null ? a.body : legacyContentToHtml(a),
+    section: a.section || 'sop',
+    tags: [].concat(a.postupTags || [], a.manualTags || [], a.wikiTags || [], a.troubleshootTags || []).join(','),
+    videoUrl: a.videoUrl || '',
+    related: (a.related || []).join(',')
+  };
+}
+function snapshotChanges(prev, cur){
+  if(!prev && cur) return ['vytvořen'];
+  if(prev && !cur) return ['smazán'];
+  const ch = [];
+  if(prev.title !== cur.title) ch.push('název');
+  if(prev.body !== cur.body) ch.push('text');
+  if(prev.section !== cur.section) ch.push('sekce');
+  if(prev.tags !== cur.tags) ch.push('kategorie');
+  if(prev.videoUrl !== cur.videoUrl) ch.push('video');
+  if(prev.related !== cur.related) ch.push('související');
+  return ch;
+}
+async function loadHistory(artId){
+  historyData = {artId: artId, loading: true, error: '', versions: [], openIdx: -1};
+  render();
+  try{
+    const headers = {'Accept': 'application/vnd.github+json'};
+    let token = null;
+    try{ token = localStorage.getItem('kb-gh-token'); }catch(e){}
+    if(token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch('https://api.github.com/repos/' + GH_REPO + '/commits?path=' + GH_FILE + '&per_page=30', {headers: headers, cache: 'no-store'});
+    if(!res.ok) throw new Error('commits');
+    const commits = (await res.json()).reverse(); // od nejstarší
+    let prev = null;
+    const versions = [];
+    for(let i = 0; i < commits.length; i++){
+      if(!historyData || historyData.artId !== artId) return;
+      historyData.progress = (i + 1) + '/' + commits.length;
+      renderHistoryMain();
+      const c = commits[i];
+      const raw = await fetch('https://raw.githubusercontent.com/' + GH_REPO + '/' + c.sha + '/' + GH_FILE);
+      if(!raw.ok) continue;
+      const data = parseDataJs(await raw.text());
+      if(!data || !Array.isArray(data.seedAll)) continue;
+      const cur = articleSnapshot(data.seedAll.find(a=>a.id === artId));
+      if(!prev && !cur) continue;
+      const ch = snapshotChanges(prev, cur);
+      if(ch.length){
+        versions.push({
+          date: c.commit.author.date,
+          who: (c.author && c.author.login) || c.commit.author.name,
+          changes: ch,
+          snap: cur
+        });
+      }
+      prev = cur;
+    }
+    if(!historyData || historyData.artId !== artId) return;
+    historyData.versions = versions.reverse(); // nejnovější nahoře
+    historyData.loading = false;
+  }catch(e){
+    if(!historyData) return;
+    historyData.loading = false;
+    historyData.error = 'Historii se nepodařilo načíst z GitHubu. Zkus to za chvíli znovu.';
+  }
+  if(view === 'history') renderHistoryMain();
+}
+function renderHistoryMain(){
+  if(view !== 'history' || !historyData) return;
+  const art = articles.find(a=>a.id === historyData.artId);
+  let html = '<div class="art-title">Historie: ' + escapeHtml(art ? art.title : historyData.artId) + '</div>' +
+    '<div class="field-hint">Změny článku podle publikací na GitHubu (posledních 30). Nepublikované úpravy z prohlížeče tu nejsou.</div>';
+  if(historyData.loading){
+    html += '<div class="status">Načítám historii… ' + (historyData.progress || '') + '</div>';
+  } else if(historyData.error){
+    html += '<div class="status">' + escapeHtml(historyData.error) + '</div>';
+  } else if(!historyData.versions.length){
+    html += '<div class="status">Článek zatím nemá žádnou publikovanou změnu.</div>';
+  } else {
+    html += historyData.versions.map((v, i)=>{
+      const d = new Date(v.date);
+      const when = d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+      let row = '<div class="role-row"><span><b>' + when + '</b> · ' + escapeHtml(v.who) + ' · změněno: ' + escapeHtml(v.changes.join(', ')) + '</span>' +
+        (v.snap ? '<button class="btn ghost" data-hist="' + i + '">' + (historyData.openIdx === i ? 'Skrýt' : 'Zobrazit') + '</button>' : '') + '</div>';
+      if(historyData.openIdx === i && v.snap){
+        row += '<div style="border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-top:6px;background:var(--paper)">' +
+          '<div class="field-label" style="margin-top:0">' + escapeHtml(v.snap.title) + '</div>' +
+          '<div class="art-body">' + v.snap.body + '</div></div>';
+      }
+      return row;
+    }).join('');
+  }
+  html += '<div class="row"><button class="btn ghost" id="backFromHistory">Zpět na článek</button></div>';
+  $('main').innerHTML = html;
+  document.querySelectorAll('[data-hist]').forEach(b=>{
+    b.onclick = ()=>{
+      const i = parseInt(b.dataset.hist, 10);
+      historyData.openIdx = (historyData.openIdx === i) ? -1 : i;
+      renderHistoryMain();
+    };
+  });
+  $('backFromHistory').onclick = ()=>{ view = 'article'; historyData = null; render(); };
+}
+
 /* ---------- nápověda ---------- */
 function renderHelpMain(){
   const isEditor = MODE === 'editor';
@@ -1212,7 +1424,7 @@ function renderHelpMain(){
     '</ul>' +
     '<h3>V článku</h3><ul>' +
     '<li><b>🖨️ Tisk</b> vytiskne jen samotný článek.</li>' +
-    '<li>Pokud má článek video, spustíš ho kliknutím na náhled.</li>' +
+    '<li>Video v článku spustíš kliknutím na náhled.</li>' +
     '<li>Dole najdeš <b>Souvisí s</b> – další články k tématu.</li>' +
     '</ul>' +
     '<h3>Aktuálnost</h3><ul>' +
@@ -1224,11 +1436,13 @@ function renderHelpMain(){
       '<li><b>+ Nový článek</b> se po uložení objeví v <b>Nezařazeno</b>. Do kategorie ho přetáhni myší, stejně tak měníš pořadí.</li>' +
       '<li>Název kategorie přepíšeš kliknutím do něj. <b>×</b> kategorii smaže (klikni dvakrát). Novou přidáš polem <b>+ Nová kategorie</b>.</li>' +
       '<li>Článek smažeš tlačítkem <b>Smazat</b> (klikni dvakrát).</li>' +
+      '<li><b>🕘 Historie</b> ukáže, kdo a kdy článek změnil a jak vypadal dřív (podle publikací).</li>' +
       '</ul>' +
       '<h3>Úprava textu</h3><ul>' +
       '<li><b>B</b>, <b>Nadpis</b>, <b>Odrážka</b> – zvýrazněné tlačítko je zapnuté, druhým kliknutím ho vypneš.</li>' +
       '<li><b>Normální</b> zruší veškeré formátování označeného textu.</li>' +
       '<li>Obrázek vložíš tlačítkem <b>🖼️ Obrázek</b> nebo Ctrl+V. Kliknutím na obrázek ho smažeš.</li>' +
+      '<li>Video vložíš kamkoli do textu tlačítkem <b>🎬 Video</b> (odkaz na YouTube nebo Dropbox), videí může být víc. Kliknutím na video v editoru ho smažeš.</li>' +
       '<li>Když odcházíš z rozpracovaného článku bez uložení, aplikace se zeptá.</li>' +
       '</ul>' +
       '<h3>Role</h3><ul>' +
@@ -1252,6 +1466,7 @@ function render(){
   renderCatList();
   if(view === 'roles') renderRolesMain();
   else if(view === 'help') renderHelpMain();
+  else if(view === 'history') renderHistoryMain();
   else renderMain();
 }
 
