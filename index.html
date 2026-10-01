@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.31 -->
+<!-- v2.32 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -242,6 +242,15 @@
   .pn-pos{font-size:11px;color:var(--cocoa-soft);margin-top:8px;text-align:center;}
   .home-hello{font-family:Georgia,serif;font-size:26px;font-weight:700;line-height:1.2;margin-bottom:6px;text-wrap:balance;}
   .home-sub{color:var(--cocoa-soft);font-size:14px;margin-bottom:22px;}
+  .home-edit-btn{float:right;border:none;background:none;font:inherit;font-size:12px;color:var(--cocoa-soft);cursor:pointer;text-decoration:underline;padding:4px 0;}
+  .home-edit-btn:hover{color:var(--caramel-deep);}
+  .tile-edit{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+  .tile-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .tile-in{flex:1 1 160px;min-width:0;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--cocoa);}
+  .tile-ico{width:48px;text-align:center;font-size:18px;padding:4px;border:1px solid var(--line);border-radius:7px;background:#fff;}
+  .tile-tools{display:flex;gap:2px;}
+  .tile-tool{border:none;background:var(--line-soft);color:var(--cocoa-soft);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
+  .tile-add{border:none;background:none;color:var(--caramel-deep);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:8px 0;}
   .home-tiles{display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:10px;margin-bottom:26px;}
   .home-tile{
     background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;
@@ -425,12 +434,12 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.31';
+const APP_VERSION = 'v2.32';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
   {id:'wiki', label:'🏢 Firemní wiki'},
-  {id:'troubleshooting', label:'🛟 Troubleshooting'}
+  {id:'troubleshooting', label:'🆘 Troubleshooting'}
 ];
 const SECTIONS = BASE_SECTIONS.slice();   // doplní se o vlastní sekce (rebuildSections)
 
@@ -685,6 +694,7 @@ async function publishToGitHub(){
       troubleshootCats: TROUBLESHOOT_CATS,
       customSections: CUSTOM_SECTIONS,
       baseSections: BASE_SECTION_STATE,
+      home: HOME,
       roles: roles,
       seedAll: articles.map(a=>{
         const c = Object.assign({}, a);
@@ -733,6 +743,8 @@ function loadEditableCats(){
   if(Array.isArray(cs)) CUSTOM_SECTIONS = cs;
   const bs = loadJSON('kb-base-sections');
   if(bs && typeof bs === 'object'){ BASE_SECTION_STATE = bs; normBaseState(); }
+  const hm = loadJSON('kb-home');
+  if(hm && Array.isArray(hm.tiles)) HOME = hm;
   rebuildSections();
   Object.keys(EDITABLE_AXES).forEach(key=>{
     const ax = EDITABLE_AXES[key];
@@ -898,6 +910,7 @@ function init(){
     Object.keys(EDITABLE_AXES).forEach(key=>saveEditableCats(key));
     saveCustomSections();
     saveBaseSections();
+    saveHome();
     setUnpublishedFlag('0');
     saveJSON('kb-base-published-at', publishedAt);
   }
@@ -1441,16 +1454,94 @@ function bindBreadcrumb(art){
 }
 
 /* ---------- úvodní stránka ---------- */
-const HOME_TILES = [
+const DEFAULT_HOME = {title:'Vítej ve znalostní bázi Sladké dílny', sub:'Vyber téma, nebo použij hledání vlevo nahoře.', tiles:[
   {ico:'☕', lbl:'Kávovar a káva', dsc:'Obsluha kávovaru a recepty na kávu', id:'napoje_kava'},
-  {ico:'🥤', lbl:'Ostatní nápoje', dsc:'Teplé, studené i alkoholické nápoje', id:'napoje_studene'},
+  {ico:'🍹', lbl:'Ostatní nápoje', dsc:'Teplé, studené i alkoholické nápoje', id:'napoje_studene'},
   {ico:'🍦', lbl:'Zmrzlina', dsc:'Míchání, točení a velikosti', id:'michani'},
   {ico:'🎂', lbl:'Objednávky dortů', dsc:'Postup v systému krok za krokem', id:'objednavani_dortu_detail'},
   {ico:'🍰', lbl:'Vitrína', dsc:'Doplňování a uspořádání', id:'vitrina_doplnovani'},
   {ico:'💳', lbl:'Kasa a peníze', dsc:'Pokladna, poukazy, slevy', id:'kasa_penize'},
   {ico:'🌅', lbl:'Ráno a večer', dsc:'Otevření a zavření provozu', id:'ranni_vecerni'},
-  {ico:'🛟', lbl:'Když se něco pokazí', dsc:'Rychlá pomoc v nestandardní situaci', section:'troubleshooting'}
-];
+  {ico:'🆘', lbl:'Když se něco pokazí', dsc:'Rychlá pomoc v nestandardní situaci', section:'troubleshooting'}
+]};
+// Úvodní stránka (nadpis, podtitulek, dlaždice) – editor ji upraví přes „✎ Upravit úvodní stránku“
+let HOME = JSON.parse(JSON.stringify((typeof _initData !== 'undefined' && _initData.home) || DEFAULT_HOME));
+function saveHome(){ if(saveJSON('kb-home', HOME, 'Uložení úvodní stránky selhalo.')) markUnpublished(); }
+/* ---------- úprava úvodní stránky (editor) ---------- */
+let homeWork = null;
+function tileTargetOptions(t){
+  const cur = t.section ? 'sec:' + t.section : 'art:' + (t.id || '');
+  let h = '<optgroup label="Celá sekce (první článek)">' + SECTIONS.map(sx=>
+    '<option value="sec:' + sx.id + '"' + (cur === 'sec:' + sx.id ? ' selected' : '') + '>' + escapeHtml(sx.label) + '</option>').join('') + '</optgroup>';
+  SECTIONS.forEach(sx=>{
+    const list = articles.filter(a=>a.section === sx.id);
+    if(!list.length) return;
+    h += '<optgroup label="' + escapeHtml(sx.label) + '">' + list.map(a=>
+      '<option value="art:' + a.id + '"' + (cur === 'art:' + a.id ? ' selected' : '') + '>' + escapeHtml(a.title) + '</option>').join('') + '</optgroup>';
+  });
+  return h;
+}
+function renderHomeEdit(msg){
+  if(!homeWork) homeWork = JSON.parse(JSON.stringify(HOME));
+  const W = homeWork;
+  let html = '<div class="art-title">Úvodní stránka</div>' +
+    '<div class="field-hint">Nadpis, podtitulek a dlaždice s hlavními tématy. Čtenář vidí jen dlaždice, jejichž článek (nebo sekci) má povolený ve své roli. Seznam nových a upravených článků pod dlaždicemi se tvoří automaticky.</div>' +
+    '<div class="field-label">Nadpis</div><input class="f-title" id="hTitle" value="' + escapeHtml(W.title) + '">' +
+    '<div class="field-label">Podtitulek</div><input class="f-title" id="hSub" style="font-size:14px;font-weight:400" value="' + escapeHtml(W.sub || '') + '">' +
+    '<div class="field-label">Dlaždice</div>' +
+    W.tiles.map((t, i)=>
+      '<div class="tile-edit"><div class="tile-row">' +
+        '<input class="tile-ico" data-t="' + i + ',ico" value="' + escapeHtml(t.ico || '') + '" title="Ikona (emoji)" maxlength="4">' +
+        '<input class="tile-in" data-t="' + i + ',lbl" value="' + escapeHtml(t.lbl || '') + '" placeholder="Název">' +
+        '<span class="tile-tools"><button class="tile-tool" data-t-up="' + i + '" title="Nahoru">↑</button><button class="tile-tool" data-t-down="' + i + '" title="Dolů">↓</button><button class="tile-tool" data-t-del="' + i + '" title="Smazat">✕</button></span>' +
+      '</div><div class="tile-row">' +
+        '<input class="tile-in" data-t="' + i + ',dsc" value="' + escapeHtml(t.dsc || '') + '" placeholder="Krátký popis">' +
+        '<select class="tile-in" data-t-target="' + i + '" title="Kam dlaždice vede">' + tileTargetOptions(t) + '</select>' +
+      '</div></div>'
+    ).join('') +
+    '<button class="tile-add" id="tAdd">+ Přidat dlaždici</button>' +
+    '<div class="field-hint" style="margin-top:8px">Tip na ikonu: použij běžné emoji (☕ 🍰 🍦 🎂 💳 🧾 🧹 🆘 📞 📦). Úplně nová emoji se na starších počítačích a telefonech zobrazí jako prázdný obdélník.</div>' +
+    '<div class="row"><button class="btn" id="hSave">Uložit</button><button class="btn ghost" id="hCancel">Zrušit</button><button class="btn ghost" id="hReset">Obnovit výchozí</button></div>' +
+    '<div class="status" id="hMsg">' + (msg || '') + '</div>';
+  $('main').innerHTML = html;
+  $('hTitle').oninput = e=>{ W.title = e.target.value; };
+  $('hSub').oninput = e=>{ W.sub = e.target.value; };
+  $('main').querySelectorAll('[data-t]').forEach(el=>{ el.oninput = ()=>{ const p = el.dataset.t.split(','); W.tiles[+p[0]][p[1]] = el.value; }; });
+  $('main').querySelectorAll('[data-t-target]').forEach(el=>{
+    el.onchange = ()=>{
+      const t = W.tiles[+el.dataset.tTarget];
+      const v = el.value.split(':');
+      delete t.id; delete t.section;
+      if(v[0] === 'sec') t.section = v[1]; else t.id = v[1];
+    };
+  });
+  const swap = (i, j)=>{ if(j < 0 || j >= W.tiles.length) return; const x = W.tiles[i]; W.tiles[i] = W.tiles[j]; W.tiles[j] = x; renderHomeEdit(); };
+  $('main').querySelectorAll('[data-t-up]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tUp, +b.dataset.tUp - 1); });
+  $('main').querySelectorAll('[data-t-down]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tDown, +b.dataset.tDown + 1); });
+  $('main').querySelectorAll('[data-t-del]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
+      W.tiles.splice(+b.dataset.tDel, 1); renderHomeEdit();
+    };
+  });
+  $('tAdd').onclick = ()=>{
+    W.tiles.push({ico:'📄', lbl:'', dsc:'', id:(articles[0] || {}).id});
+    renderHomeEdit();
+    const ins = $('main').querySelectorAll('[data-t$=",lbl"]'); ins[ins.length - 1].focus();
+  };
+  $('hCancel').onclick = ()=>{ homeWork = null; view = 'home'; render(); };
+  $('hReset').onclick = ()=>{ homeWork = JSON.parse(JSON.stringify(DEFAULT_HOME)); renderHomeEdit('Načteno výchozí nastavení – ulož ho tlačítkem Uložit.'); };
+  $('hSave').onclick = ()=>{
+    if(!W.title.trim()){ $('hMsg').textContent = 'Vyplň nadpis.'; return; }
+    for(let i = 0; i < W.tiles.length; i++){ if(!String(W.tiles[i].lbl || '').trim()){ $('hMsg').textContent = 'Dlaždice ' + (i + 1) + ' nemá název.'; return; } }
+    W.title = W.title.trim(); W.sub = (W.sub || '').trim();
+    W.tiles.forEach(t=>{ t.lbl = t.lbl.trim(); t.dsc = (t.dsc || '').trim(); t.ico = (t.ico || '').trim(); });
+    HOME = JSON.parse(JSON.stringify(W));
+    saveHome();
+    homeWork = null; view = 'home'; render();
+  };
+}
+
 function goHome(){
   if(!canLeaveEdit()) return;
   editing = false;
@@ -1462,22 +1553,23 @@ function goHome(){
 function renderHome(){
   const isEditor = MODE === 'editor';
   const role = isEditor ? null : currentRole();
-  let html = '<div class="home-hello">Vítej ve znalostní bázi Sladké dílny</div>';
+  let html = (isEditor ? '<button class="home-edit-btn" id="homeEditBtn">✎ Upravit úvodní stránku</button>' : '') +
+    '<div class="home-hello">' + escapeHtml(HOME.title) + '</div>';
   if(!isEditor && !role){
     html += '<div class="home-sub">Nejdřív si nahoře vyber <b>svou roli</b> – pak tu uvidíš návody, které se týkají tvé práce.</div>';
     $('main').innerHTML = html;
     return;
   }
-  html += '<div class="home-sub">Vyber téma, nebo použij hledání vlevo nahoře.</div>';
+  if(HOME.sub) html += '<div class="home-sub">' + escapeHtml(HOME.sub) + '</div>';
   const visible = a => isEditor || articleVisibleToRole(a, role);
-  const tiles = HOME_TILES.filter(t=>{
+  const tiles = HOME.tiles.filter(t=>{
     if(t.section) return articles.some(a=>a.section === t.section && visible(a));
     const a = articles.find(x=>x.id === t.id);
     return a && visible(a);
   });
   if(tiles.length){
     html += '<div class="home-tiles">' + tiles.map((t, i)=>
-      '<button class="home-tile" data-tile="' + i + '"><span class="ico">' + t.ico + '</span><span class="lbl">' + escapeHtml(t.lbl) + '</span><span class="dsc">' + escapeHtml(t.dsc) + '</span></button>'
+      '<button class="home-tile" data-tile="' + i + '"><span class="ico">' + escapeHtml(t.ico || '') + '</span><span class="lbl">' + escapeHtml(t.lbl) + '</span><span class="dsc">' + escapeHtml(t.dsc) + '</span></button>'
     ).join('') + '</div>';
   }
   const pool = articles.filter(visible);
@@ -1494,6 +1586,8 @@ function renderHome(){
     ).join('') + '</ul>';
   }
   $('main').innerHTML = html;
+  const he = $('homeEditBtn');
+  if(he) he.onclick = ()=>{ homeWork = null; view = 'homeEdit'; render(); scrollToMainOnMobile(); };
   $('main').querySelectorAll('[data-tile]').forEach(b=>{
     b.onclick = ()=>{
       const t = tiles[parseInt(b.dataset.tile, 10)];
@@ -2005,7 +2099,7 @@ function catMapOf(data){
   return m;
 }
 function sectionNamesOf(data){
-  const base = {sop:'📋 Postupy (SOP)', wiki:'🏢 Firemní wiki', troubleshooting:'🛟 Troubleshooting'};
+  const base = {sop:'📋 Postupy (SOP)', wiki:'🏢 Firemní wiki', troubleshooting:'🆘 Troubleshooting'};
   const bs = data.baseSections || {renamed:{}, deleted:[]};
   const m = {};
   Object.keys(base).forEach(k=>{ if((bs.deleted || []).indexOf(k) === -1) m[k] = (bs.renamed || {})[k] || base[k]; });
@@ -2049,6 +2143,7 @@ function diffKbData(prev, cur){
   });
   Object.keys(pr).forEach(id=>{ if(!cr[id]) roleLines.push('smazaná „' + pr[id].label + '“'); });
   if(roleLines.length) lines.push({label:'Role', items: roleLines.map(t=>({text:t}))});
+  if(JSON.stringify(prev.home || null) !== JSON.stringify(cur.home || null)) lines.push({label:'Úvodní stránka', items:[{text:'upravené dlaždice nebo nadpis'}]});
   return {lines: lines, arts: arts};
 }
 async function loadLog(){
@@ -2234,6 +2329,7 @@ function renderHelpMain(){
       '</ul>' +
       '<h3>Role</h3><ul>' +
       '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
+      '<li>Na úvodní stránce odkazem <b>✎ Upravit úvodní stránku</b> změníš nadpis, podtitulek a dlaždice (ikona, název, popis, kam vedou, pořadí).</li>' +
       '<li><b>🏷️ QR štítky</b> (dole pod zálohami) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
       '<li>Novou sekci přidáš odkazem <b>+ sekce</b> pod sekcemi. Každou sekci přejmenuješ ✎ nebo smažeš ✕ (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
       '<li>Přepínač Editor/Čtenář vidí jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
@@ -2320,6 +2416,7 @@ function render(){
   renderAxisSwitch();
   renderCatList();
   if(view === 'home') renderHome();
+  else if(view === 'homeEdit') renderHomeEdit();
   else if(view === 'roles') renderRolesMain();
   else if(view === 'help') renderHelpMain();
   else if(view === 'history') renderHistoryMain();
@@ -2371,7 +2468,8 @@ $('exportBtn').onclick = ()=>{
     wikiCats: WIKI_CATS,
     troubleshootCats: TROUBLESHOOT_CATS,
     customSections: CUSTOM_SECTIONS,
-    baseSections: BASE_SECTION_STATE
+    baseSections: BASE_SECTION_STATE,
+    home: HOME
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2415,6 +2513,7 @@ $('importFile').addEventListener('change', ()=>{
         BASE_SECTION_STATE = parsed.baseSections; normBaseState();
         saveBaseSections();
       }
+      if(!Array.isArray(parsed) && parsed.home && Array.isArray(parsed.home.tiles)){ HOME = parsed.home; saveHome(); }
       rebuildSections();
       articles.forEach(a=>{ if(!sectionExists(a.section)) a.section = firstSectionId(); });
       sectionId = firstSectionId(); axisId = currentAxes()[0].id;
