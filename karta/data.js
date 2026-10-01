@@ -1,5 +1,5 @@
 const CARD_DATA = {
- "publishedAt": "2026-10-01T14:47:44.000Z",
+ "publishedAt": "2026-10-01T14:55:53.167Z",
  "employees": [
   {
    "id": "etest1",
@@ -26,13 +26,13 @@ const CARD_DATA = {
    "startDate": "2026-09-14",
    "level": "novacek",
    "checklist": {
-    "logistika": 2,
+    "logistika": 3,
     "nandavani": 2,
     "ranni_vecerni": 1,
     "vitrina": 3,
     "kasa": 0,
     "tocenim": 0,
-    "test1": 0,
+    "test1": 3,
     "kavovar": 0,
     "system": 0,
     "michani": 0,
@@ -222,5 +222,17 @@ const CARD_DATA = {
    "v1migrated": true
   }
  },
- "guides": {}
+ "guides": {
+  "logistika": "Přečti si v manuálu kapitoly Úvod, Prostory a Zásady fungování a Desatero Sladké dílny.",
+  "nandavani": "Manuál: kapitola Obsluha (Nandávání) a Úklid a sklízení stolů.",
+  "ranni_vecerni": "Manuál: kapitoly Start dne a Konec dne; dokument Úkoly ráno + večer.",
+  "vitrina": "Manuál: kapitola Vitrína (doplňování podle FIFO, uspořádání pater, čistota).",
+  "kasa": "Manuál: kapitoly Peníze a Poukazy.",
+  "tocenim": "Manuál: kapitola Zmrzlina – velikost zmrzlin a točení.",
+  "kavovar": "Nápojový manuál: kapitola Káva.",
+  "system": "Manuál: kapitola Objednávání dortu se zákazníkem.",
+  "michani": "Manuál: kapitola Zmrzlina – míchání a ovládání tuhosti.",
+  "mytistroj": "Manuál: kapitola Konec dne – mytí stroje na zmrzlinu.",
+  "limonady": "Manuál: kapitola Jak se to vaří? (limonády, svařák, horká čokoláda)."
+ }
 };
