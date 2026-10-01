@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v3.2 -->
+<!-- v3.3 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -310,7 +310,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v3.2';
+const APP_VERSION = 'v3.3';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1176,15 +1176,10 @@ function detailHtml(id, d, leader){
       '<a class="btn" style="text-decoration:none" href="' + KB_URL + '#' + l[0] + '" target="sladka_kb">📖 ' + escapeHtml(l[1]) + '</a>'
     ).join('') + '</div>';
   }
-  if(leader){
-    h += '<textarea class="guide-input" data-guide="' + id + '" placeholder="Text návodu nebo odkaz (např. https://…)">' + escapeHtml(g) + '</textarea>';
-    if(/https?:\/\//.test(g)) h += '<div class="guide-view" style="margin-top:6px">' + linkify(g) + '</div>';
-  } else {
-    h += g ? '<div class="guide-view">' + linkify(g) + '</div>' : '<div class="muted">Návod zatím není vyplněn.</div>';
-  }
+  if(!KB_LINKS[id] && id.indexOf('test') !== 0) h += '<div class="muted">Návod ve znalostní bázi zatím není přiřazen.</div>';
   h += '<label class="read-row"><input type="checkbox" data-read="' + id + '"' + (L.read ? ' checked' : '') + '> Návod jsem si přečetl/a</label>';
   if(T){
-    const canStart = leader || !g || L.read;
+    const canStart = leader || !KB_LINKS[id] || L.read;
     h += '<div class="dl">Test: ' + escapeHtml(T.title) + '</div>';
     if(!leader){
       if(L.passed) h += '<div class="result ok">Splněno (' + L.score + ' %).</div>';
