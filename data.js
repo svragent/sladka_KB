@@ -130,6 +130,3 @@ const INITIAL_DATA = {
 "Zákazník chce něco, co ti systém nedovolí zadat (nesystémový požadavek na dort)?\nVolej vrchní cukrářce Nadě – 775 395 493. Řekne, jestli daná věc jde vyrobit, případně pomůže vymyslet alternativu.\n\nPokud si nejsi jistý, jestli je vůbec technicky možné něco vyrobit (neobvyklý požadavek, který ale systém zadat umožňuje), zeptej se nejdřív vedoucího směny."}
   ]
 };
-```
-
----
