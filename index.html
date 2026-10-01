@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.33 -->
+<!-- v2.35 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -242,14 +242,36 @@
   .pn-pos{font-size:11px;color:var(--cocoa-soft);margin-top:8px;text-align:center;}
   .home-hello{font-family:Georgia,serif;font-size:26px;font-weight:700;line-height:1.2;margin-bottom:6px;text-wrap:balance;}
   .home-sub{color:var(--cocoa-soft);font-size:14px;margin-bottom:22px;}
-  .home-edit-btn{float:right;border:none;background:none;font:inherit;font-size:12px;color:var(--cocoa-soft);cursor:pointer;text-decoration:underline;padding:4px 0;}
-  .home-edit-btn:hover{color:var(--caramel-deep);}
-  .tile-edit{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:6px;}
-  .tile-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-  .tile-in{flex:1 1 160px;min-width:0;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--cocoa);}
-  .tile-ico{width:48px;height:34px;text-align:center;font-size:18px;padding:2px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;}
-  .tile-ico:hover{border-color:var(--caramel);}
-  .ico-pick{border-top:1px dashed var(--line);padding-top:8px;}
+  .hin{color:inherit;background:transparent;border:1px dashed transparent;border-radius:6px;padding:2px 5px;margin-left:-6px;width:calc(100% + 12px);box-sizing:border-box;display:block;}
+  .hin:hover{border-color:var(--line);}
+  .hin:focus{outline:none;border-color:var(--caramel);border-style:solid;background:#fff;}
+  .hin::placeholder{color:#B8A894;font-weight:400;}
+  .home-sub.hin{font-family:inherit;}
+  .home-tiles.edit{grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));}
+  .tile-e{cursor:default;gap:4px;}
+  .tile-e:hover{background:var(--paper);}
+  .tile-e.picking{border-color:var(--caramel);}
+  .tile-e .hin{font-family:inherit;margin-left:-6px;}
+  .tile-e textarea.dsc{resize:none;line-height:1.35;}
+  .te-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .te-ico{font-size:24px;line-height:1;background:none;border:1px dashed var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;min-width:40px;}
+  .te-ico:hover{border-color:var(--caramel);background:#fff;}
+  .te-tools{display:flex;gap:2px;opacity:.35;}
+  .tile-e:hover .te-tools, .tile-e:focus-within .te-tools{opacity:1;}
+  @media (hover:none){ .te-tools{opacity:1;} }
+  .te-tools button{border:none;background:var(--line-soft);color:var(--cocoa-soft);border-radius:6px;padding:2px 7px;cursor:pointer;font-size:12px;}
+  .te-tools button.armed{color:#A63446;font-weight:700;}
+  .te-target{display:flex;align-items:center;gap:4px;margin-top:auto;padding-top:4px;border-top:1px dashed var(--line-soft);font-size:12px;color:var(--cocoa-soft);}
+  .te-target select{flex:1;min-width:0;font-family:inherit;font-size:11.5px;border:1px solid transparent;background:transparent;color:var(--cocoa-soft);padding:2px;border-radius:5px;cursor:pointer;}
+  .te-target select:hover{border-color:var(--line);}
+  .te-target.bad select{color:#A63446;border-color:#A63446;}
+  .te-go{border:none;background:none;color:var(--caramel-deep);font:inherit;font-size:11.5px;cursor:pointer;padding:2px;}
+  .te-pick{grid-column:1/-1;background:var(--paper);border:1px solid var(--caramel);border-radius:12px;padding:10px;}
+  .tile-add-e{border-style:dashed;align-items:center;justify-content:center;color:var(--cocoa-soft);min-height:150px;}
+  .tile-add-e .ico{color:var(--caramel);}
+  .sec-ico{background:var(--paper) !important;border:1px solid var(--caramel) !important;font-size:15px !important;}
+  .sec-pick{background:var(--paper);border:1px solid var(--caramel);border-radius:10px;padding:8px;margin-top:4px;}
+  .ico-pick{}
   .ico-cats{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
   .ico-cat{border:1px solid var(--line);background:#fff;color:var(--cocoa-soft);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer;}
   .ico-cat.on{background:var(--caramel);border-color:var(--caramel);color:#fff;}
@@ -417,11 +439,11 @@
         <input type="file" id="importFile" accept="application/json" style="display:none;">
       </div>
       <div class="backup-row" id="qrRow" style="display:none;margin-top:6px;">
-        <button class="backup-btn" id="qrBtn">🏷️ QR štítky k vytištění</button>
+        <button class="backup-btn" id="qrBtn">🔖 QR štítky k vytištění</button>
       </div>
       <div class="backup-row" id="cardRow" style="display:none;margin-top:6px;">
         <button class="backup-btn" id="logBtn">🕘 Historie změn</button>
-        <a class="backup-btn" id="cardLink" href="karta/" style="text-align:center;text-decoration:none;">👥 Karta zaměstnance</a>
+        <a class="backup-btn" id="cardLink" href="karta/" style="text-align:center;text-decoration:none;">👤 Karta zaměstnance</a>
       </div>
       <div class="status" id="status"></div>
     </div>
@@ -442,7 +464,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.33';
+const APP_VERSION = 'v2.35';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -949,7 +971,7 @@ function init(){
 function applyMode(){
   const isEditor = MODE === 'editor';
   $('modeToggleBtn').style.display = hasEditorToken() ? 'inline-block' : 'none';
-  $('modeToggleBtn').innerHTML = (isEditor ? 'Role: Editor' : 'Role: Čtenář') + ' &nbsp;🔄';
+  $('modeToggleBtn').innerHTML = (isEditor ? 'Role: Editor' : 'Role: Čtenář') + ' &nbsp;🔃';
   $('modeToggleBtn').className = 'mode-badge' + (isEditor ? '' : ' reader');
   $('addBtn').style.display = isEditor ? 'block' : 'none';
   $('backupRow').style.display = isEditor ? 'flex' : 'none';
@@ -974,20 +996,33 @@ function renderRoleSelect(){
 }
 
 let secEdit = null;   // null | 'new' | id sekce, která se přejmenovává
-function secFormHtml(value){
-  return '<div class="sec-form"><input id="secInput" maxlength="40" placeholder="Ikona a název, např. 🎂 Dorty na míru" value="' + escapeHtml(value || '') + '">' +
-    '<button class="ok" id="secOk" title="Uložit">✓</button><button class="no" id="secNo" title="Zrušit">✕</button></div>';
+let secIcoV = '', secNameV = '', secPickOpen = false;
+// Rozdělí název sekce na ikonu (emoji na začátku) a text
+function splitSecLabel(l){
+  const m = String(l || '').match(/^(\S+)\s+(.+)$/);
+  if(m && !/[A-Za-z0-9\u00C0-\u024F]/.test(m[1])) return {ico:m[1], name:m[2]};
+  return {ico:'', name:String(l || '')};
+}
+function secStart(id, label){
+  const p = splitSecLabel(label);
+  secEdit = id; secIcoV = p.ico || (id === 'new' ? '📁' : ''); secNameV = p.name; secPickOpen = false;
+}
+function secFormHtml(){
+  return '<div class="sec-form"><button class="sec-ico" id="secIcoBtn" title="Vybrat ikonu sekce">' + escapeHtml(secIcoV || '+') + '</button>' +
+    '<input id="secInput" maxlength="40" placeholder="Název sekce" value="' + escapeHtml(secNameV) + '">' +
+    '<button class="ok" id="secOk" title="Uložit">✓</button><button class="no" id="secNo" title="Zrušit">✕</button></div>' +
+    (secPickOpen ? '<div class="sec-pick">' + icoPickerHtml() + '</div>' : '');
 }
 function renderSectionSwitch(){
   const isEditor = MODE === 'editor';
   $('sectionSwitch').innerHTML = SECTIONS.map(s=>{
-    if(isEditor && secEdit === s.id) return secFormHtml(s.label);
+    if(isEditor && secEdit === s.id) return secFormHtml();
     const btn = '<button class="section-btn' + (s.id===sectionId ? ' active' : '') + '" data-section="' + s.id + '">' + escapeHtml(s.label) + '</button>';
     if(!isEditor) return btn;
     return '<div class="sec-wrap' + (s.id===sectionId ? ' active' : '') + '">' + btn +
       '<button class="sec-tool" data-sec-rename="' + s.id + '" title="Přejmenovat sekci">✎</button>' +
       '<button class="sec-tool" data-sec-del="' + s.id + '" title="Smazat sekci">✕</button></div>';
-  }).join('') + (isEditor ? (secEdit === 'new' ? secFormHtml('') : '<button class="sec-add" id="secAddBtn">+ sekce</button>') : '');
+  }).join('') + (isEditor ? (secEdit === 'new' ? secFormHtml() : '<button class="sec-add" id="secAddBtn">+ sekce</button>') : '');
   if(isEditor) bindSectionTools();
   $('sectionSwitch').querySelectorAll('[data-section]').forEach(b=>{
     b.onclick = ()=>{
@@ -1004,11 +1039,15 @@ function renderSectionSwitch(){
 
 function bindSectionTools(){
   const add = $('secAddBtn');
-  if(add) add.onclick = ()=>{ secEdit = 'new'; renderSectionSwitch(); $('secInput').focus(); };
+  if(add) add.onclick = ()=>{ secStart('new', ''); renderSectionSwitch(); $('secInput').focus(); };
   const input = $('secInput');
   if(input){
+    input.oninput = ()=>{ secNameV = input.value; };
+    $('secIcoBtn').onclick = ()=>{ secPickOpen = !secPickOpen; renderSectionSwitch(); };
+    $('sectionSwitch').querySelectorAll('[data-ico-cat]').forEach(b=>{ b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderSectionSwitch(); }; });
+    $('sectionSwitch').querySelectorAll('[data-ico]').forEach(b=>{ b.onclick = ()=>{ secIcoV = b.dataset.ico; secPickOpen = false; renderSectionSwitch(); $('secInput').focus(); }; });
     const finish = ok=>{
-      const name = input.value.trim();
+      const name = input.value.trim() ? ((secIcoV ? secIcoV + ' ' : '') + input.value.trim()) : '';
       if(ok && name){
         if(secEdit === 'new'){
           const id = 'sec_' + Date.now().toString(36);
@@ -1031,7 +1070,7 @@ function bindSectionTools(){
     input.onkeydown = e=>{ if(e.key === 'Enter') finish(true); if(e.key === 'Escape') finish(false); };
   }
   $('sectionSwitch').querySelectorAll('[data-sec-rename]').forEach(b=>{
-    b.onclick = ()=>{ secEdit = b.dataset.secRename; renderSectionSwitch(); const i = $('secInput'); i.focus(); i.select(); };
+    b.onclick = ()=>{ const sx = SECTIONS.find(x=>x.id === b.dataset.secRename); secStart(b.dataset.secRename, sx ? sx.label : ''); renderSectionSwitch(); const i = $('secInput'); i.focus(); i.select(); };
   });
   $('sectionSwitch').querySelectorAll('[data-sec-del]').forEach(b=>{
     b.onclick = ()=>{
@@ -1476,19 +1515,18 @@ const DEFAULT_HOME = {title:'Vítej ve znalostní bázi Sladké dílny', sub:'Vy
 let HOME = JSON.parse(JSON.stringify((typeof _initData !== 'undefined' && _initData.home) || DEFAULT_HOME));
 function saveHome(){ if(saveJSON('kb-home', HOME, 'Uložení úvodní stránky selhalo.')) markUnpublished(); }
 /* ---------- úprava úvodní stránky (editor) ---------- */
-let homeWork = null;
 let icoPick = -1, icoCat = 0;
 const ICON_CATS = [
-  {n:'Káva a nápoje', i:'☕ 🍵 🥛 🍼 🍹 🍸 🍷 🍺 🍻 🥂 🍾 🍶 🧃 🧉 🧊 🧋'},
-  {n:'Sladké', i:'🍰 🎂 🧁 🍩 🍪 🍫 🍬 🍭 🍮 🍯 🍦 🍧 🍨 🥧 🥐 🥨 🧇 🥞 🍞 🥖'},
-  {n:'Ovoce a jídlo', i:'🍓 🍒 🍎 🍏 🍐 🍊 🍋 🍌 🍉 🍇 🍑 🍍 🥝 🥥 🥜 🌰 🥚 🧀 🥪 🍕 🥗 🍽️ 🥄 🍴 🔪'},
-  {n:'Provoz', i:'🏪 🏠 🚪 🔑 🔒 🔓 💡 🔌 🧹 🧽 🧼 🧺 🧴 🗑️ 🚿 🧯 🛠️ 🔧 🔨 ⚙️ 🌡️ ❄️ 🔥 💧 📦 🛒 🚚 🧾 📋 🏷️'},
-  {n:'Peníze a kasa', i:'💳 💰 💵 💶 🧮 🧾 🎟️ 🎫 🎁 🛍️ 📈 📉 📊 🏦'},
-  {n:'Čas a den', i:'🌅 🌄 ☀️ 🌤️ 🌙 ⭐ 🌟 ⏰ ⏱️ ⌛ 🕐 📅 📆 🗓️'},
-  {n:'Lidé a komunikace', i:'👋 🙂 😊 👍 👌 🤝 👥 👤 👩‍🍳 🧑‍🍳 👨‍🍳 💬 📞 📱 ✉️ 📧 📣 🔔 🗣️'},
-  {n:'Dokumenty a učení', i:'📖 📚 📘 📝 ✏️ 🖊️ 📌 📍 📎 🗂️ 📁 📄 🎓 🧠 💻 🖨️ 📷 🎥 ▶️ 🔍'},
-  {n:'Symboly', i:'❤️ ✅ ✔️ ❌ ⚠️ ❗ ❓ ℹ️ 🆘 🆕 🔝 ⬆️ ⬇️ ➡️ ⬅️ 🔄 ♻️ 🚫 ⛔ 💯 ⭕ 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪'},
-  {n:'Ostatní', i:'🎉 🎈 🎀 🌸 🌷 🌹 🌻 🌿 🍀 🎄 🐣 🎃 💐 🏆 🥇 🎯 🚀 ✨ 💎 👑'}
+  {n:'Káva a nápoje', i:'☕ 🍵 🍹 🍸 🍷 🍺 🍻 🍶'},
+  {n:'Sladké', i:'🍰 🎂 🍩 🍪 🍫 🍬 🍭 🍮 🍯 🍦 🍧 🍨 🍞'},
+  {n:'Ovoce a jídlo', i:'🍓 🍒 🍎 🍏 🍊 🍌 🍉 🍇 🍑 🍍 🌰 🍕 🍴 🔪'},
+  {n:'Provoz', i:'🏪 🏠 🚪 🔑 🔒 🔓 💡 🔌 🔧 🔨 ❄️ 🔥 💧 📦 🚚 📋'},
+  {n:'Peníze a kasa', i:'💳 💰 💵 🎫 🎁 📈 📉 📊 🏦'},
+  {n:'Čas a den', i:'🌅 🌄 ☀️ 🌙 ⭐ 🌟 ⏰ ⌛ 🕐 📅 📆'},
+  {n:'Lidé a komunikace', i:'👋 😊 👍 👌 👤 💬 📞 📱 ✉️ 📧 📣 🔔'},
+  {n:'Dokumenty a učení', i:'📖 📚 📘 📝 ✏️ 📌 📍 📎 📁 📄 🎓 💻 📷 🎥 ▶️ 🔍'},
+  {n:'Symboly', i:'❤️ ✅ ✔️ ❌ ⚠️ ❗ ❓ ℹ️ 🆘 🆕 🔝 ⬆️ ⬇️ ➡️ ⬅️ ♻️ 🚫 ⛔ 💯 ⭕ 🔴 🔵 ⚫ ⚪'},
+  {n:'Ostatní', i:'🎉 🎈 🎀 🌸 🌷 🌹 🌻 🌿 🍀 🎄 🐣 🎃 💐 🏆 🎯 🚀 ✨ 💎 👑'}
 ];
 function icoPickerHtml(){
   const c = ICON_CATS[icoCat];
@@ -1509,73 +1547,73 @@ function tileTargetOptions(t){
   });
   return h;
 }
-function renderHomeEdit(msg){
-  if(!homeWork){ homeWork = JSON.parse(JSON.stringify(HOME)); icoPick = -1; }
-  const W = homeWork;
-  let html = '<div class="art-title">Úvodní stránka</div>' +
-    '<div class="field-hint">Nadpis, podtitulek a dlaždice s hlavními tématy. Čtenář vidí jen dlaždice, jejichž článek (nebo sekci) má povolený ve své roli. Seznam nových a upravených článků pod dlaždicemi se tvoří automaticky.</div>' +
-    '<div class="field-label">Nadpis</div><input class="f-title" id="hTitle" value="' + escapeHtml(W.title) + '">' +
-    '<div class="field-label">Podtitulek</div><input class="f-title" id="hSub" style="font-size:14px;font-weight:400" value="' + escapeHtml(W.sub || '') + '">' +
-    '<div class="field-label">Dlaždice</div>' +
-    W.tiles.map((t, i)=>
-      '<div class="tile-edit"><div class="tile-row">' +
-        '<button class="tile-ico" data-ico-open="' + i + '" title="Vybrat ikonu">' + escapeHtml(t.ico || '＋') + '</button>' +
-        '<input class="tile-in" data-t="' + i + ',lbl" value="' + escapeHtml(t.lbl || '') + '" placeholder="Název">' +
-        '<span class="tile-tools"><button class="tile-tool" data-t-up="' + i + '" title="Nahoru">↑</button><button class="tile-tool" data-t-down="' + i + '" title="Dolů">↓</button><button class="tile-tool" data-t-del="' + i + '" title="Smazat">✕</button></span>' +
-      '</div><div class="tile-row">' +
-        '<input class="tile-in" data-t="' + i + ',dsc" value="' + escapeHtml(t.dsc || '') + '" placeholder="Krátký popis">' +
-        '<select class="tile-in" data-t-target="' + i + '" title="Kam dlaždice vede">' + tileTargetOptions(t) + '</select>' +
-      '</div>' + (icoPick === i ? icoPickerHtml() : '') + '</div>'
-    ).join('') +
-    '<button class="tile-add" id="tAdd">+ Přidat dlaždici</button>' +
-    '<div class="field-hint" style="margin-top:8px">Ikonu změníš kliknutím na ni – otevře se nabídka podle kategorií.</div>' +
-    '<div class="row"><button class="btn" id="hSave">Uložit</button><button class="btn ghost" id="hCancel">Zrušit</button><button class="btn ghost" id="hReset">Obnovit výchozí</button></div>' +
-    '<div class="status" id="hMsg">' + (msg || '') + '</div>';
+function openTile(t){
+  if(t.section){
+    sectionId = t.section;
+    axisId = currentAxes()[0].id;
+    const role = MODE === 'editor' ? null : currentRole();
+    const first = articles.find(a=>a.section === t.section && (MODE === 'editor' || articleVisibleToRole(a, role)));
+    if(first) openArticle(first.id); else render();
+  } else openArticle(t.id);
+}
+// Úvodní stránka v režimu Editor – vše se upravuje přímo na ní a hned ukládá
+function renderHomeEditor(){
+  const H = HOME;
+  let html = '<input class="home-hello hin" id="hTitle" value="' + escapeHtml(H.title) + '" placeholder="Nadpis úvodní stránky">' +
+    '<input class="home-sub hin" id="hSub" value="' + escapeHtml(H.sub || '') + '" placeholder="Podtitulek (nepovinný)">' +
+    '<div class="home-tiles edit">';
+  H.tiles.forEach((t, i)=>{
+    const bad = t.section ? !sectionExists(t.section) : !articles.some(x=>x.id === t.id);
+    html += '<div class="home-tile tile-e' + (icoPick === i ? ' picking' : '') + '">' +
+      '<div class="te-top"><button class="te-ico" data-ico-open="' + i + '" title="Změnit ikonu">' + escapeHtml(t.ico || '+') + '</button>' +
+        '<span class="te-tools"><button data-t-up="' + i + '" title="Posunout dopředu">←</button><button data-t-down="' + i + '" title="Posunout dozadu">→</button><button data-t-del="' + i + '" title="Smazat dlaždici">✕</button></span></div>' +
+      '<input class="lbl hin" data-t="' + i + ',lbl" value="' + escapeHtml(t.lbl || '') + '" placeholder="Název dlaždice">' +
+      '<textarea class="dsc hin" data-t="' + i + ',dsc" rows="2" placeholder="Krátký popis">' + escapeHtml(t.dsc || '') + '</textarea>' +
+      '<div class="te-target' + (bad ? ' bad' : '') + '"><span title="Kam dlaždice vede">↪</span>' +
+        '<select data-t-target="' + i + '" title="Kam dlaždice vede">' + (bad ? '<option value="" selected>– vyber, kam vede –</option>' : '') + tileTargetOptions(t) + '</select>' +
+        '<button class="te-go" data-t-go="' + i + '" title="Otevřít článek, kam dlaždice vede">Otevřít</button></div>' +
+    '</div>';
+    if(icoPick === i) html += '<div class="te-pick">' + icoPickerHtml() + '</div>';
+  });
+  html += '<button class="home-tile tile-add-e" id="tAdd"><span class="ico">+</span><span class="lbl">Přidat dlaždici</span></button></div>' +
+    '<div class="field-hint">Nadpis, texty i ikony upravíš kliknutím přímo na ně. Ukládá se hned – na web to pošleš tlačítkem Publikovat na web.</div>';
   $('main').innerHTML = html;
-  $('hTitle').oninput = e=>{ W.title = e.target.value; };
-  $('hSub').oninput = e=>{ W.sub = e.target.value; };
-  $('main').querySelectorAll('[data-t]').forEach(el=>{ el.oninput = ()=>{ const p = el.dataset.t.split(','); W.tiles[+p[0]][p[1]] = el.value; }; });
+  $('hTitle').oninput = e=>{ H.title = e.target.value; saveHome(); };
+  $('hSub').oninput = e=>{ H.sub = e.target.value; saveHome(); };
+  $('main').querySelectorAll('[data-t]').forEach(el=>{
+    el.oninput = ()=>{ const p = el.dataset.t.split(','); H.tiles[+p[0]][p[1]] = el.value; saveHome(); };
+  });
   $('main').querySelectorAll('[data-t-target]').forEach(el=>{
     el.onchange = ()=>{
-      const t = W.tiles[+el.dataset.tTarget];
+      if(!el.value) return;
+      const t = H.tiles[+el.dataset.tTarget];
       const v = el.value.split(':');
       delete t.id; delete t.section;
       if(v[0] === 'sec') t.section = v[1]; else t.id = v[1];
+      saveHome(); renderHomeEditor();
     };
   });
+  $('main').querySelectorAll('[data-t-go]').forEach(b=>{ b.onclick = ()=>{ const t = H.tiles[+b.dataset.tGo]; if(t.section ? sectionExists(t.section) : articles.some(x=>x.id === t.id)) openTile(t); }; });
   $('main').querySelectorAll('[data-ico-open]').forEach(b=>{
-    b.onclick = ()=>{ const i = +b.dataset.icoOpen; icoPick = (icoPick === i ? -1 : i); renderHomeEdit(); };
+    b.onclick = ()=>{ const i = +b.dataset.icoOpen; icoPick = (icoPick === i ? -1 : i); renderHomeEditor(); };
   });
-  $('main').querySelectorAll('[data-ico-cat]').forEach(b=>{
-    b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderHomeEdit(); };
-  });
+  $('main').querySelectorAll('[data-ico-cat]').forEach(b=>{ b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderHomeEditor(); }; });
   $('main').querySelectorAll('[data-ico]').forEach(b=>{
-    b.onclick = ()=>{ W.tiles[icoPick].ico = b.dataset.ico; icoPick = -1; renderHomeEdit(); };
+    b.onclick = ()=>{ H.tiles[icoPick].ico = b.dataset.ico; icoPick = -1; saveHome(); renderHomeEditor(); };
   });
-  const swap = (i, j)=>{ if(j < 0 || j >= W.tiles.length) return; icoPick = -1; const x = W.tiles[i]; W.tiles[i] = W.tiles[j]; W.tiles[j] = x; renderHomeEdit(); };
+  const swap = (i, j)=>{ if(j < 0 || j >= H.tiles.length) return; icoPick = -1; const x = H.tiles[i]; H.tiles[i] = H.tiles[j]; H.tiles[j] = x; saveHome(); renderHomeEditor(); };
   $('main').querySelectorAll('[data-t-up]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tUp, +b.dataset.tUp - 1); });
   $('main').querySelectorAll('[data-t-down]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.tDown, +b.dataset.tDown + 1); });
   $('main').querySelectorAll('[data-t-del]').forEach(b=>{
     b.onclick = ()=>{
-      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
-      W.tiles.splice(+b.dataset.tDel, 1); icoPick = -1; renderHomeEdit();
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.classList.add('armed'); b.textContent = 'Smazat?'; return; }
+      H.tiles.splice(+b.dataset.tDel, 1); icoPick = -1; saveHome(); renderHomeEditor();
     };
   });
   $('tAdd').onclick = ()=>{
-    W.tiles.push({ico:'📄', lbl:'', dsc:'', id:(articles[0] || {}).id});
-    renderHomeEdit();
-    const ins = $('main').querySelectorAll('[data-t$=",lbl"]'); ins[ins.length - 1].focus();
-  };
-  $('hCancel').onclick = ()=>{ homeWork = null; view = 'home'; render(); };
-  $('hReset').onclick = ()=>{ homeWork = JSON.parse(JSON.stringify(DEFAULT_HOME)); renderHomeEdit('Načteno výchozí nastavení – ulož ho tlačítkem Uložit.'); };
-  $('hSave').onclick = ()=>{
-    if(!W.title.trim()){ $('hMsg').textContent = 'Vyplň nadpis.'; return; }
-    for(let i = 0; i < W.tiles.length; i++){ if(!String(W.tiles[i].lbl || '').trim()){ $('hMsg').textContent = 'Dlaždice ' + (i + 1) + ' nemá název.'; return; } }
-    W.title = W.title.trim(); W.sub = (W.sub || '').trim();
-    W.tiles.forEach(t=>{ t.lbl = t.lbl.trim(); t.dsc = (t.dsc || '').trim(); t.ico = (t.ico || '').trim(); });
-    HOME = JSON.parse(JSON.stringify(W));
-    saveHome();
-    homeWork = null; view = 'home'; render();
+    H.tiles.push({ico:'📄', lbl:'', dsc:'', id:(articles[0] || {}).id});
+    icoPick = -1; saveHome(); renderHomeEditor();
+    const ins = $('main').querySelectorAll('.tile-e .lbl'); ins[ins.length - 1].focus();
   };
 }
 
@@ -1589,9 +1627,9 @@ function goHome(){
 }
 function renderHome(){
   const isEditor = MODE === 'editor';
-  const role = isEditor ? null : currentRole();
-  let html = (isEditor ? '<button class="home-edit-btn" id="homeEditBtn">✎ Upravit úvodní stránku</button>' : '') +
-    '<div class="home-hello">' + escapeHtml(HOME.title) + '</div>';
+  if(isEditor){ renderHomeEditor(); return; }
+  const role = currentRole();
+  let html = '<div class="home-hello">' + escapeHtml(HOME.title) + '</div>';
   if(!isEditor && !role){
     html += '<div class="home-sub">Nejdřív si nahoře vyber <b>svou roli</b> – pak tu uvidíš návody, které se týkají tvé práce.</div>';
     $('main').innerHTML = html;
@@ -1623,17 +1661,9 @@ function renderHome(){
     ).join('') + '</ul>';
   }
   $('main').innerHTML = html;
-  const he = $('homeEditBtn');
-  if(he) he.onclick = ()=>{ homeWork = null; view = 'homeEdit'; render(); scrollToMainOnMobile(); };
   $('main').querySelectorAll('[data-tile]').forEach(b=>{
     b.onclick = ()=>{
-      const t = tiles[parseInt(b.dataset.tile, 10)];
-      if(t.section){
-        sectionId = t.section;
-        axisId = currentAxes()[0].id;
-        const first = articles.find(a=>a.section === t.section && visible(a));
-        if(first) openArticle(first.id); else render();
-      } else openArticle(t.id);
+      openTile(tiles[parseInt(b.dataset.tile, 10)]);
     };
   });
   $('main').querySelectorAll('[data-home-open]').forEach(li=>{ li.onclick = ()=>openArticle(li.dataset.homeOpen); });
@@ -1710,7 +1740,7 @@ function renderMain(){
     videoBlockHtml(art.videoUrl) +
     relatedHtml +
     prevNextHtml(art) +
-    '<div class="row"><button class="btn" id="printBtn">🖨️ Tisk</button>' +
+    '<div class="row"><button class="btn" id="printBtn">📄 Tisk</button>' +
     (isEditor ? '<button class="btn" id="editBtn">Upravit</button><button class="btn ghost" id="historyBtn">🕘 Historie</button><button class="btn red" id="delBtn">Smazat</button>' : '') +
     '</div>';
   bindBreadcrumb(art);
@@ -1805,13 +1835,13 @@ function editFormHtml(art){
     '<div class="field-hint">Do které části znalostní báze článek patří.</div>' +
     '<select class="f-select" id="f-section">' + SECTIONS.map(s=>'<option value="' + s.id + '"' + (s.id===sec ? ' selected' : '') + '>' + escapeHtml(s.label) + '</option>').join('') + '</select>' +
     '<div class="field-label">Obsah</div>' +
-    '<div class="field-hint">Napiš text, vyber ho a klikni na tučně/nadpis/odrážku (tlačítkem "Normální" zrušíš formátování zpátky). Obrázek vlož tlačítkem 🖼️, nebo ho sem rovnou vlož (Ctrl+V) – obrázek v textu smažeš kliknutím na něj.</div>' +
+    '<div class="field-hint">Napiš text, vyber ho a klikni na tučně/nadpis/odrážku (tlačítkem "Normální" zrušíš formátování zpátky). Obrázek vlož tlačítkem 📷, nebo ho sem rovnou vlož (Ctrl+V) – obrázek v textu smažeš kliknutím na něj.</div>' +
     '<div class="fmt-toolbar">' +
       '<button type="button" class="fmt-btn" id="fmtBold"><b>B</b></button>' +
       '<button type="button" class="fmt-btn" id="fmtHeading">Nadpis</button>' +
       '<button type="button" class="fmt-btn" id="fmtBullet">Odrážka</button>' +
       '<button type="button" class="fmt-btn" id="fmtClear">Normální</button>' +
-      '<button type="button" class="fmt-btn" id="fmtImg">🖼️ Obrázek</button>' +
+      '<button type="button" class="fmt-btn" id="fmtImg">📷 Obrázek</button>' +
       '<button type="button" class="fmt-btn" id="fmtVideo">🎬 Video</button>' +
     '</div>' +
     '<input type="file" id="bodyImgInput" accept="image/*" style="display:none;">' +
@@ -2333,7 +2363,7 @@ function renderHelpMain(){
     '<li>Značka <b>Nové</b> nebo <b>Upraveno</b> v seznamu upozorní na články, které se změnily od tvé poslední návštěvy. Po otevření článku zmizí.</li>' +
     '</ul>' +
     '<h3>V článku</h3><ul>' +
-    '<li><b>🖨️ Tisk</b> vytiskne jen samotný článek.</li>' +
+    '<li><b>📄 Tisk</b> vytiskne jen samotný článek.</li>' +
     '<li>Video v článku spustíš kliknutím na náhled.</li>' +
     '<li>U postupů s <b>odškrtávacím seznamem</b> (např. ranní příprava, večerní úklid) si kliknutím odškrtáváš hotové kroky. Ukládá se jen ve tvém telefonu a druhý den se seznam vynuluje.</li>' +
     '<li>Na mobilu je dole lišta <b>Úvod · Hledat · Seznam</b>. Na úvod se dostaneš i přes 🏠 nahoře.</li>' +
@@ -2359,16 +2389,16 @@ function renderHelpMain(){
       '<h3>Úprava textu</h3><ul>' +
       '<li><b>B</b>, <b>Nadpis</b>, <b>Odrážka</b> – zvýrazněné tlačítko je zapnuté, druhým kliknutím ho vypneš.</li>' +
       '<li><b>Normální</b> zruší veškeré formátování označeného textu.</li>' +
-      '<li>Obrázek vložíš tlačítkem <b>🖼️ Obrázek</b> nebo Ctrl+V. Kliknutím na obrázek ho smažeš.</li>' +
+      '<li>Obrázek vložíš tlačítkem <b>📷 Obrázek</b> nebo Ctrl+V. Kliknutím na obrázek ho smažeš.</li>' +
       '<li>Zaškrtnutím <b>☑ Odškrtávací postup</b> v editoru článku si zaměstnanci budou moci odškrtávat jednotlivé odstavce a odrážky.</li>' +
       '<li>Video vložíš kamkoli do textu tlačítkem <b>🎬 Video</b> (odkaz na YouTube nebo Dropbox), videí může být víc. Kliknutím na video v editoru ho smažeš.</li>' +
       '<li>Když odcházíš z rozpracovaného článku bez uložení, aplikace se zeptá.</li>' +
       '</ul>' +
       '<h3>Role</h3><ul>' +
       '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
-      '<li>Na úvodní stránce odkazem <b>✎ Upravit úvodní stránku</b> změníš nadpis, podtitulek a dlaždice (ikona – vyber kliknutím, název, popis, kam vedou, pořadí).</li>' +
-      '<li><b>🏷️ QR štítky</b> (dole pod zálohami) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
-      '<li>Novou sekci přidáš odkazem <b>+ sekce</b> pod sekcemi. Každou sekci přejmenuješ ✎ nebo smažeš ✕ (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
+      '<li><b>Úvodní stránku</b> upravíš přímo na ní: klikni do nadpisu, názvu nebo popisu dlaždice a piš. Kliknutím na ikonu ji změníš, dole v dlaždici vybereš, kam vede, šipkami ← → měníš pořadí. Prázdná čárkovaná dlaždice přidá novou. Ukládá se hned.</li>' +
+      '<li><b>🔖 QR štítky</b> (dole pod zálohami) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
+      '<li>Novou sekci přidáš odkazem <b>+ sekce</b> pod sekcemi. Každou sekci přejmenuješ ✎ (kliknutím na ikonu vedle názvu ji změníš) nebo smažeš ✕ (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
       '<li>Přepínač Editor/Čtenář vidí jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
       '</ul>' +
       '<h3>Uložit a publikovat</h3><ul>' +
@@ -2413,7 +2443,7 @@ function renderQrMain(){
         '<label><input type="checkbox" data-qr="' + a.id + '"' + (qrSelected.indexOf(a.id) !== -1 ? ' checked' : '') + '> ' + escapeHtml(a.title) + '</label>'
       ).join('');
     }).join('') + '</div>' +
-    '<div class="row"><button class="btn" id="qrPrintBtn"' + (qrSelected.length ? '' : ' disabled') + '>🖨️ Vytisknout štítky (' + qrSelected.length + ')</button>' +
+    '<div class="row"><button class="btn" id="qrPrintBtn"' + (qrSelected.length ? '' : ' disabled') + '>📄 Vytisknout štítky (' + qrSelected.length + ')</button>' +
     '<button class="btn ghost" id="backFromQr">Zpět na návody</button></div></div>';
   if(qrSelected.length){
     if(qrLibState === 'ok'){
@@ -2453,7 +2483,6 @@ function render(){
   renderAxisSwitch();
   renderCatList();
   if(view === 'home') renderHome();
-  else if(view === 'homeEdit') renderHomeEdit();
   else if(view === 'roles') renderRolesMain();
   else if(view === 'help') renderHelpMain();
   else if(view === 'history') renderHistoryMain();

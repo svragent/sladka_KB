@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v3.9 -->
+<!-- v3.10 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -377,7 +377,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v3.9';
+const APP_VERSION = 'v3.10';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1418,11 +1418,11 @@ function computeBadges(d){
     }
   });
   if(ALL_ITEM_IDS.every(id => d.checklist[id] === 2)){
-    badges.push({icon:'🏅', title:'Celá karta hotová – pracuje samostatně úplně ve všem'});
+    badges.push({icon:'👑', title:'Celá karta hotová – pracuje samostatně úplně ve všem'});
   }
   const streak = cleanMonthsStreak(d.violations || [], d.startDate);
   if(streak >= 1){
-    badges.push({icon:'🛡️', text:String(streak), title: streak + ' ' + (streak === 1 ? 'měsíc' : (streak < 5 ? 'měsíce' : 'měsíců')) + ' bez prohřešku'});
+    badges.push({icon:'✅', text:String(streak), title: streak + ' ' + (streak === 1 ? 'měsíc' : (streak < 5 ? 'měsíce' : 'měsíců')) + ' bez prohřešku'});
   }
   return badges;
 }
@@ -1438,7 +1438,7 @@ function badgesHtml(d){
 function topBadgeIcon(d){
   const badges = computeBadges(d);
   if(!badges.length) return '';
-  const priority = ['🏅', '🏆', '☕', '🌱', '🛡️'];
+  const priority = ['👑', '🏆', '☕', '🌱', '✅'];
   for(const p of priority){ const b = badges.find(x => x.icon === p); if(b) return b.icon; }
   return badges[0].icon;
 }
@@ -1553,7 +1553,7 @@ function renderMain(resetScroll){
         '<div class="wage-line">Sazba: ' + lvl.base + ' Kč/h + ' + bonusAmount + ' Kč osobní ohodnocení (' + ev.bonusPct + ' %) = <b>' + total + ' Kč/h</b></div>' +
         '<div class="row" style="margin-top:6px">' +
           '<button class="btn ghost" id="reportOneBtn">✉ Report tohoto zaměstnance</button>' +
-          '<button class="btn ghost" id="printBtn">🖨 Vytisknout kartu</button>' +
+          '<button class="btn ghost" id="printBtn">📄 Vytisknout kartu</button>' +
         '</div>' +
       '</div></div>';
   } else {
@@ -1562,7 +1562,7 @@ function renderMain(resetScroll){
       '<div class="fields"><div class="name-input">' + escapeHtml(d.name) + '</div>' +
       badgesHtml(d) +
       '<div class="meta-row"><span>Úroveň: ' + lvl.label + '</span></div>' +
-      '<div class="row" style="margin-top:6px"><button class="btn ghost" id="printBtn">🖨 Vytisknout kartu</button></div>' +
+      '<div class="row" style="margin-top:6px"><button class="btn ghost" id="printBtn">📄 Vytisknout kartu</button></div>' +
       '</div></div>';
   }
 
@@ -2584,7 +2584,7 @@ function helpContentHtml(){
 
   h += '<h3>Odznaky</h3>' +
     '<p>🌱☕🏆 se objeví, jakmile má zaměstnanec úplně všechny položky jedné fáze (Nováček/Pokročilý/Expert) na „samostatně“ – jen část skupiny nestačí. ' +
-    '🏅 je bonus za kompletně hotovou kartu včetně vstupní logistiky. 🛡️ s číslem ukazuje, kolik měsíců v kuse nemá zaměstnanec žádný prohřešek – počítá se od vyplněného data nástupu, bez něj se štít nezobrazí.</p>';
+    '👑 je bonus za kompletně hotovou kartu včetně vstupní logistiky. ✅ s číslem ukazuje, kolik měsíců v kuse nemá zaměstnanec žádný prohřešek – počítá se od vyplněného data nástupu, bez něj se štít nezobrazí.</p>';
 
   if(leader){
     h += '<h3>Prohřešky</h3>' +
