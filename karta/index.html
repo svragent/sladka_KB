@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v3.3 -->
+<!-- v3.7 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -133,6 +133,70 @@
     transform:rotate(-6deg);line-height:1.15;flex-shrink:0;
   }
   .photo-wrap{position:relative;width:64px;height:64px;flex-shrink:0;}
+  .photo-click{cursor:pointer;display:block;}
+  .photo-ov{
+    position:absolute;inset:0;border-radius:50%;background:rgba(59,42,32,.62);color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:9.5px;font-weight:700;line-height:1.2;text-align:center;opacity:0;transition:opacity .15s;
+  }
+  .photo-ov b{font-size:16px;}
+  .photo-click:hover .photo-ov, .photo-click:focus-within .photo-ov{opacity:1;}
+  @media (min-width:761px){
+    .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;align-self:start;}
+  }
+  @media (max-width:760px){
+    .emp-item{padding:10px 12px !important;font-size:14px !important;}
+    .card-head{flex-wrap:wrap;}
+    .meta-row{flex-wrap:wrap;}
+    .to-list{display:inline-block !important;}
+  }
+  .to-list{display:none;margin-bottom:12px;background:none;border:none;padding:0;color:var(--caramel-deep);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .month-table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0;}
+  .month-table th,.month-table td{border-bottom:1px solid var(--line-soft);padding:7px 6px;text-align:left;vertical-align:top;}
+  .month-table th{font-size:10.5px;text-transform:uppercase;color:var(--cocoa-soft);letter-spacing:.04em;}
+  .month-table td.num{font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .table-scroll{overflow-x:auto;max-width:100%;}
+  .main{min-width:0;}
+  .mail-to{width:100%;font-family:inherit;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--cocoa);}
+  .report-text{width:100%;min-height:160px;font-family:inherit;font-size:12.5px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--cocoa);}
+  .cfg-tabs{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap;}
+  .cfg-tab{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--cocoa-soft);font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;}
+  .cfg-tab.on{background:var(--cocoa);color:#fff;border-color:var(--cocoa);}
+  .cfg-field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:12px;color:var(--cocoa-soft);}
+  .cfg-field input,.cfg-field select,.cfg-field textarea,.cfg-select{
+    font-family:inherit;font-size:13.5px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--cocoa);min-width:0;
+  }
+  .cfg-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px;}
+  .q-edit{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;background:var(--paper);}
+  .q-head{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--caramel-deep);letter-spacing:.04em;margin-bottom:6px;}
+  .q-tools{display:flex;gap:2px;}
+  .q-tool{border:none;background:var(--line-soft);color:var(--cocoa-soft);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
+  .q-tool:hover{background:var(--line);color:var(--cocoa);}
+  .q-text{width:100%;font-family:inherit;font-size:13.5px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:44px;background:#fff;color:var(--cocoa);}
+  .opt-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
+  .opt-row input[type=text]{flex:1;min-width:0;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--cocoa);}
+  .opt-row.ok input[type=text]{border-color:var(--sage);background:#EEF4EA;}
+  .opt-row input[type=radio]{width:18px;height:18px;accent-color:var(--sage);flex-shrink:0;}
+  .add-link{border:none;background:none;color:var(--caramel-deep);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:6px 0;}
+  .cfg-msg{font-size:12.5px;margin-top:8px;}
+  .cfg-msg.err{color:var(--cherry);font-weight:600;}
+  .cfg-msg.ok{color:#3E5C36;font-weight:600;}
+  .cl-group{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0;background:var(--paper);}
+  .cl-row{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;}
+  .cl-row input[type=text],.cl-row input[type=number],.cl-row select{font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--cocoa);min-width:0;}
+  .cl-row .grow{flex:1 1 180px;}
+  .cl-row .icon-in{width:52px;text-align:center;flex:0 0 auto;}
+  .cl-row .sel-group{flex:0 1 150px;}
+  .cl-head input[type=text]{font-weight:700;}
+  .cl-items{margin-left:10px;padding-left:10px;border-left:2px solid var(--line-soft);}
+  .lvl-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:end;margin-bottom:10px;}
+  .kb-row{border-bottom:1px solid var(--line-soft);padding:10px 0;}
+  .kb-row b{font-size:13px;}
+  .kb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}
+  .kb-chip{display:inline-flex;align-items:center;gap:4px;background:var(--line-soft);border-radius:12px;padding:3px 4px 3px 10px;font-size:12px;}
+  .kb-chip button{border:none;background:none;cursor:pointer;color:var(--cocoa-soft);font-size:13px;padding:0 4px;}
+  .hist-item{border-bottom:1px solid var(--line-soft);padding:8px 0;font-size:13px;}
+  .hist-item pre{white-space:pre-wrap;font-family:inherit;font-size:12px;background:var(--cream);border-radius:8px;padding:8px;margin:6px 0 0;}
   .photo-wrap img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line);display:block;}
   .photo-wrap input[type=file]{display:none;}
   .photo-label{
@@ -288,8 +352,10 @@
       <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
     </div>
-    <button class="mode-btn" id="reportBtn">✉ Report e-mailem</button>
+    <button class="mode-btn" id="reportBtn">📅 Měsíční report a uzávěrka</button>
+    <button class="mode-btn" id="cfgBtn">⚙ Nastavení karty</button>
     <button class="mode-btn" id="publishBtn" style="display:none">☁ Publikovat na web</button>
+    <a class="mode-btn" id="kbLink" href="../" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">📚 Znalostní báze</a>
     <div class="version-tag" id="versionTag"></div>
     <div class="mode-note" id="modeHint"></div>
     <div class="mode-note" id="modeNote"></div>
@@ -310,22 +376,22 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v3.3';
+const APP_VERSION = 'v3.7';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
 const KB_LINKS = {
-  logistika:[["uvod","Úvod – co je Sladká dílna"], ["zasady_fungovani","Zásady fungování"], ["desatero","Desatero Sladké dílny"], ["prostory","Prostory cukrárny"]],
-  nandavani:[["nandavani","Nandávání zákusků & debaras nádobí"]],
-  ranni_vecerni:[["ranni_vecerni","Ranní příprava a večerní úklid"]],
-  vitrina:[["vitrina_doplnovani","Doplňování vitríny"]],
-  kasa:[["kasa_penize","Kasa a peníze"], ["poukazy","Poukazy"]],
+  logistika:[["uvod","Úvod – co je Sladká dílna"], ["zasady_fungovani","Zásady fungování"], ["desatero","Desatero Sladké dílny"], ["prostory","Prostory cukrárny"], ["kontakty_tym","Kdo je kdo"]],
+  nandavani:[["nandavani","Nandávání zákusků & debaras nádobí"], ["obsluha_sebou_tady","Obsluha – s sebou / tady, telefon, tablet, Foodora"], ["dorty_zakusky","Dorty a zákusky"]],
+  ranni_vecerni:[["ranni_vecerni","Ranní příprava a večerní úklid"], ["uklizeni_kosu","Uklízení košů"], ["volny_cas","Co dělat, když zrovna nikoho neobsluhujeme"]],
+  vitrina:[["vitrina_doplnovani","Doplňování vitríny"], ["vecerni_uklid_vitrin","Večerní úklid vitrín – detailní postup"]],
+  kasa:[["kasa_penize","Kasa a peníze"], ["poukazy","Poukazy"], ["slevy_kava","Slevy, sousedská a personální káva"]],
   tocenim:[["tocenim","Točení a velikosti zmrzliny"]],
-  kavovar:[["kavovar","Kávovar – obsluha a základní nápoje"], ["napoje_kava","Nápojový manuál – káva"]],
+  kavovar:[["kavovar","Kávovar – obsluha a základní nápoje"], ["napoje_kava","Nápojový manuál – káva"], ["napoje_teple","Nápojový manuál – teplé nápoje (čaje, kakao, matcha)"], ["napoje_studene","Nápojový manuál – studené nápoje"], ["cisteni_kavovaru_detail","Čištění kávovaru – detailní postup"]],
   system:[["system","Systém – objednávání a výdej dortů"], ["objednavani_dortu_detail","Objednávání dortu se zákazníkem – detailní postup"]],
   michani:[["michani","Míchání zmrzliny"]],
   mytistroj:[["mytistroj","Mytí a skládání stroje na zmrzlinu"]],
-  limonady:[["limonady","Vaření limonád, svařáku a horké čokolády"]]
+  limonady:[["limonady","Vaření limonád, svařáku a horké čokolády"], ["napoje_alko","Nápojový manuál – alkoholické nápoje"]]
 };
 
 const LEVELS = {
@@ -378,7 +444,7 @@ const EXPECTATIONS = [
 ];
 const CATEGORIES = EXPECTATIONS.map(e=>({id:e[0],name:e[1],desc:e[2]})).concat([{id:"jine",name:"Jiné",desc:""}]);
 
-const VIOLATION_DAYS = 30;   // po kolik dní platí žlutá; druhý prohřešek v tomto okně = červená
+let VIOLATION_DAYS = 30;   // po kolik dní platí žlutá; druhý prohřešek v tomto okně = červená
 const DAY = 86400000;
 
 // Výchozí návody (vedoucí je může v appce přepsat; ukládají se sdíleně pro všechny zaměstnance)
@@ -839,6 +905,37 @@ let MODE = 'leader';  // 'leader' | 'employee' – jen přepínač pohledu, ne z
 let sidebarSort = 'name';  // 'name' | 'progress'
 try{ if(localStorage.getItem('sidebar-sort') === 'progress') sidebarSort = 'progress'; }catch(e){}
 let searchTerm = '';
+// Měsíční uzávěrka: closedFrom = od kdy se počítají prohřešky, emails = komu posílat report, history = uzavřená období
+let SETTINGS = {closedFrom:'', emails:'', history:[]};
+async function loadSettings(){ SETTINGS = Object.assign({closedFrom:'', emails:'', history:[]}, (await kvGet('settings')) || {}); }
+async function saveSettings(){ await kvSet('settings', SETTINGS); }
+// Testy a odkazy do KB upravené v Nastavení karty nahradí výchozí hodnoty z kódu
+function applyConfig(){
+  if(SETTINGS.tests){
+    Object.keys(TESTS).forEach(k=>delete TESTS[k]);
+    Object.assign(TESTS, JSON.parse(JSON.stringify(SETTINGS.tests)));
+  }
+  if(SETTINGS.kbLinks){
+    Object.keys(KB_LINKS).forEach(k=>delete KB_LINKS[k]);
+    Object.assign(KB_LINKS, JSON.parse(JSON.stringify(SETTINGS.kbLinks)));
+  }
+  if(Array.isArray(SETTINGS.checklist) && SETTINGS.checklist.length){
+    CHECKLIST_GROUPS.length = 0;
+    JSON.parse(JSON.stringify(SETTINGS.checklist)).forEach(g=>CHECKLIST_GROUPS.push(g));
+    ALL_ITEM_IDS.length = 0;
+    CHECKLIST_GROUPS.forEach(g=>g.items.forEach(it=>ALL_ITEM_IDS.push(it[0])));
+  }
+  if(SETTINGS.levels){
+    Object.keys(SETTINGS.levels).forEach(k=>{ if(LEVELS[k]) Object.assign(LEVELS[k], SETTINGS.levels[k]); });
+  }
+  if(Array.isArray(SETTINGS.categories)){
+    EXPECTATIONS.length = 0;
+    SETTINGS.categories.forEach(c=>EXPECTATIONS.push([c.id, c.name, c.desc || '']));
+    CATEGORIES.length = 0;
+    EXPECTATIONS.map(e=>({id:e[0], name:e[1], desc:e[2]})).concat([{id:'jine', name:'Jiné', desc:''}]).forEach(c=>CATEGORIES.push(c));
+  }
+  if(SETTINGS.violationDays > 0) VIOLATION_DAYS = SETTINGS.violationDays;
+}
 try{ if(localStorage.getItem('ui-mode') === 'employee') MODE = 'employee'; }catch(e){}
 const hasCloud = (typeof window.storage !== 'undefined');
 
@@ -930,10 +1027,11 @@ function syncFromWeb(){
   const useLocal = hasLocal && (lsGet('card-unpublished') === '1' || localAt > webAt);
   if(useLocal) return;
   try{
-    Object.keys(localStorage).filter(k=>k === 'employees-index' || k === 'guides' || k.indexOf('employee:') === 0)
+    Object.keys(localStorage).filter(k=>k === 'employees-index' || k === 'guides' || k === 'settings' || k.indexOf('employee:') === 0)
       .forEach(k=>localStorage.removeItem(k));
     localStorage.setItem('employees-index', JSON.stringify(CARD_DATA.employees || []));
     localStorage.setItem('guides', JSON.stringify(CARD_DATA.guides || {}));
+    if(CARD_DATA.settings) localStorage.setItem('settings', JSON.stringify(CARD_DATA.settings));
     Object.keys(CARD_DATA.data || {}).forEach(id=>localStorage.setItem('employee:' + id, JSON.stringify(CARD_DATA.data[id])));
   }catch(e){}
   lsSet('card-unpublished', '0');
@@ -986,7 +1084,7 @@ async function publishToGitHub(){
     const publishedAt = new Date().toISOString();
     const data = {};
     for(const e of employees){ data[e.id] = await loadEmployee(e.id); }
-    const payload = {publishedAt: publishedAt, employees: employees, data: data, guides: guides};
+    const payload = {publishedAt: publishedAt, employees: employees, data: data, guides: guides, settings: SETTINGS};
     const text = 'const CARD_DATA = ' + JSON.stringify(payload, null, 1) + ';\n';
     const body = {message: 'Karta – publikace ' + publishedAt.slice(0, 16).replace('T', ' '), content: toBase64Utf8(text), branch: 'main'};
     if(sha) body.sha = sha;
@@ -1054,7 +1152,7 @@ function ensureLearn(d, id){
 /* ==================== PROHŘEŠKY (30denní okno) ==================== */
 // Každý prohřešek má datum. Druhý (a další) prohřešek do 30 dnů od nějakého dřívějšího = červená.
 // Prohřešek zapsaný jako "red" je červená rovnou. Žlutá platí 30 dnů od data.
-function evaluateViolations(list){
+function rateViolations(list){
   const sorted = list.slice().sort((a,b)=> (toDay(a.date) - toDay(b.date)) || String(a.id).localeCompare(String(b.id)));
   const out = [];
   sorted.forEach(v=>{
@@ -1063,14 +1161,25 @@ function evaluateViolations(list){
     else sev = out.some(p=> toDay(v.date) - toDay(p.date) <= VIOLATION_DAYS * DAY) ? 'red' : 'yellow';
     out.push(Object.assign({}, v, {sev}));
   });
+  return out;
+}
+function evaluateViolations(list){
+  // Prohřešky před poslední uzávěrkou se do aktuální karty a ohodnocení nepočítají (zůstávají v historii jako „uzavřeno“).
+  const from = SETTINGS.closedFrom || '';
+  const closed = rateViolations(list).filter(v=>from && v.date < from).map(v=>Object.assign(v, {closed:true}));
+  const out = rateViolations(list.filter(v=>!from || v.date >= from));
   const today = toDay(todayStr());
   const reds = out.filter(v=>v.sev === 'red');
   const active = out.filter(v=>v.sev === 'yellow' && (today - toDay(v.date)) <= VIOLATION_DAYS * DAY);
   let until = null;
   if(active.length) until = Math.max.apply(null, active.map(v=>toDay(v.date))) + VIOLATION_DAYS * DAY;
-  return {list:out, reds, active, until, bonusPct: reds.length ? 0 : (active.length ? 50 : 100)};
+  return {list:closed.concat(out), reds, active, until, bonusPct: reds.length ? 0 : (active.length ? 50 : 100)};
 }
-function catName(id){ const c = CATEGORIES.find(x=>x.id === id); return c ? c.name : id; }
+function catName(id){
+  const c = CATEGORIES.find(x=>x.id === id);
+  if(c) return c.name;
+  return (SETTINGS.oldCats && SETTINGS.oldCats[id]) || id;
+}
 
 /* ==================== FOTKA ==================== */
 function resizeImage(file, maxDim, quality){
@@ -1145,6 +1254,7 @@ function applyMode(){
   $('addForm').style.display = 'none';
   $('backupRow').style.display = leader ? 'flex' : 'none';
   $('reportBtn').style.display = leader ? 'block' : 'none';
+  $('cfgBtn').style.display = leader ? 'block' : 'none';
   $('modeHint').textContent = leader
     ? 'Klikni na roli nahoře pro přepnutí. Režim Zaměstnanec skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení – kdokoli může přepnout zpět.'
     : 'Klikni na roli nahoře pro přepnutí zpět. Tady může zaměstnanec číst návody, zaškrtávat přečtení a dělat testy.';
@@ -1295,9 +1405,10 @@ function computeBadges(d){
   const badges = [];
   const phaseIcons = {'Nováček':'🌱', 'Pokročilý':'☕', 'Expert':'🏆'};
   CHECKLIST_GROUPS.forEach(g=>{
-    if(!phaseIcons[g.group]) return;
+    const icon = (g.icon !== undefined) ? g.icon : phaseIcons[g.group];
+    if(!icon || !g.items.length) return;
     if(g.items.every(it => d.checklist[it[0]] === 2)){
-      badges.push({icon: phaseIcons[g.group], title: 'Fáze „' + g.group + '“ dokončena'});
+      badges.push({icon: icon, title: 'Fáze „' + g.group + '“ dokončena'});
     }
   });
   if(ALL_ITEM_IDS.every(id => d.checklist[id] === 2)){
@@ -1420,8 +1531,9 @@ function renderMain(resetScroll){
 
   if(leader){
     html += '<div class="card-head">' +
-      '<div class="photo-wrap">' + photoHtml +
-        '<label class="photo-label" title="Nahrát fotku">📷<input type="file" id="photoInput" accept="image/*"></label></div>' +
+      '<label class="photo-wrap photo-click" title="Klikni a nahraj fotku">' + photoHtml +
+        '<span class="photo-ov"><b>📷</b>' + (d.photo ? 'Změnit fotku' : 'Nahrát fotku') + '</span>' +
+        '<input type="file" id="photoInput" accept="image/*"></label>' +
       '<div class="fields">' +
         '<input class="name-input" id="f-name" value="' + escapeHtml(d.name) + '" placeholder="Jméno">' +
         badgesHtml(d) +
@@ -1478,7 +1590,8 @@ function renderMain(resetScroll){
     const today = todayStr();
     const hist = ev.list.slice().reverse().map(v=>{
       let badge;
-      if(v.sev === 'red') badge = '<span class="badge r">červená</span>';
+      if(v.closed) badge = '<span class="badge x">uzavřeno</span>';
+      else if(v.sev === 'red') badge = '<span class="badge r">červená</span>';
       else if((toDay(today) - toDay(v.date)) <= VIOLATION_DAYS * DAY) badge = '<span class="badge y">žlutá</span>';
       else badge = '<span class="badge x">žlutá – vypršela</span>';
       return '<div class="vio-row"><div class="vio-main"><div class="vio-date">' + fmtStr(v.date) + ' · ' + escapeHtml(catName(v.category)) + '</div>' +
@@ -1513,7 +1626,8 @@ function renderMain(resetScroll){
       '<button class="danger-link" id="deleteEmp" data-armed="0">Smazat kartu zaměstnance</button>';
   }
 
-  mainEl.innerHTML = html;
+  mainEl.innerHTML = '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button>' + html;
+  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
   bindMainEvents();
   window.scrollTo(0, resetScroll ? 0 : y);
 }
@@ -1528,6 +1642,7 @@ async function selectEmployee(id){
   if(!activeData){ activeData = blankEmployee('Nový zaměstnanec'); activeData.id = id; }
   await renderList();
   renderMain(true);
+  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 /* ==================== UDÁLOSTI ==================== */
@@ -1770,7 +1885,7 @@ function employeeReportLines(d){
   const cardState = ev.reds.length ? 'ČERVENÁ KARTA' : (ev.active.length ? 'žlutá karta do ' + fmtMs(ev.until) : 'bez karty');
   const lines = [];
   lines.push('• ' + d.name + ' (' + LEVELS[d.level].label + ')');
-  lines.push('  Postup: ' + doneItems + '/' + totalItems + ' položek samostatně. Prohřešky: ' + cardState + '.');
+  lines.push('  Postup: ' + doneItems + '/' + totalItems + ' položek samostatně. Prohřešky: ' + cardState + '. Osobní ohodnocení: ' + ev.bonusPct + ' %.');
   const testIds = ALL_ITEM_IDS.filter(id=>TESTS[id]);
   testIds.forEach(id=>{
     const label = (CHECKLIST_GROUPS.flatMap(g=>g.items).find(it=>it[0] === id) || [id, id])[1];
@@ -1806,6 +1921,500 @@ function sendReport(subject, body){
   window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
 
+/* ==================== MĚSÍČNÍ REPORT A UZÁVĚRKA ==================== */
+function periodText(){
+  return (SETTINGS.closedFrom ? 'od ' + fmtStr(SETTINGS.closedFrom) : 'od začátku') + ' do ' + fmtStr(todayStr());
+}
+async function buildMonthRows(){
+  const rows = [];
+  for(const e of employees){
+    const d = normalize(await loadEmployee(e.id));
+    if(!d) continue;
+    const ev = evaluateViolations(d.violations);
+    const cur = ev.list.filter(v=>!v.closed);
+    const tests = ALL_ITEM_IDS.filter(id=>TESTS[id]);
+    rows.push({
+      d: d,
+      done: ALL_ITEM_IDS.filter(id=>d.checklist[id] === 2).length,
+      yellow: cur.filter(v=>v.sev === 'yellow').length,
+      red: cur.filter(v=>v.sev === 'red').length,
+      bonus: ev.bonusPct,
+      testsOk: tests.filter(id=>(d.learn[id] || {}).passed).length,
+      testsAll: tests.length
+    });
+  }
+  rows.sort((a, b)=>a.d.name.localeCompare(b.d.name, 'cs'));
+  return rows;
+}
+async function buildMonthText(){
+  const lines = ['Měsíční report karet zaměstnanců – období ' + periodText(), ''];
+  for(const e of employees){
+    const d = normalize(await loadEmployee(e.id));
+    if(!d) continue;
+    lines.push.apply(lines, employeeReportLines(d));
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+async function renderMonthReport(){
+  activeId = null;
+  activeData = null;
+  await renderList();
+  const rows = await buildMonthRows();
+  const text = await buildMonthText();
+  let h = '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button>' +
+    '<section class="block"><h2>Měsíční report a uzávěrka</h2>' +
+    '<div class="muted">Období: <b>' + periodText() + '</b>. Na začátku měsíce report odešli a pak období uzavři – prohřešky se tím vynulují a osobní ohodnocení začne nový měsíc od 100 %. Pokrok v checklistu a testy zůstávají.</div>';
+  if(!rows.length){
+    h += '<div class="muted" style="margin-top:12px">Zatím nejsou žádní zaměstnanci.</div>';
+  } else {
+    h += '<div class="table-scroll"><table class="month-table"><tr><th>Zaměstnanec</th><th>Úroveň</th><th>Pokrok</th><th>Prohřešky</th><th>Ohodnocení</th><th>Testy</th></tr>' +
+      rows.map(r=>'<tr><td>' + escapeHtml(r.d.name) + '</td><td>' + LEVELS[r.d.level].label + '</td>' +
+        '<td class="num">' + r.done + ' / ' + ALL_ITEM_IDS.length + '</td>' +
+        '<td class="num">' + (r.yellow || r.red ? (r.yellow ? r.yellow + '× žlutá ' : '') + (r.red ? r.red + '× červená' : '') : '–') + '</td>' +
+        '<td class="num"><b>' + r.bonus + ' %</b></td><td class="num">' + r.testsOk + ' / ' + r.testsAll + '</td></tr>').join('') +
+      '</table></div>';
+  }
+  h += '<div class="dl" style="margin-top:14px">Komu poslat report</div>' +
+    '<input class="mail-to" id="mailTo" placeholder="např. andrej@sladkadilna.cz, ucetni@…" value="' + escapeHtml(SETTINGS.emails || '') + '">' +
+    '<div class="muted" style="margin-top:4px">Adresy odděl čárkou. Uloží se pro příště.</div>' +
+    '<div class="dl" style="margin-top:14px">Text reportu</div>' +
+    '<textarea class="report-text" id="reportText" readonly>' + escapeHtml(text) + '</textarea>' +
+    '<div class="row" style="margin-top:8px">' +
+      '<button class="btn" id="mailReport">✉ Připravit e-mail</button>' +
+      '<button class="btn ghost" id="copyReport">Zkopírovat text</button>' +
+    '</div>' +
+    '<div class="row" style="margin-top:18px">' +
+      '<button class="btn red" id="closeMonth" data-armed="0">Uzavřít období a vynulovat prohřešky</button>' +
+    '</div><div class="muted" id="monthMsg" style="margin-top:6px"></div>' +
+    '</section>';
+  if(SETTINGS.history && SETTINGS.history.length){
+    h += '<section class="block"><h2>Uzavřená období</h2>' + SETTINGS.history.map(x=>
+      '<div class="hist-item"><details><summary>' + (x.from ? fmtStr(x.from) : 'začátek') + ' – ' + fmtStr(x.closedAt) + '</summary><pre>' + escapeHtml(x.text) + '</pre></details></div>'
+    ).join('') + '</section>';
+  }
+  mainEl.innerHTML = h;
+  window.scrollTo(0, 0);
+  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({behavior:'smooth', block:'start'});
+  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  $('mailTo').onchange = async ()=>{ SETTINGS.emails = $('mailTo').value.trim(); await saveSettings(); };
+  $('mailReport').onclick = async ()=>{
+    SETTINGS.emails = $('mailTo').value.trim();
+    await saveSettings();
+    const to = SETTINGS.emails.split(/[,;\s]+/).filter(Boolean).join(',');
+    const subject = 'Měsíční report karet zaměstnanců – ' + periodText();
+    if(text.length > 1500){
+      $('monthMsg').textContent = 'Report je dlouhý, e-mail by ho mohl oříznout. Otevírám e-mail s předmětem a adresou – text vlož tlačítkem „Zkopírovat text“.';
+      window.location.href = 'mailto:' + encodeURIComponent(to).replace(/%2C/g, ',') + '?subject=' + encodeURIComponent(subject);
+      return;
+    }
+    window.location.href = 'mailto:' + encodeURIComponent(to).replace(/%2C/g, ',') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(text);
+  };
+  $('copyReport').onclick = async ()=>{
+    const ta = $('reportText');
+    try{ await navigator.clipboard.writeText(ta.value); $('monthMsg').textContent = 'Text zkopírován – vlož ho do e-mailu (Ctrl+V).'; }
+    catch(e){ ta.focus(); ta.select(); $('monthMsg').textContent = 'Text je označený – zkopíruj ho Ctrl+C.'; }
+  };
+  $('closeMonth').onclick = async ()=>{
+    const b = $('closeMonth');
+    if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Opravdu uzavřít? Klikni znovu'; return; }
+    SETTINGS.history = [{closedAt: todayStr(), from: SETTINGS.closedFrom || '', text: text}].concat(SETTINGS.history || []).slice(0, 24);
+    SETTINGS.closedFrom = todayStr();
+    await saveSettings();
+    await renderMonthReport();
+    $('monthMsg').textContent = 'Období uzavřeno. Nové období začíná dnes.';
+  };
+}
+
+/* ==================== NASTAVENÍ KARTY (testy, návody z KB) ==================== */
+let cfgTab = 'tests';
+let cfgTestId = null;
+let cfgDraft = null;       // rozpracovaná kopie testu
+let kbArticles = null;     // seznam článků ze znalostní báze (načtený z ../data.js)
+let kbLoadError = '';
+let cfgWork = null;        // rozpracovaná kopie (checklist / úrovně / prohřešky)
+let cfgWorkDirty = false;
+let cfgWorkTab = null;
+function itemLabel(id){ const it = CHECKLIST_GROUPS.flatMap(g=>g.items).find(x=>x[0] === id); return it ? it[1] : id; }
+function cfgShell(inner){
+  return '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button>' +
+    '<section class="block"><h2>Nastavení karty</h2>' +
+    '<div class="cfg-tabs"><button class="cfg-tab' + (cfgTab === 'tests' ? ' on' : '') + '" data-cfg-tab="tests">Testy</button>' +
+    '<button class="cfg-tab' + (cfgTab === 'kb' ? ' on' : '') + '" data-cfg-tab="kb">Návody ze znalostní báze</button>' +
+    '<button class="cfg-tab' + (cfgTab === 'cl' ? ' on' : '') + '" data-cfg-tab="cl">Checklist</button>' +
+    '<button class="cfg-tab' + (cfgTab === 'lvl' ? ' on' : '') + '" data-cfg-tab="lvl">Úrovně a sazby</button>' +
+    '<button class="cfg-tab' + (cfgTab === 'vio' ? ' on' : '') + '" data-cfg-tab="vio">Prohřešky</button></div>' +
+    inner + '</section>';
+}
+async function renderSettings(){
+  activeId = null; activeData = null;
+  await renderList();
+  if(cfgWorkTab !== cfgTab){ cfgWork = null; cfgWorkDirty = false; cfgWorkTab = cfgTab; }
+  if(cfgTab === 'kb') await renderCfgKb();
+  else if(cfgTab === 'cl') renderCfgChecklist();
+  else if(cfgTab === 'lvl') renderCfgLevels();
+  else if(cfgTab === 'vio') renderCfgViolations();
+  else renderCfgTests();
+  window.scrollTo(0, 0);
+  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({block:'start'});
+}
+function bindCfgShell(){
+  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  mainEl.querySelectorAll('[data-cfg-tab]').forEach(b=>{
+    b.onclick = ()=>{
+      if((cfgDraft || cfgWorkDirty) && !confirm('Máš neuložené změny. Zahodit je?')) return;
+      cfgDraft = null; cfgWork = null; cfgWorkDirty = false; cfgTab = b.dataset.cfgTab; renderSettings();
+    };
+  });
+}
+
+/* ---- Testy ---- */
+function renderCfgTests(msg, msgKind){
+  const items = CHECKLIST_GROUPS.flatMap(g=>g.items.map(it=>({id:it[0], label:it[1], group:g.group})));
+  if(!cfgTestId) cfgTestId = (items.find(x=>TESTS[x.id]) || items[0]).id;
+  let h = '<div class="cfg-field">Položka checklistu<select class="cfg-select" id="cfgTestSel">' +
+    CHECKLIST_GROUPS.map(g=>'<optgroup label="' + escapeHtml(g.group) + '">' + g.items.map(it=>
+      '<option value="' + it[0] + '"' + (it[0] === cfgTestId ? ' selected' : '') + '>' + escapeHtml(it[1]) + (TESTS[it[0]] ? '' : ' (bez testu)') + '</option>').join('') + '</optgroup>').join('') +
+    '</select></div>';
+  if(!cfgDraft && TESTS[cfgTestId]) cfgDraft = JSON.parse(JSON.stringify(TESTS[cfgTestId]));
+  const T = cfgDraft;
+  if(!T){
+    h += '<div class="muted">Tato položka zatím nemá test.</div><div class="row" style="margin-top:8px"><button class="btn" id="cfgCreate">+ Vytvořit test</button></div>';
+  } else {
+    const mode = T.passMin ? 'min' : 'pct';
+    h += '<div class="cfg-field">Název testu<input id="cfgTitle" value="' + escapeHtml(T.title || '') + '"></div>' +
+      '<div class="cfg-grid">' +
+        '<div class="cfg-field">Splnění podle<select id="cfgMode"><option value="pct"' + (mode === 'pct' ? ' selected' : '') + '>procent správně</option><option value="min"' + (mode === 'min' ? ' selected' : '') + '>počtu správných odpovědí</option></select></div>' +
+        '<div class="cfg-field">' + (mode === 'pct' ? 'Potřeba % správně' : 'Potřeba správných') + '<input id="cfgNeed" type="number" min="1" value="' + (mode === 'pct' ? (T.passPct || 80) : T.passMin) + '"></div>' +
+        '<div class="cfg-field">Zobrazit otázek (náhodně)<input id="cfgDisplay" type="number" min="1" placeholder="všechny (' + T.questions.length + ')" value="' + (T.display || '') + '"></div>' +
+        '<div class="cfg-field">Po splnění posunout na<select id="cfgOnPass"><option value="1"' + (T.onPass === 1 ? ' selected' : '') + '>zaučen, nutný dohled</option><option value="2"' + (T.onPass !== 1 ? ' selected' : '') + '>pracuje samostatně</option></select></div>' +
+      '</div>' +
+      '<label class="read-row" style="margin-top:2px"><input type="checkbox" id="cfgDraftChk"' + (T.draft ? ' checked' : '') + '> Koncept – zaměstnanci uvidí upozornění, že otázky ještě nejsou zkontrolované</label>' +
+      '<div class="cfg-field" style="margin-top:8px">Poznámka pro vedoucího (nepovinné)<textarea id="cfgTodo" rows="2">' + escapeHtml(T.todo || '') + '</textarea></div>' +
+      '<div class="dl">Otázky (' + T.questions.length + ') – kroužkem označ správnou odpověď</div>' +
+      T.questions.map((q, i)=>
+        '<div class="q-edit"><div class="q-head"><span>Otázka ' + (i + 1) + '</span><span class="q-tools">' +
+          '<button class="q-tool" data-q-up="' + i + '" title="Posunout nahoru">↑</button><button class="q-tool" data-q-down="' + i + '" title="Posunout dolů">↓</button>' +
+          '<button class="q-tool" data-q-del="' + i + '" title="Smazat otázku">✕</button></span></div>' +
+        '<textarea class="q-text" data-q="' + i + '" placeholder="Text otázky">' + escapeHtml(q.q || '') + '</textarea>' +
+        q.options.map((o, j)=>
+          '<div class="opt-row' + (q.correct === j ? ' ok' : '') + '"><input type="radio" name="corr' + i + '" data-corr="' + i + '" value="' + j + '"' + (q.correct === j ? ' checked' : '') + ' title="Správná odpověď">' +
+          '<input type="text" data-opt="' + i + ',' + j + '" value="' + escapeHtml(o) + '" placeholder="Odpověď ' + (j + 1) + '">' +
+          '<button class="q-tool" data-opt-del="' + i + ',' + j + '" title="Smazat odpověď">✕</button></div>'
+        ).join('') +
+        '<button class="add-link" data-opt-add="' + i + '">+ odpověď</button></div>'
+      ).join('') +
+      '<button class="add-link" id="cfgAddQ">+ Přidat otázku</button>' +
+      '<div class="row" style="margin-top:14px"><button class="btn" id="cfgSave">Uložit test</button>' +
+      '<button class="btn ghost" id="cfgCancel">Zahodit změny</button>' +
+      (TESTS[cfgTestId] ? '<button class="btn red" id="cfgDelTest" data-armed="0">Smazat test</button>' : '') + '</div>' +
+      '<div class="muted" style="margin-top:6px">Změna otázek neruší už splněné testy. Po uložení nezapomeň kartu publikovat.</div>';
+  }
+  h += '<div class="cfg-msg' + (msgKind ? ' ' + msgKind : '') + '" id="cfgMsg">' + (msg || '') + '</div>';
+  mainEl.innerHTML = cfgShell(h);
+  bindCfgShell();
+  $('cfgTestSel').onchange = ()=>{
+    if(cfgDraft && JSON.stringify(cfgDraft) !== JSON.stringify(TESTS[cfgTestId] || null) && !confirm('Máš neuložené změny v testu. Zahodit je?')){ $('cfgTestSel').value = cfgTestId; return; }
+    cfgTestId = $('cfgTestSel').value; cfgDraft = null; renderCfgTests();
+  };
+  if(!T){
+    $('cfgCreate').onclick = ()=>{
+      cfgDraft = {title: itemLabel(cfgTestId), passPct: 80, onPass: 2, draft: true, questions: [{q:'', options:['', ''], correct:0}]};
+      renderCfgTests();
+    };
+    return;
+  }
+  $('cfgTitle').oninput = e=>{ T.title = e.target.value; };
+  $('cfgMode').onchange = e=>{
+    if(e.target.value === 'min'){ T.passMin = Math.max(1, Math.round((T.passPct || 80) / 100 * (T.display || T.questions.length))); delete T.passPct; }
+    else { T.passPct = 80; delete T.passMin; }
+    renderCfgTests();
+  };
+  $('cfgNeed').oninput = e=>{ const v = parseInt(e.target.value, 10) || 0; if(T.passMin !== undefined) T.passMin = v; else T.passPct = v; };
+  $('cfgDisplay').oninput = e=>{ const v = parseInt(e.target.value, 10); if(v > 0) T.display = v; else delete T.display; };
+  $('cfgOnPass').onchange = e=>{ T.onPass = parseInt(e.target.value, 10); };
+  $('cfgDraftChk').onchange = e=>{ T.draft = e.target.checked; };
+  $('cfgTodo').oninput = e=>{ T.todo = e.target.value; if(!T.todo) delete T.todo; };
+  mainEl.querySelectorAll('[data-q]').forEach(el=>{ el.oninput = ()=>{ T.questions[+el.dataset.q].q = el.value; }; });
+  mainEl.querySelectorAll('[data-opt]').forEach(el=>{ el.oninput = ()=>{ const p = el.dataset.opt.split(','); T.questions[+p[0]].options[+p[1]] = el.value; }; });
+  mainEl.querySelectorAll('[data-corr]').forEach(el=>{
+    el.onchange = ()=>{
+      T.questions[+el.dataset.corr].correct = +el.value;
+      el.closest('.q-edit').querySelectorAll('.opt-row').forEach((r, j)=>r.classList.toggle('ok', j === +el.value));
+    };
+  });
+  const move = (i, d)=>{ const j = i + d; if(j < 0 || j >= T.questions.length) return; const x = T.questions[i]; T.questions[i] = T.questions[j]; T.questions[j] = x; renderCfgTests(); };
+  mainEl.querySelectorAll('[data-q-up]').forEach(b=>{ b.onclick = ()=>move(+b.dataset.qUp, -1); });
+  mainEl.querySelectorAll('[data-q-down]').forEach(b=>{ b.onclick = ()=>move(+b.dataset.qDown, 1); });
+  mainEl.querySelectorAll('[data-q-del]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
+      T.questions.splice(+b.dataset.qDel, 1); renderCfgTests();
+    };
+  });
+  mainEl.querySelectorAll('[data-opt-add]').forEach(b=>{ b.onclick = ()=>{ T.questions[+b.dataset.optAdd].options.push(''); renderCfgTests(); }; });
+  mainEl.querySelectorAll('[data-opt-del]').forEach(b=>{
+    b.onclick = ()=>{
+      const p = b.dataset.optDel.split(',').map(Number);
+      const q = T.questions[p[0]];
+      if(q.options.length <= 2){ $('cfgMsg').className = 'cfg-msg err'; $('cfgMsg').textContent = 'Otázka musí mít aspoň dvě odpovědi.'; return; }
+      q.options.splice(p[1], 1);
+      if(q.correct === p[1]) q.correct = 0; else if(q.correct > p[1]) q.correct--;
+      renderCfgTests();
+    };
+  });
+  $('cfgAddQ').onclick = ()=>{
+    T.questions.push({q:'', options:['', '', ''], correct:0});
+    renderCfgTests();
+    const all = mainEl.querySelectorAll('.q-text'); const last = all[all.length - 1];
+    if(last){ last.scrollIntoView({block:'center'}); last.focus(); }
+  };
+  $('cfgCancel').onclick = ()=>{ cfgDraft = null; renderCfgTests('Změny zahozeny.'); };
+  $('cfgSave').onclick = async ()=>{
+    const err = validateTest(T);
+    if(err){ renderCfgTests(err, 'err'); return; }
+    T.questions.forEach(q=>{ q.q = q.q.trim(); q.options = q.options.map(o=>o.trim()); });
+    TESTS[cfgTestId] = JSON.parse(JSON.stringify(T));
+    SETTINGS.tests = JSON.parse(JSON.stringify(TESTS));
+    await saveSettings();
+    cfgDraft = null;
+    renderCfgTests('Test uložen.', 'ok');
+  };
+  const del = $('cfgDelTest');
+  if(del) del.onclick = async ()=>{
+    if(del.dataset.armed !== '1'){ del.dataset.armed = '1'; del.textContent = 'Opravdu smazat test? Klikni znovu'; return; }
+    delete TESTS[cfgTestId];
+    SETTINGS.tests = JSON.parse(JSON.stringify(TESTS));
+    await saveSettings();
+    cfgDraft = null;
+    renderCfgTests('Test smazán. Výsledky zaměstnanců zůstaly uložené.', 'ok');
+  };
+}
+function validateTest(T){
+  if(!T.title || !T.title.trim()) return 'Vyplň název testu.';
+  if(!T.questions.length) return 'Test musí mít aspoň jednu otázku.';
+  for(let i = 0; i < T.questions.length; i++){
+    const q = T.questions[i];
+    if(!q.q || !q.q.trim()) return 'Otázka ' + (i + 1) + ' nemá text.';
+    if(q.options.filter(o=>o && o.trim()).length < q.options.length) return 'Otázka ' + (i + 1) + ' má prázdnou odpověď – vyplň ji, nebo ji smaž.';
+    if(q.options.length < 2) return 'Otázka ' + (i + 1) + ' musí mít aspoň dvě odpovědi.';
+    if(!(q.correct >= 0 && q.correct < q.options.length)) return 'U otázky ' + (i + 1) + ' označ správnou odpověď.';
+  }
+  const shown = T.display && T.display < T.questions.length ? T.display : T.questions.length;
+  if(T.passMin !== undefined && (T.passMin < 1 || T.passMin > shown)) return 'Počet potřebných správných odpovědí musí být 1 až ' + shown + '.';
+  if(T.passPct !== undefined && (T.passPct < 1 || T.passPct > 100)) return 'Procento pro splnění musí být 1 až 100.';
+  return '';
+}
+
+/* ---- společné: uložit / zahodit ---- */
+function cfgButtons(){
+  return '<div class="row" style="margin-top:14px"><button class="btn" id="cfgWSave">Uložit</button><button class="btn ghost" id="cfgWCancel">Zahodit změny</button></div>';
+}
+function cfgMsgHtml(msg, kind){ return '<div class="cfg-msg' + (kind ? ' ' + kind : '') + '" id="cfgMsg">' + (msg || '') + '</div>'; }
+function markWork(){ cfgWorkDirty = true; }
+function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+
+/* ---- Checklist ---- */
+function renderCfgChecklist(msg, kind){
+  const phaseIcons = {'Nováček':'🌱', 'Pokročilý':'☕', 'Expert':'🏆'};
+  if(!cfgWork){
+    cfgWork = JSON.parse(JSON.stringify(CHECKLIST_GROUPS));
+    cfgWork.forEach(g=>{ if(g.icon === undefined) g.icon = phaseIcons[g.group] || ''; });   // ikona zůstane i po přejmenování
+  }
+  const W = cfgWork;
+  let h = '<div class="muted">Skupiny jsou fáze zaškolení. Ikona skupiny je odznak, který zaměstnanec dostane po dokončení celé fáze (můžeš ji nechat prázdnou). ' +
+    'Smazaná položka zmizí z karet, ale stav a výsledky zaměstnanců zůstanou uložené. Test k nové položce vytvoříš v záložce Testy, návody v záložce Návody.</div>';
+  W.forEach((g, gi)=>{
+    const icon = (g.icon !== undefined) ? g.icon : (phaseIcons[g.group] || '');
+    h += '<div class="cl-group"><div class="cl-row cl-head">' +
+      '<input type="text" class="grow" data-g-name="' + gi + '" value="' + escapeHtml(g.group) + '" placeholder="Název skupiny">' +
+      '<input type="text" class="icon-in" data-g-icon="' + gi + '" value="' + escapeHtml(icon) + '" placeholder="ikona" title="Odznak po dokončení fáze">' +
+      '<span class="q-tools"><button class="q-tool" data-g-up="' + gi + '" title="Nahoru">↑</button><button class="q-tool" data-g-down="' + gi + '" title="Dolů">↓</button>' +
+      '<button class="q-tool" data-g-del="' + gi + '" title="Smazat skupinu">✕</button></span></div><div class="cl-items">' +
+      g.items.map((it, ii)=>
+        '<div class="cl-row"><input type="text" class="grow" data-i-name="' + gi + ',' + ii + '" value="' + escapeHtml(it[1]) + '" placeholder="Název položky">' +
+        (W.length > 1 ? '<select class="sel-group" data-i-move="' + gi + ',' + ii + '" title="Přesunout do skupiny">' + W.map((x, k)=>'<option value="' + k + '"' + (k === gi ? ' selected' : '') + '>' + escapeHtml(x.group || 'Skupina ' + (k + 1)) + '</option>').join('') + '</select>' : '') +
+        '<span class="q-tools"><button class="q-tool" data-i-up="' + gi + ',' + ii + '" title="Nahoru">↑</button><button class="q-tool" data-i-down="' + gi + ',' + ii + '" title="Dolů">↓</button>' +
+        '<button class="q-tool" data-i-del="' + gi + ',' + ii + '" title="Smazat položku">✕</button></span></div>'
+      ).join('') +
+      '<button class="add-link" data-i-add="' + gi + '">+ položka</button></div></div>';
+  });
+  h += '<button class="add-link" id="clAddGroup">+ Přidat skupinu</button>' + cfgButtons() + cfgMsgHtml(msg, kind);
+  mainEl.innerHTML = cfgShell(h);
+  bindCfgShell();
+  const P = s=>s.split(',').map(Number);
+  mainEl.querySelectorAll('[data-g-name]').forEach(el=>{ el.oninput = ()=>{ W[+el.dataset.gName].group = el.value; markWork(); }; });
+  mainEl.querySelectorAll('[data-g-icon]').forEach(el=>{ el.oninput = ()=>{ W[+el.dataset.gIcon].icon = el.value.trim(); markWork(); }; });
+  mainEl.querySelectorAll('[data-i-name]').forEach(el=>{ el.oninput = ()=>{ const p = P(el.dataset.iName); W[p[0]].items[p[1]][1] = el.value; markWork(); }; });
+  const swap = (arr, i, j)=>{ if(j < 0 || j >= arr.length) return; const x = arr[i]; arr[i] = arr[j]; arr[j] = x; markWork(); renderCfgChecklist(); };
+  mainEl.querySelectorAll('[data-g-up]').forEach(b=>{ b.onclick = ()=>swap(W, +b.dataset.gUp, +b.dataset.gUp - 1); });
+  mainEl.querySelectorAll('[data-g-down]').forEach(b=>{ b.onclick = ()=>swap(W, +b.dataset.gDown, +b.dataset.gDown + 1); });
+  mainEl.querySelectorAll('[data-i-up]').forEach(b=>{ const p = P(b.dataset.iUp); b.onclick = ()=>swap(W[p[0]].items, p[1], p[1] - 1); });
+  mainEl.querySelectorAll('[data-i-down]').forEach(b=>{ const p = P(b.dataset.iDown); b.onclick = ()=>swap(W[p[0]].items, p[1], p[1] + 1); });
+  mainEl.querySelectorAll('[data-i-move]').forEach(sel=>{
+    sel.onchange = ()=>{ const p = P(sel.dataset.iMove); const it = W[p[0]].items.splice(p[1], 1)[0]; W[+sel.value].items.push(it); markWork(); renderCfgChecklist(); };
+  });
+  mainEl.querySelectorAll('[data-i-del]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
+      const p = P(b.dataset.iDel); W[p[0]].items.splice(p[1], 1); markWork(); renderCfgChecklist();
+    };
+  });
+  mainEl.querySelectorAll('[data-g-del]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = W[+b.dataset.gDel].items.length ? 'Smazat i s položkami?' : 'Smazat?'; return; }
+      W.splice(+b.dataset.gDel, 1); markWork(); renderCfgChecklist();
+    };
+  });
+  mainEl.querySelectorAll('[data-i-add]').forEach(b=>{
+    b.onclick = ()=>{
+      const gi = +b.dataset.iAdd; W[gi].items.push([newId('p'), '']); markWork(); renderCfgChecklist();
+      const ins = mainEl.querySelectorAll('[data-i-name^="' + gi + ',"]'); const last = ins[ins.length - 1]; if(last) last.focus();
+    };
+  });
+  $('clAddGroup').onclick = ()=>{ W.push({group:'', icon:'', items:[]}); markWork(); renderCfgChecklist(); const ins = mainEl.querySelectorAll('[data-g-name]'); ins[ins.length - 1].focus(); };
+  $('cfgWCancel').onclick = ()=>{ cfgWork = null; cfgWorkDirty = false; renderCfgChecklist('Změny zahozeny.'); };
+  $('cfgWSave').onclick = async ()=>{
+    for(const g of W){
+      if(!g.group.trim()) return renderCfgChecklist('Každá skupina musí mít název.', 'err');
+      for(const it of g.items) if(!it[1].trim()) return renderCfgChecklist('Položka ve skupině „' + g.group + '“ nemá název.', 'err');
+    }
+    if(!W.some(g=>g.items.length)) return renderCfgChecklist('Checklist musí mít aspoň jednu položku.', 'err');
+    W.forEach(g=>{ g.group = g.group.trim(); g.items.forEach(it=>{ it[1] = it[1].trim(); }); });
+    SETTINGS.checklist = JSON.parse(JSON.stringify(W));
+    await saveSettings();
+    applyConfig();
+    cfgWork = null; cfgWorkDirty = false;
+    await renderList();
+    renderCfgChecklist('Checklist uložen.', 'ok');
+  };
+}
+
+/* ---- Úrovně a sazby ---- */
+function renderCfgLevels(msg, kind){
+  if(!cfgWork) cfgWork = JSON.parse(JSON.stringify(LEVELS));
+  const W = cfgWork;
+  let h = '<div class="muted">Sazba je základní hodinová mzda. Osobní ohodnocení je částka navíc při 100 % – při žluté kartě se vyplácí polovina, při červené nic.</div><div style="margin-top:12px">' +
+    Object.keys(W).map(k=>
+      '<div class="lvl-row"><div class="cfg-field" style="margin:0">Název úrovně<input data-lv="' + k + ',label" value="' + escapeHtml(W[k].label) + '"></div>' +
+      '<div class="cfg-field" style="margin:0">Sazba Kč/h<input type="number" min="0" data-lv="' + k + ',base" value="' + W[k].base + '"></div>' +
+      '<div class="cfg-field" style="margin:0">Ohodnocení Kč/h<input type="number" min="0" data-lv="' + k + ',bonus" value="' + W[k].bonus + '"></div></div>'
+    ).join('') + '</div>' + cfgButtons() + cfgMsgHtml(msg, kind);
+  mainEl.innerHTML = cfgShell(h);
+  bindCfgShell();
+  mainEl.querySelectorAll('[data-lv]').forEach(el=>{
+    el.oninput = ()=>{ const p = el.dataset.lv.split(','); W[p[0]][p[1]] = p[1] === 'label' ? el.value : (parseInt(el.value, 10) || 0); markWork(); };
+  });
+  $('cfgWCancel').onclick = ()=>{ cfgWork = null; cfgWorkDirty = false; renderCfgLevels('Změny zahozeny.'); };
+  $('cfgWSave').onclick = async ()=>{
+    for(const k of Object.keys(W)) if(!String(W[k].label).trim()) return renderCfgLevels('Každá úroveň musí mít název.', 'err');
+    SETTINGS.levels = JSON.parse(JSON.stringify(W));
+    await saveSettings();
+    applyConfig();
+    cfgWork = null; cfgWorkDirty = false;
+    renderCfgLevels('Úrovně a sazby uloženy.', 'ok');
+  };
+}
+
+/* ---- Prohřešky ---- */
+function renderCfgViolations(msg, kind){
+  if(!cfgWork) cfgWork = {days: VIOLATION_DAYS, cats: EXPECTATIONS.map(e=>({id:e[0], name:e[1], desc:e[2]}))};
+  const W = cfgWork;
+  let h = '<div class="cfg-field" style="max-width:260px">Žlutá karta platí (dní)<input type="number" min="1" id="vioDays" value="' + W.days + '"></div>' +
+    '<div class="muted">Druhý prohřešek během této doby = červená karta.</div>' +
+    '<div class="dl" style="margin-top:14px">Kategorie prohřešků (očekávání)</div>' +
+    W.cats.map((c, i)=>
+      '<div class="cl-group"><div class="cl-row"><input type="text" class="grow" data-c-name="' + i + '" value="' + escapeHtml(c.name) + '" placeholder="Název">' +
+      '<span class="q-tools"><button class="q-tool" data-c-up="' + i + '">↑</button><button class="q-tool" data-c-down="' + i + '">↓</button><button class="q-tool" data-c-del="' + i + '">✕</button></span></div>' +
+      '<div class="cl-row"><input type="text" class="grow" data-c-desc="' + i + '" value="' + escapeHtml(c.desc) + '" placeholder="Popis – co se od zaměstnance čeká"></div></div>'
+    ).join('') +
+    '<div class="muted">Kategorie „Jiné“ zůstává vždy. Smazaná kategorie zůstane u starých prohřešků pod svým názvem.</div>' +
+    '<button class="add-link" id="cAdd">+ Přidat kategorii</button>' + cfgButtons() + cfgMsgHtml(msg, kind);
+  mainEl.innerHTML = cfgShell(h);
+  bindCfgShell();
+  $('vioDays').oninput = e=>{ W.days = parseInt(e.target.value, 10) || 0; markWork(); };
+  mainEl.querySelectorAll('[data-c-name]').forEach(el=>{ el.oninput = ()=>{ W.cats[+el.dataset.cName].name = el.value; markWork(); }; });
+  mainEl.querySelectorAll('[data-c-desc]').forEach(el=>{ el.oninput = ()=>{ W.cats[+el.dataset.cDesc].desc = el.value; markWork(); }; });
+  const swap = (i, j)=>{ if(j < 0 || j >= W.cats.length) return; const x = W.cats[i]; W.cats[i] = W.cats[j]; W.cats[j] = x; markWork(); renderCfgViolations(); };
+  mainEl.querySelectorAll('[data-c-up]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.cUp, +b.dataset.cUp - 1); });
+  mainEl.querySelectorAll('[data-c-down]').forEach(b=>{ b.onclick = ()=>swap(+b.dataset.cDown, +b.dataset.cDown + 1); });
+  mainEl.querySelectorAll('[data-c-del]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.dataset.armed !== '1'){ b.dataset.armed = '1'; b.textContent = 'Smazat?'; return; }
+      W.cats.splice(+b.dataset.cDel, 1); markWork(); renderCfgViolations();
+    };
+  });
+  $('cAdd').onclick = ()=>{ W.cats.push({id:newId('c'), name:'', desc:''}); markWork(); renderCfgViolations(); const ins = mainEl.querySelectorAll('[data-c-name]'); ins[ins.length - 1].focus(); };
+  $('cfgWCancel').onclick = ()=>{ cfgWork = null; cfgWorkDirty = false; renderCfgViolations('Změny zahozeny.'); };
+  $('cfgWSave').onclick = async ()=>{
+    if(!(W.days >= 1)) return renderCfgViolations('Doba platnosti žluté karty musí být aspoň 1 den.', 'err');
+    for(const c of W.cats) if(!c.name.trim()) return renderCfgViolations('Každá kategorie musí mít název.', 'err');
+    // názvy smazaných kategorií si pamatuj kvůli starým prohřeškům
+    SETTINGS.oldCats = SETTINGS.oldCats || {};
+    EXPECTATIONS.forEach(e=>{ if(!W.cats.some(c=>c.id === e[0])) SETTINGS.oldCats[e[0]] = e[1]; });
+    SETTINGS.categories = W.cats.map(c=>({id:c.id, name:c.name.trim(), desc:(c.desc || '').trim()}));
+    SETTINGS.violationDays = W.days;
+    await saveSettings();
+    applyConfig();
+    cfgWork = null; cfgWorkDirty = false;
+    renderCfgViolations('Nastavení prohřešků uloženo.', 'ok');
+  };
+}
+
+/* ---- Návody ze znalostní báze ---- */
+async function loadKbArticles(){
+  if(kbArticles) return;
+  try{
+    const res = await fetch('../data.js?t=' + Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('http');
+    const t = await res.text();
+    const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+    kbArticles = (j.seedAll || []).map(a=>({id:a.id, title:a.title, section:a.section}));
+    kbArticles.sort((a, b)=>a.title.localeCompare(b.title, 'cs'));
+  }catch(e){
+    kbArticles = [];
+    kbLoadError = 'Seznam článků znalostní báze se nepodařilo načíst (funguje jen na webu GitHubu). Odebírat odkazy můžeš i tak.';
+  }
+}
+async function renderCfgKb(){
+  await loadKbArticles();
+  let h = '<div class="muted">U každé položky checklistu vyber články ze znalostní báze – zaměstnanec je uvidí jako tlačítka 📖. Změny se ukládají hned.</div>' +
+    (kbLoadError ? '<div class="cfg-msg err">' + kbLoadError + '</div>' : '');
+  CHECKLIST_GROUPS.forEach(g=>{
+    h += '<div class="dl" style="margin-top:14px">' + escapeHtml(g.group) + '</div>';
+    g.items.forEach(it=>{
+      const links = KB_LINKS[it[0]] || [];
+      const free = kbArticles.filter(a=>!links.some(l=>l[0] === a.id));
+      h += '<div class="kb-row"><b>' + escapeHtml(it[1]) + '</b><div class="kb-chips">' +
+        (links.length ? links.map((l, k)=>'<span class="kb-chip">📖 ' + escapeHtml(l[1]) + '<button data-kb-del="' + it[0] + ',' + k + '" title="Odebrat">✕</button></span>').join('') : '<span class="muted">zatím žádný článek</span>') +
+        '</div>' + (free.length ? '<select class="cfg-select" data-kb-add="' + it[0] + '"><option value="">+ přidat článek…</option>' +
+          free.map(a=>'<option value="' + a.id + '">' + escapeHtml(a.title) + '</option>').join('') + '</select>' : '') + '</div>';
+    });
+  });
+  h += '<div class="cfg-msg" id="cfgMsg"></div>';
+  mainEl.innerHTML = cfgShell(h);
+  bindCfgShell();
+  const store = async ()=>{ SETTINGS.kbLinks = JSON.parse(JSON.stringify(KB_LINKS)); await saveSettings(); };
+  mainEl.querySelectorAll('[data-kb-del]').forEach(b=>{
+    b.onclick = async ()=>{
+      const p = b.dataset.kbDel.split(',');
+      KB_LINKS[p[0]].splice(+p[1], 1);
+      if(!KB_LINKS[p[0]].length) delete KB_LINKS[p[0]];
+      await store(); renderCfgKb();
+    };
+  });
+  mainEl.querySelectorAll('[data-kb-add]').forEach(sel=>{
+    sel.onchange = async ()=>{
+      const a = kbArticles.find(x=>x.id === sel.value);
+      if(!a) return;
+      const id = sel.dataset.kbAdd;
+      if(!KB_LINKS[id]) KB_LINKS[id] = [];
+      KB_LINKS[id].push([a.id, a.title]);
+      await store(); renderCfgKb();
+    };
+  });
+}
+
 /* ==================== NÁPOVĚDA ==================== */
 function helpContentHtml(){
   const leader = MODE === 'leader';
@@ -1834,7 +2443,9 @@ function helpContentHtml(){
       '<p>„Náhled testu“ jen ukáže, jaké otázky se v testu objevují – nic se tím neukládá ani nemění kartu. „Zobrazit odpovědi zaměstnance“ se objeví až po jeho reálném pokusu a ukáže přesně to, co zaškrtl, se zeleně označenou správnou odpovědí.</p>';
 
     h += '<h3>Reporty a záloha</h3>' +
-      '<p>„Report e-mailem“ (za všechny) a „Report tohoto zaměstnance“ (na kartě) otevřou e-mail s předvyplněným přehledem – adresáta doplníš sám. ' +
+      '<p><b>📅 Měsíční report a uzávěrka</b> ukáže souhrn všech zaměstnanců za období od poslední uzávěrky. Vyplníš adresy (Andrej, účetní – uloží se), tlačítkem „Připravit e-mail“ otevřeš hotový e-mail a tlačítkem „Uzavřít období“ vynuluješ prohřešky pro nový měsíc. Předchozí reporty najdeš dole v „Uzavřená období“. Na fotku zaměstnance klikni přímo na kolečko v hlavičce karty. ' +
+      '„Report tohoto zaměstnance“ (na kartě) otevře e-mail s přehledem jednoho zaměstnance. ' +
+      'V <b>⚙ Nastavení karty</b> upravíš testy (otázky, odpovědi, správnou odpověď, kolik je potřeba ke splnění, přidání nového testu), vybereš články ze znalostní báze pro tlačítka 📖, upravíš checklist (skupiny, položky, pořadí, odznaky), úrovně a sazby a kategorie prohřešků včetně doby platnosti žluté karty. Po změnách kartu publikuj. ' +
       '„Uložit zálohu“ a „Nahrát zálohu“ slouží k přenosu dat mezi počítači nebo jako pojistka.</p>';
 
     h += '<h3>Řazení a role</h3>' +
@@ -1861,11 +2472,8 @@ $('helpBtn').onclick = openHelp;
 $('helpOverlay').addEventListener('click', e=>{ if(e.target.id === 'helpOverlay') closeHelp(); });
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeHelp(); });
 
-$('reportBtn').onclick = async ()=>{
-  if(!employees.length){ alert('Zatím není žádný zaměstnanec.'); return; }
-  const body = await buildFullReport();
-  sendReport('Report karet zaměstnanců – ' + todayStr(), body);
-};
+$('reportBtn').onclick = ()=>{ renderMonthReport(); };
+$('cfgBtn').onclick = ()=>{ cfgDraft = null; cfgWork = null; cfgWorkDirty = false; renderSettings(); };
 
 $('modeLabel').onclick = ()=>{
   MODE = (MODE === 'leader') ? 'employee' : 'leader';
@@ -1881,7 +2489,7 @@ $('modeLabel').onclick = ()=>{
 $('exportBtn').onclick = async ()=>{
   const data = {};
   for(const e of employees){ data[e.id] = await loadEmployee(e.id); }
-  const payload = JSON.stringify({employees, data, guides}, null, 2);
+  const payload = JSON.stringify({employees, data, guides, settings: SETTINGS}, null, 2);
   const blob = new Blob([payload], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1905,6 +2513,7 @@ importFileInput.addEventListener('change', async ()=>{
     await saveIndex();
     for(const id of Object.keys(parsed.data)){ await saveEmployee(normalize(parsed.data[id])); }
     if(parsed.guides){ guides = Object.assign({}, DEFAULT_GUIDES, parsed.guides); await saveGuides(); }
+    if(parsed.settings){ SETTINGS = Object.assign({closedFrom:'', emails:'', history:[]}, parsed.settings); await saveSettings(); applyConfig(); }
     await renderList();
     if(employees.length) await selectEmployee(employees[0].id);
     $('modeNote').textContent = 'Záloha nahrána.';
@@ -1925,6 +2534,8 @@ $('publishBtn').onclick = ()=>{ publishToGitHub(); };
   if(onWeb){ $('publishBtn').style.display = 'block'; updatePublishStatus(); }
   await loadIndex();
   await loadGuides();
+  await loadSettings();
+  applyConfig();
   applyMode();
   await renderList();
   if(employees.length) await selectEmployee(employees[0].id);
