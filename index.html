@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.16 -->
+<!-- v2.18 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -201,6 +201,7 @@
         <select class="f-select" id="roleSelect"></select>
       </div>
       <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
+      <button class="plain-btn" id="helpBtn">❓ Nápověda</button>
 
       <input class="search-box" id="searchInput" type="text" placeholder="🔍 Hledat ve všech článcích…">
       <div class="section-switch" id="sectionSwitch"></div>
@@ -227,7 +228,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.16';
+const APP_VERSION = 'v2.18';
 
 const SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -360,6 +361,10 @@ function toBase64Utf8(str){
   }
   return btoa(bin);
 }
+async function hashText(str){
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).slice(0, 10).map(b=>b.toString(16).padStart(2, '0')).join('');
+}
 async function publishToGitHub(){
   if(editing){ $('status').textContent = 'Nejdřív článek ulož nebo zruš úpravu.'; return; }
   let token = null;
@@ -373,25 +378,54 @@ async function publishToGitHub(){
   btn.disabled = true;
   $('status').textContent = 'Publikuji…';
   const publishedAt = new Date().toISOString();
-  const payload = {
-    publishedAt: publishedAt,
-    postupCats: POSTUP_CATS,
-    manualCats: MANUAL_CATS,
-    wikiCats: WIKI_CATS,
-    troubleshootCats: TROUBLESHOOT_CATS,
-    roles: roles,
-    seedAll: articles.map(a=>{
-      const c = Object.assign({}, a);
-      delete c.content;
-      delete c.images;
-      delete c.isNew;
-      return c;
-    })
-  };
-  const text = 'const INITIAL_DATA = ' + JSON.stringify(payload, null, 1) + ';\n';
-  const url = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_FILE;
+  const apiBase = 'https://api.github.com/repos/' + GH_REPO + '/contents/';
+  const url = apiBase + GH_FILE;
   const headers = {'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'};
   try{
+    // Obrázky vložené v textu nahraj jako samostatné soubory do složky images/
+    const imgMap = {};
+    const found = [];
+    articles.forEach(a=>{
+      const re = /src="(data:image\/(png|jpe?g|gif|webp);base64,([^"]+))"/g;
+      let m;
+      while((m = re.exec(a.body || '')) !== null){
+        if(imgMap[m[1]] === undefined){
+          imgMap[m[1]] = '';
+          found.push({dataUrl: m[1], ext: (m[2] === 'jpeg' ? 'jpg' : m[2]), b64: m[3]});
+        }
+      }
+    });
+    for(let i = 0; i < found.length; i++){
+      $('status').textContent = 'Nahrávám obrázky ' + (i + 1) + '/' + found.length + '…';
+      const f = found[i];
+      const name = 'images/' + (await hashText(f.b64)) + '.' + f.ext;
+      const imgRes = await fetch(apiBase + name, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({message: 'Obrázek ' + name, content: f.b64, branch: 'main'})
+      });
+      if(imgRes.status === 401 || imgRes.status === 403) throw new Error('auth');
+      if(!imgRes.ok && imgRes.status !== 422) throw new Error('img'); // 422 = soubor už na GitHubu je
+      imgMap[f.dataUrl] = name;
+    }
+    $('status').textContent = 'Publikuji…';
+    const payload = {
+      publishedAt: publishedAt,
+      postupCats: POSTUP_CATS,
+      manualCats: MANUAL_CATS,
+      wikiCats: WIKI_CATS,
+      troubleshootCats: TROUBLESHOOT_CATS,
+      roles: roles,
+      seedAll: articles.map(a=>{
+        const c = Object.assign({}, a);
+        delete c.content;
+        delete c.images;
+        delete c.isNew;
+        if(c.body) c.body = c.body.replace(/src="(data:image\/[^"]+)"/g, (all, d)=> imgMap[d] ? 'src="' + imgMap[d] + '"' : all);
+        return c;
+      })
+    };
+    const text = 'const INITIAL_DATA = ' + JSON.stringify(payload, null, 1) + ';\n';
     const getRes = await fetch(url + '?ref=main', {headers: headers, cache: 'no-store'});
     if(getRes.status === 401 || getRes.status === 403 || getRes.status === 404) throw new Error('auth');
     if(!getRes.ok) throw new Error('get');
@@ -499,7 +533,7 @@ function init(){
   const localPublishedAt = loadJSON('kb-published-at') || '';
   // Lokální kopii použij, když má editor nepublikované změny,
   // nebo když web ještě neukazuje poslední publikaci z tohoto prohlížeče.
-  const useLocal = !!existing && ((MODE === 'editor' && unpublished !== '0') || localPublishedAt > publishedAt);
+  const useLocal = !!existing && ((MODE === 'editor' && unpublished === '1') || localPublishedAt > publishedAt);
 
   if(useLocal){
     loadEditableCats();
@@ -533,7 +567,6 @@ function init(){
   });
   if(useLocal){
     if(migrated) saveArticles();
-    if(unpublished === null) setUnpublishedFlag('1');
   } else if(MODE === 'editor'){
     saveArticles();
     saveRoles();
@@ -542,7 +575,13 @@ function init(){
   }
 
   if(articles.length) activeId = articles[0].id;
-  $('versionTag').textContent = APP_VERSION;
+  let versionText = APP_VERSION;
+  if(publishedAt){
+    const d = new Date(publishedAt);
+    versionText += ' · data: ' + d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' +
+      d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  $('versionTag').textContent = versionText;
   $('searchInput').oninput = ()=>{ searchQuery = $('searchInput').value; renderCatList(); };
   applyMode();
   render();
@@ -1160,11 +1199,59 @@ function renderRolesMain(){
   $('backToArticles').onclick = ()=>{ view = 'article'; render(); };
 }
 
+/* ---------- nápověda ---------- */
+function renderHelpMain(){
+  const isEditor = MODE === 'editor';
+  let html = '<div class="art-title">Nápověda</div><div class="art-body">';
+  html +=
+    '<h3>Jak najít návod</h3><ul>' +
+    (isEditor ? '' : '<li>Nahoře vlevo si vyber <b>svou roli</b> – uvidíš návody, které se týkají tvé práce.</li>') +
+    '<li>Přepínej sekce <b>Postupy</b>, <b>Firemní wiki</b> a <b>Troubleshooting</b>.</li>' +
+    '<li>U Postupů můžeš procházet <b>podle postupu</b> (jak jdeš zaškolením) nebo <b>podle manuálu</b> (kapitoly provozního manuálu).</li>' +
+    '<li><b>Hledání</b> prohledá názvy i texty všech článků.</li>' +
+    '</ul>' +
+    '<h3>V článku</h3><ul>' +
+    '<li><b>🖨️ Tisk</b> vytiskne jen samotný článek.</li>' +
+    '<li>Pokud má článek video, spustíš ho kliknutím na náhled.</li>' +
+    '<li>Dole najdeš <b>Souvisí s</b> – další články k tématu.</li>' +
+    '</ul>' +
+    '<h3>Aktuálnost</h3><ul>' +
+    '<li>Vlevo dole je verze aplikace a datum poslední aktualizace obsahu.</li>' +
+    '</ul>';
+  if(isEditor){
+    html +=
+      '<h3>Články a kategorie</h3><ul>' +
+      '<li><b>+ Nový článek</b> se po uložení objeví v <b>Nezařazeno</b>. Do kategorie ho přetáhni myší, stejně tak měníš pořadí.</li>' +
+      '<li>Název kategorie přepíšeš kliknutím do něj. <b>×</b> kategorii smaže (klikni dvakrát). Novou přidáš polem <b>+ Nová kategorie</b>.</li>' +
+      '<li>Článek smažeš tlačítkem <b>Smazat</b> (klikni dvakrát).</li>' +
+      '</ul>' +
+      '<h3>Úprava textu</h3><ul>' +
+      '<li><b>B</b>, <b>Nadpis</b>, <b>Odrážka</b> – zvýrazněné tlačítko je zapnuté, druhým kliknutím ho vypneš.</li>' +
+      '<li><b>Normální</b> zruší veškeré formátování označeného textu.</li>' +
+      '<li>Obrázek vložíš tlačítkem <b>🖼️ Obrázek</b> nebo Ctrl+V. Kliknutím na obrázek ho smažeš.</li>' +
+      '<li>Když odcházíš z rozpracovaného článku bez uložení, aplikace se zeptá.</li>' +
+      '</ul>' +
+      '<h3>Role</h3><ul>' +
+      '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
+      '</ul>' +
+      '<h3>Uložit a publikovat</h3><ul>' +
+      '<li><b>Uložit</b> ukládá jen do tohoto prohlížeče – ostatní změny zatím nevidí.</li>' +
+      '<li><b>☁ Publikovat na web</b> pošle vše na GitHub a do pár minut to uvidí všichni. Při prvním publikování zadáš token.</li>' +
+      '<li>Needitujte ve dvou současně – kdo publikuje později, přepíše změny toho druhého. Před úpravami obnov stránku, po úpravách hned publikuj.</li>' +
+      '<li><b>⬇ Uložit zálohu</b> stáhne všechna data do souboru, <b>⬆ Nahrát zálohu</b> je obnoví.</li>' +
+      '</ul>';
+  }
+  html += '</div><div class="row"><button class="btn ghost" id="backToArticles3">Zpět na návody</button></div>';
+  $('main').innerHTML = html;
+  $('backToArticles3').onclick = ()=>{ view = 'article'; render(); };
+}
+
 function render(){
   renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
   if(view === 'roles') renderRolesMain();
+  else if(view === 'help') renderHelpMain();
   else renderMain();
 }
 
@@ -1177,6 +1264,7 @@ $('modeToggleBtn').onclick = ()=>{
   applyMode();
   render();
 };
+$('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'help'; render(); };
 $('rolesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'roles'; editingRoleId = null; render(); };
 $('addBtn').onclick = ()=>{
   if(!canLeaveEdit()) return;
