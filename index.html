@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.35 -->
+<!-- v2.40 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -24,22 +24,6 @@
     font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:14px;
   }
   h1,h2,h3{font-family:Georgia,"Iowan Old Style",serif;margin:0;}
-  .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh;}
-  @media (max-width:760px){
-    .app{grid-template-columns:1fr;}
-    .sidebar{border-right:none;border-bottom:1px solid var(--line);min-height:0;}
-    .sidebar-spacer{display:none;}
-    .main .to-list-btn{
-      display:inline-block;margin-bottom:12px;background:none;border:none;padding:0;
-      color:var(--caramel-deep);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
-    }
-    .main{padding:20px 14px 90px;}
-    .bottom-nav{display:flex !important;}
-  }
-  /* 1) počítač: levý panel se posouvá samostatně */
-  @media (min-width:761px){
-    .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;align-self:start;}
-  }
   .home-btn{
     border:none;background:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;opacity:.8;
   }
@@ -325,7 +309,7 @@
   .related-box .art-item{cursor:pointer;}
   .search-results .cat-label{font-style:italic;}
   @media print{
-    .sidebar, .row, .toc, .no-print, .to-list-btn, .crumbs, .bottom-nav, .chk-head, .pn-nav, .pn-pos, .lightbox{display:none !important;}
+    .sidebar, .rail, .role-menu, .m-back, .row, .toc, .no-print, .to-list-btn, .crumbs, .bottom-nav, .chk-head, .pn-nav, .pn-pos, .lightbox{display:none !important;}
     .app{display:block !important;}
     .main{max-width:none !important;padding:0 !important;}
     .qr-sheet{grid-template-columns:repeat(2, 9cm);gap:0.4cm;}
@@ -338,7 +322,7 @@
   .art-body ul, .art-ul{margin:8px 0;padding-left:22px;}
   .art-body li{margin-bottom:4px;}
   .art-body img, .inline-img{max-width:100%;border-radius:8px;border:1px solid var(--line);margin:12px 0;display:block;}
-  .fmt-toolbar{display:flex;gap:6px;margin-bottom:6px;}
+  .fmt-toolbar{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
   .fmt-btn{
     background:var(--line-soft);color:var(--cocoa);border:1px solid var(--line);border-radius:6px;
     padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
@@ -407,28 +391,110 @@
     background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:8px;
   }
 
+  /* ===== v2.40: lišta se sekcemi + panel ===== */
+  .app{display:grid;grid-template-columns:90px 280px minmax(0,1fr);min-height:100vh;}
+  .rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--cocoa);display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 0;z-index:40;}
+  .rail-secs{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .rail-btn{width:80px;flex-shrink:0;border:none;background:none;border-radius:12px;color:#E8DCC8;font-family:inherit;font-size:10px;letter-spacing:-.1px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 1px;cursor:pointer;line-height:1.15;text-align:center;overflow-wrap:break-word;}
+  .rail-btn .ri{font-size:21px;line-height:1;}
+  .rail-btn:hover{background:rgba(255,255,255,.08);}
+  .rail-btn.on{background:#6B4A33;color:#FFFDF8;}
+  .rail-sep{width:40px;height:1px;background:#6B5744;margin:4px 0;flex-shrink:0;}
+  .rail-spacer{flex:1;}
+  .rail-add{flex-shrink:0;border:1px dashed #8A7462;background:none;color:#E8DCC8;border-radius:10px;width:40px;height:30px;cursor:pointer;font-size:16px;margin-top:2px;}
+  .rail-add:hover{border-color:#E8DCC8;}
+  .rail-mob{display:none;}
+  .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;align-self:start;}
+  .panel-title{font-family:Georgia,serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;color:var(--cocoa-soft);}
+  .panel-title:hover{color:var(--caramel-deep);}
+  .sec-head{display:flex;align-items:center;gap:4px;margin:2px 0 8px;}
+  .sec-title{flex:1;min-width:0;font-family:Georgia,serif;font-size:19px;font-weight:700;}
+  .sec-head .sec-tool{opacity:.6;font-size:13px;padding:2px 6px;}
+  .sec-head:hover .sec-tool{opacity:1;}
+  .axis-switch{gap:4px;margin-bottom:10px;}
+  .axis-btn{padding:5px 4px;font-size:11px;}
+  .role-menu{position:fixed;left:98px;bottom:12px;z-index:60;width:250px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 12px 32px rgba(59,42,32,.2);}
+  .role-opt{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:13.5px;color:var(--cocoa);padding:8px 10px;border-radius:8px;cursor:pointer;}
+  .role-opt:hover{background:var(--line-soft);}
+  .role-opt.on{background:var(--line-soft);font-weight:700;}
+  .role-mode{display:block;width:100%;margin-top:8px;border:1px solid var(--line);background:var(--cream);border-radius:8px;padding:8px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--caramel-deep);cursor:pointer;text-align:left;}
+  .branch-btn{width:100%;display:flex;align-items:center;gap:10px;background:var(--cocoa);color:#FFFDF8;border:none;border-radius:12px;padding:8px 12px;font:inherit;text-align:left;cursor:pointer;margin-bottom:10px;}
+  .branch-btn .bl{display:block;font-size:10.5px;color:#E8DCC8;}
+  .branch-btn b{font-size:13.5px;}
+  .branch-menu{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:4px;margin:-4px 0 10px;box-shadow:0 8px 20px rgba(59,42,32,.12);}
+  .branch-opt{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--cocoa);}
+  .branch-opt:hover{background:var(--line-soft);}
+  .branch-opt.on{background:var(--line-soft);font-weight:700;}
+  .panel-h{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--caramel-deep);letter-spacing:.04em;margin:6px 0;}
+  .new-item{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;padding:7px 9px;border-radius:8px;cursor:pointer;color:var(--cocoa);font-size:13px;}
+  .new-item:hover{background:var(--line-soft);}
+  .new-item small{display:block;font-size:11px;color:var(--cocoa-soft);}
+  .home-lists{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:24px;}
+  .hl-box{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .hl-item{display:block;width:100%;text-align:left;border:none;border-top:1px solid var(--line-soft);background:none;font:inherit;font-size:13.5px;color:var(--cocoa);padding:9px 14px;cursor:pointer;}
+  .hl-item:first-child{border-top:none;}
+  .hl-item:hover{background:var(--cream);}
+  .hl-item.more{color:var(--cocoa-soft);font-size:12.5px;}
+  .hl-pick{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;}
+  .main{padding:26px 36px 60px;max-width:820px;}
+  .br-only{border-left:4px solid var(--caramel);background:var(--paper);border-radius:0 10px 10px 0;padding:8px 14px;margin:12px 0;}
+  .br-only::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--caramel-deep);margin-bottom:2px;}
+  .br-only.dim{opacity:.45;}
+  .rich-editor .br-only{border:1px dashed var(--caramel);border-left:4px solid var(--caramel);}
+  .fmt-sel{background:var(--line-soft);color:var(--cocoa);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .att-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .att{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--cocoa);text-decoration:none;max-width:100%;overflow-wrap:anywhere;}
+  .att:hover{border-color:var(--caramel);}
+  .att small{color:var(--cocoa-soft);font-size:11px;}
+  .att-edit{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 10px;}
+  .art-branch{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#E3EBDD;color:#3E5C36;}
+  .mob-only, .m-back{display:none;}
+  @media (min-width:761px){
+    #catList .art-list{gap:0;}
+    #catList .art-item{padding:3px 8px;line-height:1.3;font-size:12.5px;}
+    #catList .cat-label-row, #catList .cat-label{margin:8px 0 2px;}
+    #catList .cat-label-row .cat-label{margin:0;}
+    .new-item{padding:4px 8px;line-height:1.3;}
+  }
+  @media (max-width:760px){
+    .app{display:block;}
+    .rail{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px 6px calc(6px + env(safe-area-inset-bottom, 0px));gap:2px;justify-content:flex-start;}
+    .rail-secs{flex-direction:row;gap:2px;}
+    .rail-btn{width:auto;min-width:46px;flex:1 0 auto;padding:6px 4px;font-size:9.5px;white-space:nowrap;}
+    .rail-desk, .rail-sep{display:none;}
+    .rail-btn .ri{font-size:19px;}
+    .rail-sep{width:1px;height:36px;margin:0 2px;}
+    .rail-spacer{display:none;}
+    .rail-mob{display:flex;}
+    .rail-add{width:30px;height:40px;margin:auto 2px;}
+    .sidebar{display:none;position:static;height:auto;min-height:100vh;border-right:none;padding:16px 14px 96px;}
+    body.m-panel .sidebar{display:flex;}
+    body.m-panel .main{display:none;}
+    .main{padding:18px 14px 100px;max-width:none;}
+    .role-menu{left:10px;right:10px;width:auto;bottom:84px;}
+    .mob-only{display:block;}
+    .m-back{display:inline-block;border:none;background:none;padding:0;margin-bottom:10px;font:inherit;font-size:13.5px;font-weight:600;color:var(--caramel-deep);cursor:pointer;}
+  }
   button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--caramel);outline-offset:2px;}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="sidebar">
+  <nav class="rail" id="rail" aria-label="Sekce">
+    <button class="rail-btn" id="railHome" title="Úvodní stránka"><span class="ri">🏠</span>Úvod</button>
+    <button class="rail-btn rail-mob" id="railSearch"><span class="ri">🔍</span>Hledat</button>
+    <div class="rail-sep"></div>
+    <div class="rail-secs" id="sectionSwitch"></div>
+    <div class="rail-spacer"></div>
+    <button class="rail-btn rail-desk" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
+    <button class="rail-btn" id="railRole" title="Moje role"><span class="ri" id="railRoleIco">👤</span><span id="railRoleLbl">Role</span></button>
+  </nav>
+  <div class="sidebar" id="panel">
     <div>
-      <div class="title-row">
-        <h1 id="homeLink" title="Úvodní stránka">Znalostní báze</h1>
-        <span class="title-tools"><button class="home-btn" id="homeBtn" title="Úvodní stránka" aria-label="Úvodní stránka">🏠</button><button class="help-btn" id="helpBtn" title="Nápověda" aria-label="Nápověda">?</button></span>
-      </div>
-      <div class="sub">Sladká dílna</div>
-      <button class="mode-badge" id="modeToggleBtn" title="Kliknutím přepneš režim"></button>
-
-      <div id="roleSelectWrap" style="display:none;margin-bottom:14px;">
-        <div class="field-label" style="margin:0 0 5px">Moje role</div>
-        <select class="f-select" id="roleSelect"></select>
-      </div>
-      <button class="plain-btn" id="rolesBtn" style="display:none;">🔑 Spravovat role</button>
-
+      <div class="panel-title" id="homeLink" title="Úvodní stránka">Znalostní báze · Sladká dílna</div>
+      <div id="branchWrap"></div>
       <input class="search-box" id="searchInput" type="text" placeholder="🔍 Hledat ve všech článcích…">
-      <div class="section-switch" id="sectionSwitch"></div>
+      <div id="secHead"></div>
       <div class="axis-switch" id="axisSwitch"></div>
       <div id="catList"></div>
       <button class="add-btn" id="addBtn" style="display:none">+ Nový článek</button>
@@ -437,6 +503,10 @@
         <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
         <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+      <div class="backup-row" id="adminRow" style="display:none;margin-top:6px;">
+        <button class="backup-btn" id="rolesBtn">🔑 Role</button>
+        <button class="backup-btn" id="branchesBtn">🏪 Pobočky</button>
       </div>
       <div class="backup-row" id="qrRow" style="display:none;margin-top:6px;">
         <button class="backup-btn" id="qrBtn">🔖 QR štítky k vytištění</button>
@@ -448,23 +518,23 @@
       <div class="status" id="status"></div>
     </div>
     <div class="sidebar-spacer"></div>
+    <button class="plain-btn mob-only" id="helpBtnM" style="margin-top:14px">❓ Nápověda</button>
     <div class="version-tag" id="versionTag"></div>
   </div>
-  <nav class="bottom-nav" id="bottomNav" aria-label="Rychlá navigace">
-  <button id="bnHome"><b>🏠</b>Úvod</button>
-  <button id="bnSearch"><b>🔍</b>Hledat</button>
-  <button id="bnList"><b>📋</b>Seznam</button>
-</nav>
   <div class="main" id="main">
     <div class="empty-state">Načítám…</div>
   </div>
+</div>
+<div class="role-menu" id="roleMenu" hidden>
+  <div id="roleSelectWrap"><div class="field-label" style="margin:0 0 4px">Moje role</div><div id="roleOpts"></div></div>
+  <button class="role-mode" id="modeToggleBtn"></button>
 </div>
 
 <!-- NAČTENÍ DAT ZE SOUBORU data.js -->
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.35';
+const APP_VERSION = 'v2.40';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -483,6 +553,13 @@ let TROUBLESHOOT_CATS = _initData.troubleshootCats.slice();
 const SEED_ALL = _initData.seedAll.slice();
 // Vlastní sekce vytvořené editorem: [{id, label, cats:[{id,label}]}]; články v nich mají kategorie v poli customTags
 let CUSTOM_SECTIONS = JSON.parse(JSON.stringify(_initData.customSections || []));
+// Pobočky: [{id, name}] – přepínač v panelu; článek může platit jen pro některé (pole branches)
+let BRANCHES = JSON.parse(JSON.stringify(_initData.branches || []));
+let branchId = '';
+try{ branchId = localStorage.getItem('kb-branch') || ''; }catch(e){}
+function saveBranches(){ if(saveJSON('kb-branches', BRANCHES, 'Uložení poboček selhalo.')) markUnpublished(); }
+function branchName(id){ const b = BRANCHES.find(x=>x.id === id); return b ? b.name : ''; }
+function branchOk(a){ return !branchId || !(a.branches && a.branches.length) || a.branches.indexOf(branchId) !== -1; }
 // Úpravy původních sekcí: {renamed:{id:název}, deleted:[id]}
 let BASE_SECTION_STATE = JSON.parse(JSON.stringify(_initData.baseSections || {renamed:{}, deleted:[]}));
 function normBaseState(){
@@ -578,7 +655,9 @@ function editFormState(){
   const clone = bodyEl.cloneNode(true);
   clone.querySelectorAll('.img-del-overlay').forEach(el=>el.remove());
   return [$('f-title').value, $('f-section').value, clone.innerHTML, $('f-checklist').checked ? '1' : '0',
-    Array.from(document.querySelectorAll('[data-related]:checked')).map(el=>el.value).join(',')].join('\u0001');
+    Array.from(document.querySelectorAll('[data-related]:checked')).map(el=>el.value).join(','),
+    Array.from(document.querySelectorAll('[data-art-branch]:checked')).map(el=>el.value).join(','),
+    $('attEdit') ? $('attEdit').textContent : ''].join('\u0001');
 }
 function canLeaveEdit(){
   if(!editing) return true;
@@ -594,6 +673,7 @@ function articleAllTags(art){
 }
 function articleVisibleToRole(art, role){
   if(!role) return false;
+  if(!branchOk(art)) return false;
   return articleAllTags(art).some(t=>role.allowedCats.indexOf(t) !== -1);
 }
 
@@ -725,6 +805,7 @@ async function publishToGitHub(){
       customSections: CUSTOM_SECTIONS,
       baseSections: BASE_SECTION_STATE,
       home: HOME,
+      branches: BRANCHES,
       roles: roles,
       seedAll: articles.map(a=>{
         const c = Object.assign({}, a);
@@ -775,6 +856,8 @@ function loadEditableCats(){
   if(bs && typeof bs === 'object'){ BASE_SECTION_STATE = bs; normBaseState(); }
   const hm = loadJSON('kb-home');
   if(hm && Array.isArray(hm.tiles)) HOME = hm;
+  const br = loadJSON('kb-branches');
+  if(Array.isArray(br)) BRANCHES = br;
   rebuildSections();
   Object.keys(EDITABLE_AXES).forEach(key=>{
     const ax = EDITABLE_AXES[key];
@@ -914,8 +997,11 @@ function init(){
     if(!a.troubleshootTags) a.troubleshootTags = [];
     if(!a.customTags) a.customTags = [];
     if(!a.related) a.related = [];
+    if(!a.files) a.files = [];
+    if(!a.branches) a.branches = [];
     if(!sectionExists(a.section)) a.section = firstSectionId();
   });
+  if(branchId && !BRANCHES.some(b=>b.id === branchId)) branchId = '';
   if(!sectionExists(sectionId)){ sectionId = firstSectionId(); axisId = currentAxes()[0].id; }
   
   const prostory = articles.find(a=>a.id === 'prostory');
@@ -941,6 +1027,7 @@ function init(){
     saveCustomSections();
     saveBaseSections();
     saveHome();
+    saveBranches();
     setUnpublishedFlag('0');
     saveJSON('kb-base-published-at', publishedAt);
   }
@@ -962,7 +1049,7 @@ function init(){
       d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
   }
   $('versionTag').textContent = versionText;
-  $('searchInput').oninput = ()=>{ searchQuery = $('searchInput').value; renderCatList(); };
+  $('searchInput').oninput = ()=>{ searchQuery = $('searchInput').value; renderSectionSwitch(); renderAxisSwitch(); renderCatList(); };
   applyMode();
   render();
   if(fromLink) scrollToMainOnMobile();
@@ -970,29 +1057,44 @@ function init(){
 
 function applyMode(){
   const isEditor = MODE === 'editor';
-  $('modeToggleBtn').style.display = hasEditorToken() ? 'inline-block' : 'none';
-  $('modeToggleBtn').innerHTML = (isEditor ? 'Role: Editor' : 'Role: Čtenář') + ' &nbsp;🔃';
-  $('modeToggleBtn').className = 'mode-badge' + (isEditor ? '' : ' reader');
+  $('modeToggleBtn').style.display = hasEditorToken() ? 'block' : 'none';
+  $('modeToggleBtn').textContent = isEditor ? '👁 Přepnout na čtenáře' : '✏️ Přepnout na editora';
   $('addBtn').style.display = isEditor ? 'block' : 'none';
   $('backupRow').style.display = isEditor ? 'flex' : 'none';
   $('publishBtn').style.display = isEditor ? 'block' : 'none';
-  $('rolesBtn').style.display = isEditor ? 'block' : 'none';
+  $('adminRow').style.display = isEditor ? 'flex' : 'none';
   $('qrRow').style.display = isEditor ? 'flex' : 'none';
   $('cardRow').style.display = isEditor ? 'flex' : 'none';
   $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
   if(!isEditor) renderRoleSelect();
+  updateRailRole();
   updatePublishStatus();
+}
+function updateRailRole(){
+  const isEditor = MODE === 'editor';
+  const r = currentRole();
+  $('railRoleIco').textContent = isEditor ? '✏️' : '👤';
+  $('railRoleLbl').textContent = isEditor ? 'Editor' : (r ? r.label : 'Role');
+}
+function openRoleMenu(){
+  if(MODE !== 'editor') renderRoleSelect();
+  $('roleMenu').hidden = false;
 }
 
 function renderRoleSelect(){
-  const sel = $('roleSelect');
-  sel.innerHTML = '<option value="">— vyber roli —</option>' +
-    roles.map(r=>'<option value="' + r.id + '"' + (r.id===readerRoleId ? ' selected' : '') + '>' + escapeHtml(r.label) + '</option>').join('');
-  sel.onchange = ()=>{
-    readerRoleId = sel.value || null;
-    try{ if(readerRoleId) localStorage.setItem('kb-reader-role', readerRoleId); else localStorage.removeItem('kb-reader-role'); }catch(e){}
-    render();
-  };
+  const box = $('roleOpts');
+  box.innerHTML = roles.length
+    ? roles.map(r=>'<button class="role-opt' + (r.id === readerRoleId ? ' on' : '') + '" data-role-pick="' + r.id + '">' + escapeHtml(r.label) + '</button>').join('')
+    : '<div class="status" style="margin:0">Zatím nejsou nastavené žádné role.</div>';
+  box.querySelectorAll('[data-role-pick]').forEach(b=>{
+    b.onclick = ()=>{
+      readerRoleId = b.dataset.rolePick;
+      try{ localStorage.setItem('kb-reader-role', readerRoleId); }catch(e){}
+      $('roleMenu').hidden = true;
+      renderRoleSelect();
+      render();
+    };
+  });
 }
 
 let secEdit = null;   // null | 'new' | id sekce, která se přejmenovává
@@ -1013,39 +1115,79 @@ function secFormHtml(){
     '<button class="ok" id="secOk" title="Uložit">✓</button><button class="no" id="secNo" title="Zrušit">✕</button></div>' +
     (secPickOpen ? '<div class="sec-pick">' + icoPickerHtml() + '</div>' : '');
 }
+function shortSec(n){ return String(n || '').replace(/\s*\(.*?\)\s*/g, ' ').trim(); }
 function renderSectionSwitch(){
   const isEditor = MODE === 'editor';
+  const onHome = view === 'home';
   $('sectionSwitch').innerHTML = SECTIONS.map(s=>{
-    if(isEditor && secEdit === s.id) return secFormHtml();
-    const btn = '<button class="section-btn' + (s.id===sectionId ? ' active' : '') + '" data-section="' + s.id + '">' + escapeHtml(s.label) + '</button>';
-    if(!isEditor) return btn;
-    return '<div class="sec-wrap' + (s.id===sectionId ? ' active' : '') + '">' + btn +
-      '<button class="sec-tool" data-sec-rename="' + s.id + '" title="Přejmenovat sekci">✎</button>' +
-      '<button class="sec-tool" data-sec-del="' + s.id + '" title="Smazat sekci">✕</button></div>';
-  }).join('') + (isEditor ? (secEdit === 'new' ? secFormHtml() : '<button class="sec-add" id="secAddBtn">+ sekce</button>') : '');
+    const p = splitSecLabel(s.label);
+    return '<button class="rail-btn' + (!onHome && s.id === sectionId ? ' on' : '') + '" data-section="' + s.id + '" title="' + escapeHtml(s.label) + '">' +
+      '<span class="ri">' + escapeHtml(p.ico || '📁') + '</span>' + escapeHtml(shortSec(p.name)) + '</button>';
+  }).join('') + (isEditor ? '<button class="rail-add" id="secAddBtn" title="Přidat sekci">+</button>' : '');
+  $('railHome').classList.toggle('on', onHome);
+  let head = '';
+  if(isEditor && secEdit === 'new'){
+    head = '<div class="panel-h">Nová sekce</div>' + secFormHtml();
+  } else if(!onHome && !searchQuery.trim()){
+    const s = SECTIONS.find(x=>x.id === sectionId);
+    if(s){
+      if(isEditor && secEdit === s.id) head = secFormHtml();
+      else head = '<div class="sec-head"><span class="sec-title">' + escapeHtml(s.label) + '</span>' +
+        (isEditor ? '<button class="sec-tool" data-sec-rename="' + s.id + '" title="Přejmenovat sekci a změnit ikonu">✎</button><button class="sec-tool" data-sec-del="' + s.id + '" title="Smazat sekci">✕</button>' : '') +
+        '</div>';
+    }
+  }
+  $('secHead').innerHTML = head;
   if(isEditor) bindSectionTools();
   $('sectionSwitch').querySelectorAll('[data-section]').forEach(b=>{
-    b.onclick = ()=>{
-      if(!canLeaveEdit()) return;
-      sectionId = b.dataset.section;
-      axisId = currentAxes()[0].id;
-      activeId = null;
-      editing = false;
-      view = 'article';
-      render();
-    };
+    b.onclick = ()=>openSection(b.dataset.section);
   });
+}
+// První článek sekce, který čtenář smí vidět (v pořadí kategorií)
+function firstVisibleInSection(id){
+  const isEditor = MODE === 'editor';
+  const role = isEditor ? null : currentRole();
+  const vis = a => a.section === id && (isEditor || articleVisibleToRole(a, role));
+  const ax = (SECTION_AXES[id] || [])[0];
+  if(ax){
+    for(const c of ax.cats){
+      const f = articles.find(a=>vis(a) && (a[ax.field] || []).indexOf(c.id) !== -1);
+      if(f) return f;
+    }
+  }
+  return articles.find(vis) || null;
+}
+// Klik na sekci v liště: na počítači otevře její první článek, na mobilu ukáže seznam
+function openSection(id){
+  if(!canLeaveEdit()) return;
+  sectionId = id;
+  axisId = currentAxes()[0].id;
+  editing = false;
+  videoOpen = false;
+  searchQuery = '';
+  $('searchInput').value = '';
+  view = 'article';
+  if(isMobile()){
+    render();
+    document.body.classList.add('m-panel');
+    window.scrollTo(0, 0);
+    return;
+  }
+  const first = firstVisibleInSection(id);
+  activeId = first ? first.id : null;
+  render();
+  window.scrollTo(0, 0);
 }
 
 function bindSectionTools(){
   const add = $('secAddBtn');
-  if(add) add.onclick = ()=>{ secStart('new', ''); renderSectionSwitch(); $('secInput').focus(); };
+  if(add) add.onclick = ()=>{ secStart('new', ''); renderSectionSwitch(); if(isMobile()){ document.body.classList.add('m-panel'); window.scrollTo(0, 0); } $('secInput').focus(); };
   const input = $('secInput');
   if(input){
     input.oninput = ()=>{ secNameV = input.value; };
     $('secIcoBtn').onclick = ()=>{ secPickOpen = !secPickOpen; renderSectionSwitch(); };
-    $('sectionSwitch').querySelectorAll('[data-ico-cat]').forEach(b=>{ b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderSectionSwitch(); }; });
-    $('sectionSwitch').querySelectorAll('[data-ico]').forEach(b=>{ b.onclick = ()=>{ secIcoV = b.dataset.ico; secPickOpen = false; renderSectionSwitch(); $('secInput').focus(); }; });
+    $('secHead').querySelectorAll('[data-ico-cat]').forEach(b=>{ b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderSectionSwitch(); }; });
+    $('secHead').querySelectorAll('[data-ico]').forEach(b=>{ b.onclick = ()=>{ secIcoV = b.dataset.ico; secPickOpen = false; renderSectionSwitch(); $('secInput').focus(); }; });
     const finish = ok=>{
       const name = input.value.trim() ? ((secIcoV ? secIcoV + ' ' : '') + input.value.trim()) : '';
       if(ok && name){
@@ -1069,10 +1211,10 @@ function bindSectionTools(){
     $('secNo').onclick = ()=>finish(false);
     input.onkeydown = e=>{ if(e.key === 'Enter') finish(true); if(e.key === 'Escape') finish(false); };
   }
-  $('sectionSwitch').querySelectorAll('[data-sec-rename]').forEach(b=>{
+  $('secHead').querySelectorAll('[data-sec-rename]').forEach(b=>{
     b.onclick = ()=>{ const sx = SECTIONS.find(x=>x.id === b.dataset.secRename); secStart(b.dataset.secRename, sx ? sx.label : ''); renderSectionSwitch(); const i = $('secInput'); i.focus(); i.select(); };
   });
-  $('sectionSwitch').querySelectorAll('[data-sec-del]').forEach(b=>{
+  $('secHead').querySelectorAll('[data-sec-del]').forEach(b=>{
     b.onclick = ()=>{
       const id = b.dataset.secDel;
       const count = articles.filter(a=>a.section === id).length;
@@ -1104,7 +1246,7 @@ function bindSectionTools(){
 
 function renderAxisSwitch(){
   const axes = currentAxes();
-  if(axes.length <= 1){
+  if(axes.length <= 1 || view === 'home' || searchQuery.trim()){
     $('axisSwitch').innerHTML = '';
     $('axisSwitch').style.display = 'none';
     return;
@@ -1122,7 +1264,7 @@ function renderCatList(){
   const isEditor = MODE === 'editor';
   const role = isEditor ? null : currentRole();
   if(!isEditor && !role){
-    $('catList').innerHTML = '<div class="status">Vyber svou roli nahoře – appka ti pak ukáže návody pro tebe.</div>';
+    $('catList').innerHTML = '<div class="status">Klikni v liště na 👤 a vyber svou roli – appka ti pak ukáže návody pro tebe.</div>';
     return;
   }
   const q = searchQuery.trim().toLowerCase();
@@ -1140,12 +1282,31 @@ function renderCatList(){
     });
     return;
   }
+  if(view === 'home'){
+    const nw = homeNewList(a=> isEditor || articleVisibleToRole(a, role));
+    $('catList').innerHTML = nw.list.length
+      ? '<div class="panel-h">' + escapeHtml(nw.title) + '</div>' + nw.list.map(a=>{
+          const sec = SECTIONS.find(x=>x.id === a.section);
+          return '<button class="new-item" data-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) +
+            '<small>' + escapeHtml(sec ? shortSec(splitSecLabel(sec.label).name) : '') + (a.updatedAt ? ' · ' + escapeHtml(fmtUpdated(a.updatedAt)) : '') + '</small></button>';
+        }).join('')
+      : '';
+    $('catList').querySelectorAll('[data-open]').forEach(el=>{ el.onclick = ()=>openArticle(el.dataset.open); });
+    return;
+  }
   const axis = currentAxis();
   const itemLi = a => '<li class="art-item' + (a.id===activeId ? ' active' : '') + '"' +
     (isEditor ? ' draggable="true"' : '') + ' data-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + '</li>';
   let html = '';
   // Na mobilu je rozbalená jen kategorie s otevřeným článkem, na počítači všechny – pokud je uživatel sám nepřepnul.
-  const isOpen = (catId, items)=> (catId in catOpen) ? catOpen[catId] : (!isMobile() || items.some(a=>a.id === activeId));
+  const activeInSec = articles.some(a=>a.id === activeId && a.section === sectionId);
+  let firstOpenDone = false;
+  const isOpen = (catId, items)=>{
+    if(catId in catOpen) return catOpen[catId];
+    if(!isMobile() || items.some(a=>a.id === activeId)) return true;
+    if(!activeInSec && !firstOpenDone && items.length){ firstOpenDone = true; return true; }
+    return false;
+  };
   const chev = '<span class="cat-chev">▼</span>';
   axis.cats.forEach(cat=>{
     if(!isEditor && role.allowedCats.indexOf(cat.id) === -1) return;
@@ -1421,7 +1582,7 @@ function openArticle(id){
   videoOpen = false;
   view = 'article';
   render();
-  $('main').scrollIntoView({block:'start'});
+  scrollToMainOnMobile();
 }
 
 /* ---------- odškrtávací postup (stav jen v tomto zařízení, každý den znovu) ---------- */
@@ -1494,7 +1655,8 @@ function bindBreadcrumb(art){
       if(kind === 'home'){ goHome(); return; }
       if(kind === 'cat') catOpen[b.dataset.cat] = true;
       renderCatList();
-      const target = kind === 'cat' ? $('catList').querySelector('[data-catgroup="' + b.dataset.cat + '"]') : $('sectionSwitch');
+      if(isMobile()){ document.body.classList.add('m-panel'); window.scrollTo(0, 0); return; }
+      const target = kind === 'cat' ? $('catList').querySelector('[data-catgroup="' + b.dataset.cat + '"]') : $('secHead');
       (target || $('catList')).scrollIntoView({behavior:'smooth', block:'start'});
     };
   });
@@ -1510,7 +1672,7 @@ const DEFAULT_HOME = {title:'Vítej ve znalostní bázi Sladké dílny', sub:'Vy
   {ico:'💳', lbl:'Kasa a peníze', dsc:'Pokladna, poukazy, slevy', id:'kasa_penize'},
   {ico:'🌅', lbl:'Ráno a večer', dsc:'Otevření a zavření provozu', id:'ranni_vecerni'},
   {ico:'🆘', lbl:'Když se něco pokazí', dsc:'Rychlá pomoc v nestandardní situaci', section:'troubleshooting'}
-]};
+], lists:['troubleshooting', 'wiki']};
 // Úvodní stránka (nadpis, podtitulek, dlaždice) – editor ji upraví přes „✎ Upravit úvodní stránku“
 let HOME = JSON.parse(JSON.stringify((typeof _initData !== 'undefined' && _initData.home) || DEFAULT_HOME));
 function saveHome(){ if(saveJSON('kb-home', HOME, 'Uložení úvodní stránky selhalo.')) markUnpublished(); }
@@ -1577,7 +1739,19 @@ function renderHomeEditor(){
   });
   html += '<button class="home-tile tile-add-e" id="tAdd"><span class="ico">+</span><span class="lbl">Přidat dlaždici</span></button></div>' +
     '<div class="field-hint">Nadpis, texty i ikony upravíš kliknutím přímo na ně. Ukládá se hned – na web to pošleš tlačítkem Publikovat na web.</div>';
+  html += '<div class="home-h" style="margin-top:22px">Seznamy článků na úvodu</div>' +
+    '<div class="field-hint">Zaškrtni sekce, jejichž články se čtenářům ukážou jako seznam pod dlaždicemi (prvních 6, pak odkaz na celou sekci).</div>' +
+    '<div class="hl-pick">' + SECTIONS.map(sx=>'<label class="tag-check"><input type="checkbox" data-hl="' + sx.id + '"' + (homeListIds().indexOf(sx.id) !== -1 ? ' checked' : '') + '> ' + escapeHtml(sx.label) + '</label>').join('') + '</div>' +
+    homeListsHtml(()=>true, true);
   $('main').innerHTML = html;
+  $('main').querySelectorAll('[data-hl]').forEach(cb=>{
+    cb.onchange = ()=>{
+      H.lists = Array.from($('main').querySelectorAll('[data-hl]:checked')).map(x=>x.dataset.hl);
+      saveHome();
+      renderHomeEditor();
+    };
+  });
+  bindHomeLists();
   $('hTitle').oninput = e=>{ H.title = e.target.value; saveHome(); };
   $('hSub').oninput = e=>{ H.sub = e.target.value; saveHome(); };
   $('main').querySelectorAll('[data-t]').forEach(el=>{
@@ -1623,20 +1797,56 @@ function goHome(){
   view = 'home';
   activeId = null;
   render();
-  if(isMobile()) $('main').scrollIntoView({block:'start'}); else window.scrollTo(0, 0);
+  document.body.classList.remove('m-panel');
+  window.scrollTo(0, 0);
+}
+// Seznam „Nové a upravené“ (panel na úvodu, na mobilu pod dlaždicemi)
+function homeNewList(visible){
+  const pool = articles.filter(visible);
+  let title = 'Nové a upravené od tvé poslední návštěvy';
+  let list = pool.filter(a=>artBadge(a));
+  if(!list.length){
+    title = 'Naposledy upravené';
+    list = pool.filter(a=>a.updatedAt).sort((x, y)=> String(y.updatedAt).localeCompare(String(x.updatedAt))).slice(0, 5);
+  }
+  return {title: title, list: list};
+}
+function homeListIds(){ return Array.isArray(HOME.lists) ? HOME.lists : ['troubleshooting', 'wiki']; }
+// Seznamy článků vybraných sekcí pod dlaždicemi
+function homeListsHtml(visible, isEditor){
+  const ids = homeListIds();
+  let h = '';
+  SECTIONS.forEach(s=>{
+    if(ids.indexOf(s.id) === -1) return;
+    const arts = articles.filter(a=>a.section === s.id && visible(a));
+    if(!arts.length && !isEditor) return;
+    h += '<div><div class="home-h">' + escapeHtml(s.label) + '</div><div class="hl-box">' +
+      (arts.length
+        ? arts.slice(0, 6).map(a=>'<button class="hl-item" data-home-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + '</button>').join('')
+        : '<div class="hl-item more">Zatím tu nejsou žádné články.</div>') +
+      (arts.length > 6 ? '<button class="hl-item more" data-home-sec="' + s.id + '">Všech ' + arts.length + ' ›</button>' : '') +
+      '</div></div>';
+  });
+  return h ? '<div class="home-lists">' + h + '</div>' : '';
+}
+function bindHomeLists(){
+  $('main').querySelectorAll('[data-home-open]').forEach(li=>{ li.onclick = ()=>openArticle(li.dataset.homeOpen); });
+  $('main').querySelectorAll('[data-home-sec]').forEach(b=>{ b.onclick = ()=>openSection(b.dataset.homeSec); });
 }
 function renderHome(){
   const isEditor = MODE === 'editor';
   if(isEditor){ renderHomeEditor(); return; }
   const role = currentRole();
   let html = '<div class="home-hello">' + escapeHtml(HOME.title) + '</div>';
-  if(!isEditor && !role){
-    html += '<div class="home-sub">Nejdřív si nahoře vyber <b>svou roli</b> – pak tu uvidíš návody, které se týkají tvé práce.</div>';
+  if(!role){
+    html += '<div class="home-sub">Nejdřív si vyber <b>svou roli</b> – pak tu uvidíš návody, které se týkají tvé práce.</div>' +
+      '<button class="btn" id="pickRoleBtn">👤 Vybrat roli</button>';
     $('main').innerHTML = html;
+    $('pickRoleBtn').onclick = e=>{ e.stopPropagation(); openRoleMenu(); };
     return;
   }
   if(HOME.sub) html += '<div class="home-sub">' + escapeHtml(HOME.sub) + '</div>';
-  const visible = a => isEditor || articleVisibleToRole(a, role);
+  const visible = a => articleVisibleToRole(a, role);
   const tiles = HOME.tiles.filter(t=>{
     if(t.section) return articles.some(a=>a.section === t.section && visible(a));
     const a = articles.find(x=>x.id === t.id);
@@ -1647,26 +1857,18 @@ function renderHome(){
       '<button class="home-tile" data-tile="' + i + '"><span class="ico">' + escapeHtml(t.ico || '') + '</span><span class="lbl">' + escapeHtml(t.lbl) + '</span><span class="dsc">' + escapeHtml(t.dsc) + '</span></button>'
     ).join('') + '</div>';
   }
-  const pool = articles.filter(visible);
-  const changed = pool.filter(a=>artBadge(a));
-  let listTitle = 'Nové a upravené od tvé poslední návštěvy';
-  let list = changed;
-  if(!list.length){
-    listTitle = 'Naposledy upravené';
-    list = pool.filter(a=>a.updatedAt).sort((x, y)=> String(y.updatedAt).localeCompare(String(x.updatedAt))).slice(0, 5);
-  }
-  if(list.length){
-    html += '<div class="home-h">' + listTitle + '</div><ul class="home-list">' + list.map(a=>
+  html += homeListsHtml(visible, false);
+  const nw = homeNewList(visible);
+  if(nw.list.length){
+    html += '<div class="mob-only"><div class="home-h">' + escapeHtml(nw.title) + '</div><ul class="home-list">' + nw.list.map(a=>
       '<li data-home-open="' + a.id + '"><span>' + escapeHtml(a.title) + artBadge(a) + '</span><span class="when">' + escapeHtml(fmtUpdated(a.updatedAt)) + '</span></li>'
-    ).join('') + '</ul>';
+    ).join('') + '</ul></div>';
   }
   $('main').innerHTML = html;
   $('main').querySelectorAll('[data-tile]').forEach(b=>{
-    b.onclick = ()=>{
-      openTile(tiles[parseInt(b.dataset.tile, 10)]);
-    };
+    b.onclick = ()=>{ openTile(tiles[parseInt(b.dataset.tile, 10)]); };
   });
-  $('main').querySelectorAll('[data-home-open]').forEach(li=>{ li.onclick = ()=>openArticle(li.dataset.homeOpen); });
+  bindHomeLists();
 }
 
 /* ---------- hledání: ukázka textu ---------- */
@@ -1687,8 +1889,8 @@ function searchSnippet(a, q){
 // Na mobilu je seznam článků nad článkem – po výběru článku sjeď na něj
 function isMobile(){ return window.matchMedia('(max-width:760px)').matches; }
 function scrollToMainOnMobile(){
-  if(isMobile()) $('main').scrollIntoView({behavior:'smooth', block:'start'});
-  else window.scrollTo(0, 0);   // na počítači vždy od začátku článku (levý panel má vlastní posuv)
+  if(isMobile()) document.body.classList.remove('m-panel');   // na mobilu: zavři seznam, ukaž článek
+  window.scrollTo(0, 0);
 }
 
 function renderMain(){
@@ -1697,7 +1899,7 @@ function renderMain(){
   if(!isEditor && !(art && art.id === deepLinkId)){
     const role = currentRole();
     if(!role){
-      $('main').innerHTML = '<div class="empty-state">Nejdřív si vyber svou roli (výběr „Moje role“ nahoře).</div>';
+      $('main').innerHTML = '<div class="empty-state">Nejdřív si vyber svou roli (👤 v liště).</div>';
       return;
     }
     if(!art || !articleVisibleToRole(art, role)){
@@ -1719,8 +1921,10 @@ function renderMain(){
     .concat(WIKI_CATS.filter(c=>(art.wikiTags||[]).indexOf(c.id)!==-1))
     .concat(TROUBLESHOOT_CATS.filter(c=>(art.troubleshootTags||[]).indexOf(c.id)!==-1))
     .concat(((CUSTOM_SECTIONS.find(x=>x.id === art.section) || {}).cats || []).filter(c=>(art.customTags||[]).indexOf(c.id)!==-1))
-    .map(c=>'<span class="tag-chip">' + escapeHtml(c.label) + '</span>').join('');
+    .map(c=>'<span class="tag-chip">' + escapeHtml(c.label) + '</span>').join('') +
+    ((art.branches || []).length ? '<span class="art-branch">🏪 Jen: ' + escapeHtml(art.branches.map(branchName).filter(Boolean).join(', ')) + '</span>' : '');
   const role = isEditor ? null : currentRole();
+  const artSec = SECTIONS.find(x=>x.id === art.section);
   const relatedIds = (art.related||[]).slice();
   articles.forEach(a=>{ if((a.related||[]).indexOf(art.id)!==-1 && relatedIds.indexOf(a.id)===-1) relatedIds.push(a.id); });
   const relatedArts = relatedIds
@@ -1732,12 +1936,14 @@ function renderMain(){
       '</ul></div>'
     : '';
   $('main').innerHTML =
+    '<button class="m-back" id="mBack">‹ ' + escapeHtml(artSec ? shortSec(splitSecLabel(artSec.label).name) : 'Seznam') + '</button>' +
     breadcrumbHtml(art) +
     '<div class="art-title">' + escapeHtml(art.title) + '</div>' +
     (art.updatedAt ? '<div class="art-updated">Poslední úprava: ' + escapeHtml(fmtUpdated(art.updatedAt)) + '</div>' : '') +
     '<div class="art-tags">' + tagsHtml + '</div>' +
     '<div class="art-body">' + (art.body || '') + '</div>' +
     videoBlockHtml(art.videoUrl) +
+    attachmentsHtml(art) +
     relatedHtml +
     prevNextHtml(art) +
     '<div class="row"><button class="btn" id="printBtn">📄 Tisk</button>' +
@@ -1747,6 +1953,8 @@ function renderMain(){
   const thumb = $('videoThumb');
   if(thumb) thumb.onclick = ()=>{ videoOpen = true; renderMain(); };
   const artBody = document.querySelector('#main .art-body');
+  $('mBack').onclick = ()=>{ document.body.classList.add('m-panel'); renderCatList(); window.scrollTo(0, 0); };
+  if(artBody) processBranchBlocks(artBody, isEditor);
   if(artBody){ bindInlineVideos(artBody); buildToc(artBody); bindLightbox(artBody); if(art.checklist) buildChecklist(art, artBody); }
   $('main').querySelectorAll('[data-pn]').forEach(b=>{ b.onclick = ()=>openArticle(b.dataset.pn); });
   if(markSeen(art)) renderCatList();
@@ -1773,6 +1981,36 @@ function renderMain(){
       render();
     };
   }
+}
+
+/* ---------- pobočky v textu, přílohy ---------- */
+// Blok <div class="br-only" data-branch="…"> = text jen pro jednu pobočku
+function processBranchBlocks(box, isEditor){
+  Array.from(box.querySelectorAll('.br-only')).forEach(el=>{
+    const id = el.getAttribute('data-branch') || '';
+    const name = branchName(id);
+    if(!name){ el.replaceWith(...Array.from(el.childNodes)); return; }   // pobočka už neexistuje
+    if(branchId && id !== branchId){
+      if(isEditor) el.classList.add('dim');
+      else { el.remove(); return; }
+    }
+    el.setAttribute('data-label', 'Jen pobočka ' + name);
+  });
+}
+function fileIcon(name){ return /\.pdf$/i.test(name || '') ? '📄' : '📊'; }
+function fmtSize(b){
+  b = b || 0;
+  return b < 1048576 ? Math.max(1, Math.round(b / 1024)) + ' kB' : (b / 1048576).toFixed(1).replace('.', ',') + ' MB';
+}
+function safeFileName(n){
+  return String(n || 'soubor').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').slice(-80);
+}
+function attachmentsHtml(art){
+  const fs = art.files || [];
+  if(!fs.length) return '';
+  return '<div class="field-label" style="margin-top:22px">Přílohy</div><div class="att-list">' + fs.map(f=>
+    '<a class="att" href="' + escapeHtml(f.path) + '" target="_blank" rel="noopener">' + fileIcon(f.name) + ' <span>' + escapeHtml(f.name) + ' <small>' + fmtSize(f.size) + '</small></span></a>'
+  ).join('') + '</div>';
 }
 
 function inlineFormat(escapedText){
@@ -1843,10 +2081,21 @@ function editFormHtml(art){
       '<button type="button" class="fmt-btn" id="fmtClear">Normální</button>' +
       '<button type="button" class="fmt-btn" id="fmtImg">📷 Obrázek</button>' +
       '<button type="button" class="fmt-btn" id="fmtVideo">🎬 Video</button>' +
+      (BRANCHES.length ? '<select class="fmt-sel" id="fmtBranch" title="Označený odstavec jen pro jednu pobočku"><option value="">🏪 Jen pro pobočku…</option>' +
+        BRANCHES.map(b=>'<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>').join('') +
+        '<option value="__off">✕ Zrušit blok pobočky</option></select>' : '') +
     '</div>' +
     '<input type="file" id="bodyImgInput" accept="image/*" style="display:none;">' +
     '<div class="art-body rich-editor" id="f-body" contenteditable="true">' + (art.body || '') + '</div>' +
     '<label class="tag-check" style="margin-top:14px"><input type="checkbox" id="f-checklist"' + (art.checklist ? ' checked' : '') + '> ☑ Odškrtávací postup – zaměstnanec si během směny odškrtává jednotlivé kroky (odstavce a odrážky)</label>' +
+    '<div class="field-label">Přílohy (PDF, Excel)</div>' +
+    '<div class="field-hint">Soubor se hned nahraje na GitHub do složky files/ (nejvýš 20 MB). Pozor: repozitář je veřejný – kdo zná odkaz, soubor si stáhne. Nedávej sem citlivé dokumenty.</div>' +
+    '<div id="attEdit"></div>' +
+    '<input type="file" id="attInput" accept=".pdf,.xls,.xlsx,.csv" style="display:none;">' +
+    '<button type="button" class="btn ghost" id="attAddBtn" style="margin-top:6px">📎 Přidat přílohu</button>' +
+    '<div class="status" id="attStatus" style="margin-top:6px"></div>' +
+    (BRANCHES.length ? '<div class="field-label">Pobočky</div><div class="field-hint">Pro které pobočky článek platí. Když nic nezaškrtneš, platí pro všechny.</div><div class="tag-box">' +
+      BRANCHES.map(b=>'<label class="tag-check"><input type="checkbox" data-art-branch value="' + b.id + '"' + ((art.branches || []).indexOf(b.id) !== -1 ? ' checked' : '') + '> ' + escapeHtml(b.name) + '</label>').join('') + '</div>' : '') +
     '<div class="field-label">Související články</div>' +
     '<div class="field-hint">Zaškrtni články, které se čtenáři nabídnou jako „Souvisí s“ dole u tohoto článku.</div>' +
     relatedBoxHtml(art) +
@@ -1997,14 +2246,103 @@ function bindEditForm(art){
     document.execCommand('insertText', false, text);
   });
 
+  // --- blok textu jen pro pobočku ---
+  bodyEl.querySelectorAll('.br-only').forEach(el=>{ el.setAttribute('data-label', 'Jen pobočka ' + (branchName(el.getAttribute('data-branch')) || '?')); });
+  const fmtBranch = $('fmtBranch');
+  if(fmtBranch){
+    fmtBranch.addEventListener('mousedown', saveRange);
+    fmtBranch.onchange = ()=>{
+      const v = fmtBranch.value;
+      fmtBranch.value = '';
+      if(!v) return;
+      bodyEl.focus();
+      restoreRange();
+      const sel = window.getSelection();
+      const r = (sel.rangeCount && bodyEl.contains(sel.anchorNode)) ? sel.getRangeAt(0) : null;
+      const topOf = n=>{
+        if(!n || n === bodyEl || !bodyEl.contains(n)) return null;
+        while(n.parentNode !== bodyEl) n = n.parentNode;
+        return n;
+      };
+      if(v === '__off'){
+        let n = r ? r.startContainer : null;
+        while(n && n !== bodyEl && !(n.classList && n.classList.contains('br-only'))) n = n.parentNode;
+        if(n && n !== bodyEl) n.replaceWith(...Array.from(n.childNodes));
+        return;
+      }
+      const box = document.createElement('div');
+      box.className = 'br-only';
+      box.setAttribute('data-branch', v);
+      box.setAttribute('data-label', 'Jen pobočka ' + branchName(v));
+      const st = r ? topOf(r.startContainer === bodyEl ? bodyEl.childNodes[r.startOffset] : r.startContainer) : null;
+      const en = r ? topOf(r.endContainer === bodyEl ? bodyEl.childNodes[Math.max(0, r.endOffset - 1)] : r.endContainer) : null;
+      if(r && !r.collapsed && st && en){
+        bodyEl.insertBefore(box, st);
+        let n = st;
+        while(n){ const next = n.nextSibling; box.appendChild(n); if(n === en) break; n = next; }
+      } else {
+        box.innerHTML = '<div>Text jen pro pobočku ' + escapeHtml(branchName(v)) + '…</div>';
+        if(st && st.nextSibling) bodyEl.insertBefore(box, st.nextSibling); else bodyEl.appendChild(box);
+      }
+    };
+  }
+
+  // --- přílohy: nahrají se hned na GitHub do files/ ---
+  let formFiles = (art.files || []).map(f=>Object.assign({}, f));
+  function renderAttEdit(){
+    $('attEdit').innerHTML = formFiles.map((f, i)=>
+      '<div class="att-edit">' + fileIcon(f.name) + ' <span style="flex:1;min-width:0;overflow-wrap:anywhere">' + escapeHtml(f.name) +
+      ' <small style="color:var(--cocoa-soft)">' + fmtSize(f.size) + '</small></span><button type="button" class="btn ghost" data-att-del="' + i + '" title="Odebrat přílohu">✕</button></div>'
+    ).join('');
+    $('attEdit').querySelectorAll('[data-att-del]').forEach(b=>{ b.onclick = ()=>{ formFiles.splice(+b.dataset.attDel, 1); renderAttEdit(); }; });
+  }
+  renderAttEdit();
+  $('attAddBtn').onclick = ()=>$('attInput').click();
+  $('attInput').onchange = async ()=>{
+    const file = $('attInput').files[0];
+    $('attInput').value = '';
+    if(!file) return;
+    if(!/\.(pdf|xlsx?|csv)$/i.test(file.name)){ $('attStatus').textContent = 'Jde nahrát jen PDF nebo Excel (xls, xlsx, csv).'; return; }
+    if(file.size > 20 * 1024 * 1024){ $('attStatus').textContent = 'Soubor je větší než 20 MB.'; return; }
+    let token = null;
+    try{ token = localStorage.getItem('kb-gh-token'); }catch(e){}
+    if(!token){ $('attStatus').textContent = 'Pro nahrání přílohy je potřeba GitHub token.'; return; }
+    $('attStatus').textContent = 'Nahrávám ' + file.name + '…';
+    $('attAddBtn').disabled = true;
+    try{
+      const b64 = await new Promise((res, rej)=>{
+        const fr = new FileReader();
+        fr.onerror = ()=>rej(new Error('read'));
+        fr.onload = ()=>res(String(fr.result).split(',')[1] || '');
+        fr.readAsDataURL(file);
+      });
+      const path = 'files/' + (await hashText(b64)) + '-' + safeFileName(file.name);
+      const res = await fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + path, {
+        method: 'PUT',
+        headers: {'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'},
+        body: JSON.stringify({message: 'Příloha ' + file.name, content: b64, branch: 'main'})
+      });
+      if(res.status === 401 || res.status === 403) throw new Error('auth');
+      if(!res.ok && res.status !== 422) throw new Error('put');   // 422 = stejný soubor už na GitHubu je
+      formFiles.push({name: file.name, path: path, size: file.size});
+      renderAttEdit();
+      $('attStatus').textContent = 'Nahráno. Ulož článek a publikuj – na webu bude soubor ke stažení do pár minut.';
+    }catch(e){
+      $('attStatus').textContent = e.message === 'auth' ? 'Nahrání selhalo: neplatný token nebo chybí oprávnění.' : 'Nahrání selhalo (síť nebo GitHub). Zkus to znovu.';
+    }
+    $('attAddBtn').disabled = false;
+  };
+
   editSnapshot = editFormState();
 
   $('saveBtn').onclick = ()=>{
     removeImgOverlay();
     art.title = $('f-title').value.trim() || 'Bez názvu';
     art.section = $('f-section').value;
-    art.body = $('f-body').innerHTML;
+    art.body = $('f-body').innerHTML.replace(/ data-label="[^"]*"/g, '');
     art.checklist = $('f-checklist').checked;
+    art.files = formFiles;
+    art.branches = Array.from(document.querySelectorAll('[data-art-branch]:checked')).map(el=>el.value);
     art.related = Array.from(document.querySelectorAll('[data-related]:checked')).map(el=>el.value);
     art.updatedAt = new Date().toISOString();
     if(art.isNew){ delete art.isNew; articles.push(art); }
@@ -2113,6 +2451,71 @@ function renderRolesMain(){
   $('backToArticles').onclick = ()=>{ view = 'article'; render(); };
 }
 
+/* ---------- pobočky (jen editor) ---------- */
+let branchMenuOpen = false;
+function renderBranch(){
+  const w = $('branchWrap');
+  if(!BRANCHES.length){ w.innerHTML = ''; return; }
+  if(branchId && !BRANCHES.some(b=>b.id === branchId)) branchId = '';
+  let h = '<button class="branch-btn" id="branchBtn"><span style="font-size:18px">🏪</span><span style="flex:1;min-width:0"><span class="bl">Pobočka</span><b>' +
+    escapeHtml(branchId ? branchName(branchId) : 'Všechny pobočky') + '</b></span><span>▾</span></button>';
+  if(branchMenuOpen){
+    h += '<div class="branch-menu">' + BRANCHES.map(b=>'<button class="branch-opt' + (b.id === branchId ? ' on' : '') + '" data-branch-pick="' + b.id + '">' + escapeHtml(b.name) + '</button>').join('') +
+      '<button class="branch-opt' + (!branchId ? ' on' : '') + '" data-branch-pick="">Všechny pobočky</button></div>';
+  }
+  w.innerHTML = h;
+  $('branchBtn').onclick = ()=>{ branchMenuOpen = !branchMenuOpen; renderBranch(); };
+  w.querySelectorAll('[data-branch-pick]').forEach(b=>{
+    b.onclick = ()=>{
+      if(!canLeaveEdit()) return;
+      branchId = b.dataset.branchPick;
+      branchMenuOpen = false;
+      try{ localStorage.setItem('kb-branch', branchId); }catch(e){}
+      editing = false;
+      render();
+    };
+  });
+}
+function renderBranchesMain(){
+  let html = '<div class="art-title">Pobočky</div>' +
+    '<div class="field-hint">Pobočky pro přepínač nahoře v panelu (zobrazí se, až bude aspoň jedna). U článku pak zaškrtneš, pro které pobočky platí, a v textu můžeš označit odstavce „Jen pro pobočku“.</div>' +
+    BRANCHES.map(b=>'<div class="role-row"><input class="f-title" data-br-name="' + b.id + '" value="' + escapeHtml(b.name) + '" style="flex:1;font-size:14px;font-family:inherit;padding:6px 8px">' +
+      '<button class="btn red" data-br-del="' + b.id + '">Smazat</button></div>').join('') +
+    '<div class="row"><input class="f-title" id="newBranchName" placeholder="Název pobočky (např. Praha – Vinohrady)" style="flex:1;font-size:14px;font-weight:400;font-family:inherit;"><button class="btn" id="addBranchBtn">Přidat pobočku</button></div>' +
+    '<div class="row"><button class="btn ghost" id="backFromBranches">Zpět na návody</button></div>';
+  $('main').innerHTML = html;
+  $('main').querySelectorAll('[data-br-name]').forEach(inp=>{
+    inp.onchange = ()=>{
+      const b = BRANCHES.find(x=>x.id === inp.dataset.brName);
+      if(!b) return;
+      b.name = inp.value.trim() || b.name;
+      inp.value = b.name;
+      saveBranches();
+      renderBranch();
+    };
+  });
+  $('main').querySelectorAll('[data-br-del]').forEach(btn=>{
+    btn.onclick = ()=>{
+      if(btn.dataset.armed !== '1'){ btn.dataset.armed = '1'; btn.textContent = 'Opravdu?'; return; }
+      const id = btn.dataset.brDel;
+      BRANCHES = BRANCHES.filter(x=>x.id !== id);
+      articles.forEach(a=>{ if(a.branches) a.branches = a.branches.filter(x=>x !== id); });
+      saveArticles();
+      saveBranches();
+      if(branchId === id){ branchId = ''; try{ localStorage.setItem('kb-branch', ''); }catch(e){} }
+      render();
+    };
+  });
+  $('addBranchBtn').onclick = ()=>{
+    const name = $('newBranchName').value.trim();
+    if(!name) return;
+    BRANCHES.push({id: 'b' + Date.now().toString(36), name: name});
+    saveBranches();
+    render();
+  };
+  $('backFromBranches').onclick = ()=>{ view = 'home'; render(); };
+}
+
 /* ---------- historie článku (z publikací na GitHubu) ---------- */
 function parseDataJs(text){
   try{ return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }catch(e){}
@@ -2127,7 +2530,9 @@ function articleSnapshot(a){
     section: a.section || 'sop',
     tags: [].concat(a.postupTags || [], a.manualTags || [], a.wikiTags || [], a.troubleshootTags || [], a.customTags || []).join(','),
     videoUrl: a.videoUrl || '',
-    related: (a.related || []).join(',')
+    related: (a.related || []).join(','),
+    files: (a.files || []).map(f=>f.name).join(','),
+    branches: (a.branches || []).join(',')
   };
 }
 function snapshotChanges(prev, cur){
@@ -2140,6 +2545,8 @@ function snapshotChanges(prev, cur){
   if(prev.tags !== cur.tags) ch.push('kategorie');
   if(prev.videoUrl !== cur.videoUrl) ch.push('video');
   if(prev.related !== cur.related) ch.push('související');
+  if((prev.files || '') !== (cur.files || '')) ch.push('přílohy');
+  if((prev.branches || '') !== (cur.branches || '')) ch.push('pobočky');
   return ch;
 }
 async function fetchCommits(path){
@@ -2210,6 +2617,7 @@ function diffKbData(prev, cur){
   });
   Object.keys(pr).forEach(id=>{ if(!cr[id]) roleLines.push('smazaná „' + pr[id].label + '“'); });
   if(roleLines.length) lines.push({label:'Role', items: roleLines.map(t=>({text:t}))});
+  if(JSON.stringify(prev.branches || []) !== JSON.stringify(cur.branches || [])) lines.push({label:'Pobočky', items:[{text:'upravený seznam poboček'}]});
   if(JSON.stringify(prev.home || null) !== JSON.stringify(cur.home || null)) lines.push({label:'Úvodní stránka', items:[{text:'upravené dlaždice nebo nadpis'}]});
   return {lines: lines, arts: arts};
 }
@@ -2356,8 +2764,9 @@ function renderHelpMain(){
   let html = '<div class="art-title">Nápověda</div><div class="art-body">';
   html +=
     '<h3>Jak najít návod</h3><ul>' +
-    (isEditor ? '' : '<li>Nahoře vlevo si vyber <b>svou roli</b> – uvidíš návody, které se týkají tvé práce.</li>') +
-    '<li>Přepínej sekce <b>Postupy</b>, <b>Firemní wiki</b> a <b>Troubleshooting</b>.</li>' +
+    (isEditor ? '' : '<li>V liště klikni na <b>👤</b> a vyber <b>svou roli</b> – uvidíš návody, které se týkají tvé práce.</li>') +
+    '<li>Sekce přepínáš v <b>tmavé liště</b> vlevo (na mobilu dole). Vedle v panelu jsou kategorie a návody vybrané sekce, nahoře hledání.</li>' +
+    '<li>Když má Sladká dílna víc poboček, vyber si nahoře v panelu <b>🏪 svou pobočku</b> – uvidíš návody a části textu, které platí pro ni.</li>' +
     '<li>U Postupů můžeš procházet <b>podle postupu</b> (jak jdeš zaškolením) nebo <b>podle manuálu</b> (kapitoly provozního manuálu).</li>' +
     '<li><b>Hledání</b> prohledá názvy i texty všech článků a ukáže, kde se hledané slovo v textu vyskytuje.</li>' +
     '<li>Značka <b>Nové</b> nebo <b>Upraveno</b> v seznamu upozorní na články, které se změnily od tvé poslední návštěvy. Po otevření článku zmizí.</li>' +
@@ -2366,7 +2775,8 @@ function renderHelpMain(){
     '<li><b>📄 Tisk</b> vytiskne jen samotný článek.</li>' +
     '<li>Video v článku spustíš kliknutím na náhled.</li>' +
     '<li>U postupů s <b>odškrtávacím seznamem</b> (např. ranní příprava, večerní úklid) si kliknutím odškrtáváš hotové kroky. Ukládá se jen ve tvém telefonu a druhý den se seznam vynuluje.</li>' +
-    '<li>Na mobilu je dole lišta <b>Úvod · Hledat · Seznam</b>. Na úvod se dostaneš i přes 🏠 nahoře.</li>' +
+    '<li>Na mobilu je dole lišta: <b>🏠 Úvod</b>, <b>🔍 Hledat</b> a sekce. Z článku se do seznamu vrátíš odkazem <b>‹</b> nahoře.</li>' +
+    '<li><b>Přílohy</b> (PDF, Excel) najdeš pod textem článku – kliknutím je otevřeš nebo stáhneš.</li>' +
     '<li>U dlouhých článků je nahoře <b>Obsah článku</b> – kliknutím skočíš na danou část.</li>' +
     '<li>Obrázek zvětšíš kliknutím, zavřeš ho dalším kliknutím.</li>' +
     '<li>Dole pod článkem přejdeš na <b>předchozí / další</b> článek ve stejné kategorii – hodí se při zaškolení.</li>' +
@@ -2395,11 +2805,14 @@ function renderHelpMain(){
       '<li>Když odcházíš z rozpracovaného článku bez uložení, aplikace se zeptá.</li>' +
       '</ul>' +
       '<h3>Role</h3><ul>' +
-      '<li>V <b>🔑 Spravovat role</b> nastavíš, které kategorie uvidí která role.</li>' +
+      '<li>V <b>🔑 Role</b> (dole v panelu) nastavíš, které kategorie uvidí která role.</li>' +
+      '<li><b>🏪 Pobočky</b> (dole v panelu) – seznam poboček. U článku zaškrtneš, pro které pobočky platí. Odstavce, které platí jen pro jednu pobočku, označ a v liště nástrojů vyber <b>🏪 Jen pro pobočku…</b>; blok zrušíš stejnou nabídkou (✕ Zrušit blok).</li>' +
+      '<li><b>📎 Přidat přílohu</b> v úpravě článku nahraje PDF nebo Excel. Soubory jsou veřejně dostupné, nedávej sem citlivé dokumenty.</li>' +
+      '<li>Pod dlaždicemi na úvodu zaškrtneš, které sekce se ukážou jako <b>seznam článků</b>.</li>' +
       '<li><b>Úvodní stránku</b> upravíš přímo na ní: klikni do nadpisu, názvu nebo popisu dlaždice a piš. Kliknutím na ikonu ji změníš, dole v dlaždici vybereš, kam vede, šipkami ← → měníš pořadí. Prázdná čárkovaná dlaždice přidá novou. Ukládá se hned.</li>' +
-      '<li><b>🔖 QR štítky</b> (dole pod zálohami) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
-      '<li>Novou sekci přidáš odkazem <b>+ sekce</b> pod sekcemi. Každou sekci přejmenuješ ✎ (kliknutím na ikonu vedle názvu ji změníš) nebo smažeš ✕ (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
-      '<li>Přepínač Editor/Čtenář vidí jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
+      '<li><b>🔖 QR štítky</b> (dole v panelu) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
+      '<li>Novou sekci přidáš tlačítkem <b>+</b> v liště pod sekcemi. Sekci přejmenuješ ✎ (kliknutím na ikonu změníš i ikonu) nebo smažeš ✕ v její hlavičce v panelu (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
+      '<li>Přepínání editor/čtenář najdeš pod <b>✏️ / 👤</b> dole v liště – vidí ho jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
       '</ul>' +
       '<h3>Uložit a publikovat</h3><ul>' +
       '<li><b>Uložit</b> ukládá jen do tohoto prohlížeče – ostatní změny zatím nevidí.</li>' +
@@ -2474,12 +2887,10 @@ function renderQrMain(){
   $('backFromQr').onclick = ()=>{ view = 'article'; render(); };
 }
 
-function updateBottomNav(){
-  $('bnHome').classList.toggle('on', view === 'home');
-}
 function render(){
+  renderBranch();
+  updateRailRole();
   renderSectionSwitch();
-  updateBottomNav();
   renderAxisSwitch();
   renderCatList();
   if(view === 'home') renderHome();
@@ -2488,6 +2899,7 @@ function render(){
   else if(view === 'history') renderHistoryMain();
   else if(view === 'log') renderLogMain();
   else if(view === 'qr') renderQrMain();
+  else if(view === 'branches') renderBranchesMain();
   else renderMain();
 }
 
@@ -2496,16 +2908,22 @@ $('modeToggleBtn').onclick = ()=>{
   MODE = (MODE === 'editor') ? 'reader' : 'editor';
   try{ localStorage.setItem('kb-mode', MODE); }catch(e){}
   editing = false;
-  view = 'article';
+  if(view !== 'home') view = 'article';
+  $('roleMenu').hidden = true;
   applyMode();
   render();
 };
 $('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'help'; render(); scrollToMainOnMobile(); };
 $('homeLink').onclick = ()=>{ goHome(); };
-$('homeBtn').onclick = ()=>{ goHome(); };
-$('bnHome').onclick = ()=>{ goHome(); };
-$('bnSearch').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); setTimeout(()=>$('searchInput').focus(), 250); };
-$('bnList').onclick = ()=>{ const t = $('sectionSwitch'); window.scrollTo({top: t.getBoundingClientRect().top + window.scrollY - 10, behavior:'smooth'}); };
+$('helpBtnM').onclick = ()=>$('helpBtn').onclick();
+$('railHome').onclick = ()=>{ goHome(); };
+$('railSearch').onclick = ()=>{ document.body.classList.add('m-panel'); window.scrollTo(0, 0); setTimeout(()=>$('searchInput').focus(), 150); };
+$('railRole').onclick = e=>{ e.stopPropagation(); if($('roleMenu').hidden) openRoleMenu(); else $('roleMenu').hidden = true; };
+document.addEventListener('click', e=>{
+  const m = $('roleMenu');
+  if(!m.hidden && !m.contains(e.target) && !e.target.closest('#railRole')) m.hidden = true;
+});
+$('branchesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'branches'; render(); scrollToMainOnMobile(); };
 $('logBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'log'; loadLog(); scrollToMainOnMobile(); };
 $('qrBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'qr'; render(); scrollToMainOnMobile(); };
 $('rolesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'roles'; editingRoleId = null; render(); scrollToMainOnMobile(); };
@@ -2515,7 +2933,7 @@ $('addBtn').onclick = ()=>{
   editing = true;
   videoOpen = false;
   view = 'article';
-  const blank = {id:activeId, isNew:true, section:sectionId, title:'', body:'', content:'', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:[], customTags:[], images:[], videoUrl:'', related:[]};
+  const blank = {id:activeId, isNew:true, section:sectionId, title:'', body:'', content:'', postupTags:[], manualTags:[], wikiTags:[], troubleshootTags:[], customTags:[], images:[], videoUrl:'', related:[], files:[], branches:[]};
   renderSectionSwitch();
   renderAxisSwitch();
   renderCatList();
@@ -2535,7 +2953,8 @@ $('exportBtn').onclick = ()=>{
     troubleshootCats: TROUBLESHOOT_CATS,
     customSections: CUSTOM_SECTIONS,
     baseSections: BASE_SECTION_STATE,
-    home: HOME
+    home: HOME,
+    branches: BRANCHES
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2568,6 +2987,8 @@ $('importFile').addEventListener('change', ()=>{
         if(!a.related) a.related = [];
         if(a.body == null) a.body = legacyContentToHtml(a);
         if(!a.customTags) a.customTags = [];
+        if(!a.files) a.files = [];
+        if(!a.branches) a.branches = [];
         migrateVideoField(a);
       });
       roles = newRoles;
@@ -2580,6 +3001,7 @@ $('importFile').addEventListener('change', ()=>{
         saveBaseSections();
       }
       if(!Array.isArray(parsed) && parsed.home && Array.isArray(parsed.home.tiles)){ HOME = parsed.home; saveHome(); }
+      if(!Array.isArray(parsed) && Array.isArray(parsed.branches)){ BRANCHES = parsed.branches; saveBranches(); }
       rebuildSections();
       articles.forEach(a=>{ if(!sectionExists(a.section)) a.section = firstSectionId(); });
       sectionId = firstSectionId(); axisId = currentAxes()[0].id;
