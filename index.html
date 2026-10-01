@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- offline verze – data se ukládají jen v tomto prohlížeči (localStorage) -->
-<!-- v2.14 -->
+<!-- v2.15 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -127,6 +127,7 @@
     padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
   }
   .fmt-btn:hover{background:var(--line);}
+  .fmt-btn.active{background:var(--caramel);color:#fff;border-color:var(--caramel-deep);box-shadow:inset 0 1px 3px rgba(0,0,0,.25);}
   .img-insert{
     display:block;width:100%;margin-top:3px;background:var(--line-soft);color:var(--cocoa-soft);
     border:1px solid var(--line);border-radius:6px;font-size:10px;padding:2px 0;cursor:pointer;
@@ -225,7 +226,7 @@
 <script src="data.js"></script>
 
 <script>
-const APP_VERSION = 'v2.14';
+const APP_VERSION = 'v2.15';
 
 const SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -242,38 +243,25 @@ let WIKI_CATS = _initData.wikiCats.slice();
 let TROUBLESHOOT_CATS = _initData.troubleshootCats.slice();
 const SEED_ALL = _initData.seedAll.slice();
 
-// Ke kterému seznamu kategorií patří které pole na článku – používá se pro checkboxy v editaci i pro role.
-const FIELD_CATS = {
-  postupTags: POSTUP_CATS,
-  manualTags: MANUAL_CATS,
-  wikiTags: WIKI_CATS,
-  troubleshootTags: TROUBLESHOOT_CATS
-};
-
-// Editovatelné osy (jen SOP): key = interní klíč pro Spravovat kategorie, field = jméno pole na článku,
-// storageKey = kam se seznam kategorií ukládá.
+// Osy kategorií: field = jméno pole na článku, storageKey = kam se seznam kategorií ukládá.
 const EDITABLE_AXES = {
-  postup: {cats:POSTUP_CATS, field:'postupTags', storageKey:'kb-postup-cats', label:'📋 Podle postupu'},
-  manual: {cats:MANUAL_CATS, field:'manualTags', storageKey:'kb-manual-cats', label:'📋 Podle manuálu'},
-  wiki: {cats:WIKI_CATS, field:'wikiTags', storageKey:'kb-wiki-cats', label:'🏢 Firemní wiki'},
-  troubleshooting: {cats:TROUBLESHOOT_CATS, field:'troubleshootTags', storageKey:'kb-troubleshoot-cats', label:'🛟 Troubleshooting'}
+  postup: {cats:POSTUP_CATS, field:'postupTags', storageKey:'kb-postup-cats'},
+  manual: {cats:MANUAL_CATS, field:'manualTags', storageKey:'kb-manual-cats'},
+  wiki: {cats:WIKI_CATS, field:'wikiTags', storageKey:'kb-wiki-cats'},
+  troubleshooting: {cats:TROUBLESHOOT_CATS, field:'troubleshootTags', storageKey:'kb-troubleshoot-cats'}
 };
 
 // Jaké osy (pohledy na kategorie) appka nabízí v jednotlivých sekcích.
 const SECTION_AXES = {
   sop: [
-    {id:'postup', label:'Podle postupu', field:'postupTags', cats:POSTUP_CATS,
-     hint:'Do jaké fáze zaškolení návod patří – stejné skupiny jako checklist v kartě zaměstnance.'},
-    {id:'manual', label:'Podle manuálu', field:'manualTags', cats:MANUAL_CATS,
-     hint:'Do jaké kapitoly kompletního provozního manuálu návod patří.'}
+    {id:'postup', label:'Podle postupu', field:'postupTags', cats:POSTUP_CATS},
+    {id:'manual', label:'Podle manuálu', field:'manualTags', cats:MANUAL_CATS}
   ],
   wiki: [
-    {id:'wiki', label:'Firemní wiki', field:'wikiTags', cats:WIKI_CATS,
-     hint:'Kdo jsme, kde co najdeme a s čím pracujeme – ne postup práce, ale základní orientace ve firmě.'}
+    {id:'wiki', label:'Firemní wiki', field:'wikiTags', cats:WIKI_CATS}
   ],
   troubleshooting: [
-    {id:'troubleshooting', label:'Troubleshooting', field:'troubleshootTags', cats:TROUBLESHOOT_CATS,
-     hint:'Rychlá pomoc, když se něco pokazí nebo nastane nestandardní situace.'}
+    {id:'troubleshooting', label:'Troubleshooting', field:'troubleshootTags', cats:TROUBLESHOOT_CATS}
   ]
 };
 
@@ -288,6 +276,7 @@ let view = 'article';    // 'article' | 'roles'
 let editingRoleId = null;
 let readerRoleId = null;
 let searchQuery = '';
+let editSnapshot = null;
 let MODE = 'editor';     // 'editor' | 'reader' – UI přepínač, bez zabezpečení
 try{ if(localStorage.getItem('kb-mode') === 'reader') MODE = 'reader'; }catch(e){}
 try{ readerRoleId = localStorage.getItem('kb-reader-role') || null; }catch(e){}
@@ -295,6 +284,20 @@ try{ readerRoleId = localStorage.getItem('kb-reader-role') || null; }catch(e){}
 const $ = id => document.getElementById(id);
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function editFormState(){
+  const bodyEl = $('f-body');
+  if(!bodyEl) return null;
+  const clone = bodyEl.cloneNode(true);
+  clone.querySelectorAll('.img-del-overlay').forEach(el=>el.remove());
+  return [$('f-title').value, $('f-section').value, clone.innerHTML, $('f-video').value,
+    Array.from(document.querySelectorAll('[data-related]:checked')).map(el=>el.value).join(',')].join('\u0001');
+}
+function canLeaveEdit(){
+  if(!editing) return true;
+  const state = editFormState();
+  if(state === null || state === editSnapshot) return true;
+  return confirm('Máš neuložené změny. Opravdu je chceš zahodit?');
 }
 function currentAxes(){ return SECTION_AXES[sectionId]; }
 function currentAxis(){ return currentAxes().find(a=>a.id===axisId) || currentAxes()[0]; }
@@ -412,8 +415,9 @@ function init(){
   }
   
   let added = false;
+  const deletedIds = loadJSON('kb-deleted') || [];
   SEED_ALL.forEach(s=>{
-    if(!articles.find(a=>a.id === s.id)){
+    if(deletedIds.indexOf(s.id) === -1 && !articles.find(a=>a.id === s.id)){
       articles.push(Object.assign({}, s));
       added = true;
     }
@@ -465,6 +469,7 @@ function renderSectionSwitch(){
   ).join('');
   $('sectionSwitch').querySelectorAll('[data-section]').forEach(b=>{
     b.onclick = ()=>{
+      if(!canLeaveEdit()) return;
       sectionId = b.dataset.section;
       axisId = currentAxes()[0].id;
       activeId = null;
@@ -487,7 +492,7 @@ function renderAxisSwitch(){
     '<button class="axis-btn' + (a.id===axisId ? ' active' : '') + '" data-axis="' + a.id + '">' + escapeHtml(a.label) + '</button>'
   ).join('');
   $('axisSwitch').querySelectorAll('[data-axis]').forEach(b=>{
-    b.onclick = ()=>{ axisId = b.dataset.axis; render(); };
+    b.onclick = ()=>{ if(!canLeaveEdit()) return; axisId = b.dataset.axis; editing = false; render(); };
   });
 }
 
@@ -501,7 +506,7 @@ function renderCatList(){
   const q = searchQuery.trim().toLowerCase();
   if(q){
     let pool = articles.filter(a=> isEditor || articleVisibleToRole(a, role));
-    pool = pool.filter(a=> (a.title||'').toLowerCase().indexOf(q)!==-1 || (a.content||'').toLowerCase().indexOf(q)!==-1);
+    pool = pool.filter(a=> (a.title||'').toLowerCase().indexOf(q)!==-1 || (a.body||'').replace(/<[^>]*>/g,' ').toLowerCase().indexOf(q)!==-1);
     let html = '<div class="cat-group search-results"><div class="cat-label">Výsledky hledání (' + pool.length + ')</div>';
     html += pool.length
       ? '<ul class="art-list">' + pool.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + '</li>').join('') + '</ul>'
@@ -509,7 +514,7 @@ function renderCatList(){
     html += '</div>';
     $('catList').innerHTML = html;
     $('catList').querySelectorAll('[data-open]').forEach(el=>{
-      el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
+      el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
     });
     return;
   }
@@ -536,7 +541,7 @@ function renderCatList(){
   }
   $('catList').innerHTML = html || '<div class="status">' + (isEditor ? 'V téhle sekci zatím nejsou žádné kategorie.' : 'Pro tvoji roli zatím nejsou povolené žádné kategorie v téhle sekci.') + '</div>';
   $('catList').querySelectorAll('[data-open]').forEach(el=>{
-    el.onclick = ()=>{ activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
+    el.onclick = ()=>{ if(!canLeaveEdit()) return; activeId = el.dataset.open; editing = false; videoOpen = false; view = 'article'; render(); };
   });
   if(!isEditor) return;
 
@@ -715,6 +720,8 @@ function renderMain(){
       }
       articles = articles.filter(a=>a.id !== art.id);
       saveArticles();
+      const deletedIds = loadJSON('kb-deleted') || [];
+      if(deletedIds.indexOf(art.id) === -1){ deletedIds.push(art.id); saveJSON('kb-deleted', deletedIds); }
       activeId = null;
       render();
     };
@@ -815,12 +822,44 @@ function bindEditForm(art){
 
   const bodyEl = $('f-body');
 
+  // tlačítka lišty nesmí brát editoru kurzor ani výběr
+  document.querySelectorAll('.fmt-toolbar .fmt-btn').forEach(b=>{
+    b.addEventListener('mousedown', e=>e.preventDefault());
+  });
+
+  function selectionInside(tag){
+    const sel = window.getSelection();
+    if(!sel.rangeCount || !bodyEl.contains(sel.anchorNode)) return false;
+    let node = sel.anchorNode;
+    while(node && node !== bodyEl){
+      if(node.nodeName === tag) return true;
+      node = node.parentNode;
+    }
+    return false;
+  }
+  function updateFmtButtons(){
+    if(!document.body.contains(bodyEl)){
+      document.removeEventListener('selectionchange', updateFmtButtons);
+      return;
+    }
+    const sel = window.getSelection();
+    const inside = sel.rangeCount && bodyEl.contains(sel.anchorNode);
+    $('fmtBold').classList.toggle('active', !!inside && document.queryCommandState('bold'));
+    $('fmtHeading').classList.toggle('active', !!inside && selectionInside('H3'));
+    $('fmtBullet').classList.toggle('active', !!inside && selectionInside('UL'));
+  }
+  document.addEventListener('selectionchange', updateFmtButtons);
+
   const fmtBold = $('fmtBold');
-  if(fmtBold) fmtBold.onclick = ()=>{ bodyEl.focus(); document.execCommand('bold'); };
+  if(fmtBold) fmtBold.onclick = ()=>{ bodyEl.focus(); document.execCommand('bold'); updateFmtButtons(); };
   const fmtHeading = $('fmtHeading');
-  if(fmtHeading) fmtHeading.onclick = ()=>{ bodyEl.focus(); document.execCommand('formatBlock', false, 'H3'); };
+  if(fmtHeading) fmtHeading.onclick = ()=>{
+    bodyEl.focus();
+    document.execCommand('formatBlock', false, selectionInside('H3') ? 'DIV' : 'H3');
+    updateFmtButtons();
+  };
   const fmtBullet = $('fmtBullet');
-  if(fmtBullet) fmtBullet.onclick = ()=>{ bodyEl.focus(); document.execCommand('insertUnorderedList'); };
+  if(fmtBullet) fmtBullet.onclick = ()=>{ bodyEl.focus(); document.execCommand('insertUnorderedList'); updateFmtButtons(); };
 
   let savedRange = null;
   function saveRange(){
@@ -839,8 +878,10 @@ function bindEditForm(art){
   const fmtClear = $('fmtClear');
   if(fmtClear) fmtClear.onclick = ()=>{
     bodyEl.focus();
+    if(selectionInside('UL')) document.execCommand('insertUnorderedList');
     document.execCommand('removeFormat');
     document.execCommand('formatBlock', false, 'DIV');
+    updateFmtButtons();
   };
 
   function removeImgOverlay(){
@@ -897,7 +938,10 @@ function bindEditForm(art){
     document.execCommand('insertText', false, text);
   });
 
+  editSnapshot = editFormState();
+
   $('saveBtn').onclick = ()=>{
+    removeImgOverlay();
     art.title = $('f-title').value.trim() || 'Bez názvu';
     art.section = $('f-section').value;
     art.body = $('f-body').innerHTML;
@@ -1018,6 +1062,7 @@ function render(){
 }
 
 $('modeToggleBtn').onclick = ()=>{
+  if(!canLeaveEdit()) return;
   MODE = (MODE === 'editor') ? 'reader' : 'editor';
   try{ localStorage.setItem('kb-mode', MODE); }catch(e){}
   editing = false;
@@ -1025,8 +1070,9 @@ $('modeToggleBtn').onclick = ()=>{
   applyMode();
   render();
 };
-$('rolesBtn').onclick = ()=>{ view = 'roles'; editingRoleId = null; render(); };
+$('rolesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'roles'; editingRoleId = null; render(); };
 $('addBtn').onclick = ()=>{
+  if(!canLeaveEdit()) return;
   activeId = uid();
   editing = true;
   videoOpen = false;
@@ -1075,6 +1121,8 @@ $('importFile').addEventListener('change', ()=>{
         if(!a.section) a.section = 'sop';
         if(!a.wikiTags) a.wikiTags = [];
         if(!a.troubleshootTags) a.troubleshootTags = [];
+        if(!a.related) a.related = [];
+        if(a.body == null) a.body = legacyContentToHtml(a);
       });
       roles = newRoles;
       if(!Array.isArray(parsed) && Array.isArray(parsed.postupCats) && parsed.postupCats.length){
