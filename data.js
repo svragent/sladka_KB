@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-01T15:02:58.000Z",
+ "publishedAt": "2026-10-01T20:44:06.000Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
@@ -159,29 +159,20 @@ const INITIAL_DATA = {
  ],
  "seedAll": [
   {
-   "id": "a1790866626938swfjm",
-   "section": "sop",
-   "title": "TESSSS",
-   "body": "SDSSDDSD<div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div>SDSDSD</div></div><div>DCXC</div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div><br></div>",
-   "postupTags": [],
-   "manualTags": [],
-   "wikiTags": [],
-   "troubleshootTags": [],
-   "videoUrl": "https://www.youtube.com/watch?v=M7Eup3ZeHlI&t=2s",
-   "related": [],
-   "updatedAt": "2026-10-01"
-  },
-  {
    "id": "uvod",
    "title": "Úvod – co je Sladká dílna",
-   "postupTags": [],
-   "manualTags": [],
-   "videoUrl": "https://www.youtube.com/watch?v=9qUqxnwQdco",
+   "postupTags": [
+    "vstupni_logistika"
+   ],
+   "manualTags": [
+    "uvod"
+   ],
+   "videoUrl": "",
    "section": "sop",
    "wikiTags": [],
    "troubleshootTags": [],
    "related": [],
-   "body": "<div>V naší cukrárně nejde jen o dorty a kávu – jde hlavně o lidi. O zákazníky, kteří k nám chodí pro radost a pohodu, i o nás samotné, kteří tu tvoříme tým. Chceme, aby Sladká dílna byla místem, kde se všichni cítí vítaní, opečovaní a spokojení.</div><br><div>Proto jsme si stanovili jednoduché zásady: být k sobě i k hostům vždy milí a vřelí, pracovat poctivě a srdcem a nabízet jen to, co bychom si sami dali na talíř nebo do sklenice.</div><br><div>Když se jich budeme držet, bude naše práce lehčí, atmosféra příjemnější a hosté se k nám budou rádi vracet.</div>",
+   "body": "<div>V naší cukrárně nejde jen o dorty a kávu – jde hlavně o lidi. O zákazníky, kteří k nám chodí pro radost a pohodu, i o nás samotné, kteří tu tvoříme tým. Chceme, aby Sladká dílna byla místem, kde se všichni cítí vítaní, opečovaní a spokojení.</div><br><div>Proto jsme si stanovili jednoduché zásady: být k sobě i k hostům vždy milí a vřelí, pracovat poctivě a srdcem a nabízet jen to, co bychom si sami dali na talíř nebo do sklenice.</div><br><div>Když se jich budeme držet, bude naše práce lehčí, atmosféra příjemnější a hosté se k nám budou rádi vracet.</div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=9qUqxnwQdco\">🎬 Video: https://www.youtube.com/watch?v=9qUqxnwQdco</div>",
    "updatedAt": "2026-10-01"
   },
   {
@@ -265,7 +256,8 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "related": [],
-   "body": "<div>RÁNO</div><br><div>Zkontroluj vitrínu a lednice – všechny produkty mají cedulku (na středu tácku, u dortů vpravo od produktu), vitrína je vyleštěná, zapni a rozsviť ji. Chlebíčky jsou připravené na tácech a zabalené fresh fólií.</div><br><div>Sundej všechny židle, stoly otři hadrem na stoly. V létě rozlož zahrádku a zkontroluj čistotu pod stoly.</div><br><div>Připrav pracovní plochu – ubrousky, brčka, sklenička na nůž a míchací lžíci.</div><br><div>Zapni kávovar (i mlýnek), pokud ho ještě nezapnuly cukrářky ráno.</div><br><div>Zkontroluj a případně doplň cenovky, dezerty ve vitríně (podívej se i dozadu, zda nějaký dort nepotřebuje jít do vitríny dřív), stav limonád, mléka a alternativní mléka, led v mrazicím boxu.</div><br><div>Zkontroluj služební mobil (zapnutý, nabitý, mail s objednávkami) a nástěnku kvůli objednávkám.</div><br><div>Pusť hudbu na tabletu – příjemná hlasitost, vhodný playlist na Spotify.</div><br><div>Zapni Dáme jídlo a uprav dostupnost položek, zkontroluj Foodoru.</div><br><div>PŘES DEN</div><br><div>Kontroluj rostliny ve vázách (čistá voda), čas od času zajdi zkontrolovat čistotu na WC (toaletní papír, ubrousky, mýdlo), sleduj stav zásob limonád a surovin – při nedostatku napiš na tabuli.</div><br><div>VEČER</div><br><div>17:30 – začni přeskládávat dezerty, které to potřebují, na čisté tácy, odnes na myčku sklenice.</div><div>18:00 – i přes případnou frontu začni zanášet trvanlivější dezerty z vitríny do lednice (postup viz článek Doplňování vitríny).</div><br><div>Doplň lednici na nápoje, vynes dopředu prázdné bedny od chlebíčků, stáhni špinavé utěrky do červeného pytle u kanceláře a připrav nové, poklid dětský koutek.</div><br><div>Káva: umyj a vypni kávovar a mlýnek, vysyp lógr do koše – kávu do mlýnku nedoplňuj, lepší nasypat ráno čerstvě otevřené.</div><br><div>Zmrzlina: stroj zanocuj/umyj (bílé poklopy, nerez vyleštit), umyj a vrať vaničku, doplň kornoutky do krabice i do záložní. Směsi nemíchej na noc, lepší čerstvé ráno.</div><br><div>PŘED ODCHODEM ZKONTROLUJ: vypnutá světla (i v lednici na drinky), vypnuté ventilátory (i mini u vitríny), nabíjí se mobil/tablet, kasa zhaslá a klíček pod tiskárnou, vypnutý kávovar a obě vitríny, dozavřená příruční lednice, zavřený ledovač, zavřená všechna okna.</div>"
+   "body": "<div>RÁNO</div><br><div>Zkontroluj vitrínu a lednice – všechny produkty mají cedulku (na středu tácku, u dortů vpravo od produktu), vitrína je vyleštěná, zapni a rozsviť ji. Chlebíčky jsou připravené na tácech a zabalené fresh fólií.</div><br><div>Sundej všechny židle, stoly otři hadrem na stoly. V létě rozlož zahrádku a zkontroluj čistotu pod stoly.</div><br><div>Připrav pracovní plochu – ubrousky, brčka, sklenička na nůž a míchací lžíci.</div><br><div>Zapni kávovar (i mlýnek), pokud ho ještě nezapnuly cukrářky ráno.</div><br><div>Zkontroluj a případně doplň cenovky, dezerty ve vitríně (podívej se i dozadu, zda nějaký dort nepotřebuje jít do vitríny dřív), stav limonád, mléka a alternativní mléka, led v mrazicím boxu.</div><br><div>Zkontroluj služební mobil (zapnutý, nabitý, mail s objednávkami) a nástěnku kvůli objednávkám.</div><br><div>Pusť hudbu na tabletu – příjemná hlasitost, vhodný playlist na Spotify.</div><br><div>Zapni Dáme jídlo a uprav dostupnost položek, zkontroluj Foodoru.</div><br><div>PŘES DEN</div><br><div>Kontroluj rostliny ve vázách (čistá voda), čas od času zajdi zkontrolovat čistotu na WC (toaletní papír, ubrousky, mýdlo), sleduj stav zásob limonád a surovin – při nedostatku napiš na tabuli.</div><br><div>VEČER</div><br><div>17:30 – začni přeskládávat dezerty, které to potřebují, na čisté tácy, odnes na myčku sklenice.</div><div>18:00 – i přes případnou frontu začni zanášet trvanlivější dezerty z vitríny do lednice (postup viz článek Doplňování vitríny).</div><br><div>Doplň lednici na nápoje, vynes dopředu prázdné bedny od chlebíčků, stáhni špinavé utěrky do červeného pytle u kanceláře a připrav nové, poklid dětský koutek.</div><br><div>Káva: umyj a vypni kávovar a mlýnek, vysyp lógr do koše – kávu do mlýnku nedoplňuj, lepší nasypat ráno čerstvě otevřené.</div><br><div>Zmrzlina: stroj zanocuj/umyj (bílé poklopy, nerez vyleštit), umyj a vrať vaničku, doplň kornoutky do krabice i do záložní. Směsi nemíchej na noc, lepší čerstvé ráno.</div><br><div>PŘED ODCHODEM ZKONTROLUJ: vypnutá světla (i v lednici na drinky), vypnuté ventilátory (i mini u vitríny), nabíjí se mobil/tablet, kasa zhaslá a klíček pod tiskárnou, vypnutý kávovar a obě vitríny, dozavřená příruční lednice, zavřený ledovač, zavřená všechna okna.</div>",
+   "checklist": true
   },
   {
    "id": "vitrina_doplnovani",
@@ -498,7 +490,8 @@ const INITIAL_DATA = {
    "troubleshootTags": [],
    "videoUrl": "",
    "body": "<div>Uklízení košů zahrnuje odpad z placu, z toalet, venkovní koš a plastový/skleněný odpad od cukrářek, případně koš z kanceláře. Kdo má úklid odpadu na starosti, má za úkol i vyvážení popelnic. Pytle se směsným odpadem vždy zavaž na uzel a do všech vynesených košů dej nové pytle.</div><br><h3>Směsný odpad</h3><div>Plac: dva koše pod vitrínou, jeden pod kasou, jeden velký koš na placu v zázemí, podle potřeby koš v kanceláři. Toalety: koš pod utěrkami na ruce, jeden na dámských záchodech, jeden pod přebalovacím pultem. Plus venkovní koš. Vyhazujeme na dvorek do černé popelnice na směsný odpad.</div><br><h3>Papír</h3><div>Plac: papír pod kasou odnes do modré popelnice na dvorku.</div><br><h3>Plast</h3><div>Plac: dva koše pod kasou (můžeš přidat do velkého pytle s plastem od cukrářek). Kuchyně: plasty ve velkém koši u východu na dvorek – dej do jednoho velkého pytle a zavaž. Plasty vyhazujeme do popelnice na plast mimo cukrárnu.</div><br><h3>Sklo</h3><div>Plac: zkontroluj krabici na sklo vedle kanceláře. Kuchyně: vynes, pokud cukrářky potřebují. Sklo roztřiď podle barvy a odnes do popelnice mimo cukrárnu.</div><br><div>Na konci vždy setři místo na koše pod kasou a dva koše na plast z placu odnes na myčku umýt.</div><br><h3>Vyvážení popelnic</h3><div>Směsný odpad – neděle a středa. Kontejner na papír – pondělí. Popelnice stavíme na vyznačené místo (šrafování) u parkovacích míst venku před cukrárnou.</div>",
-   "related": []
+   "related": [],
+   "checklist": true
   },
   {
    "id": "cisteni_kavovaru_detail",
@@ -514,7 +507,8 @@ const INITIAL_DATA = {
    "troubleshootTags": [],
    "videoUrl": "",
    "body": "<div>Úklid kávovaru zahrnuje umytí kávovaru, úklid pracovní plochy, úklid chladicí vany, umytí oplachu na konvičky a umytí nástrojů na nandávání zákusků. V letní sezóně navíc čištění šlehače na mléko a zmrzlinového stroje s odkapávačem, v zimní sezóně várnici na svařené víno a na horkou čokoládu.</div><br><h3>Úklid pracovní plochy</h3><div>Nahoru do poličky uprostřed dej všechny podšálky, držák na lžičky, nádobku s balenými cukry a cukr/skořici/kakao ve skleničkách. Do poličky vpravo dej brčka a kelímky na nápoje. Celou plochu setři do čista, jednou za čas ji vyčisti čisticím práškem. Otři skříňky pod kávovarem od kávy. Umyj krabičku na odklepávání lógru, tamper, štětec a gumovou podložku, otři mokrým hadrem prostor mezi lednicí a pracovní deskou, umyj všechny konvičky na šlehání mléka a podložku i tělo mlýnku na kávu.</div><br><h3>Úklid chladicí vany</h3><div>Vše z vany přemísti do bílé ledničky pod kávovarem, vanu vypni (zelené tlačítko), vyndej obě mříže a omyj je, vanu vytři namočeným hadrem a poté utěrkou do sucha. Jednou za čas vanu vydezinfikuj Sanytolem.</div><br><h3>Oplach na konvičky</h3><div>Odšroubuj horní část a s kovovým kolečkem pořádně omyj, umyj celý prostor od zaschlého mléka a suché kovové součástky smontuj zpět.</div><br><h3>Nástroje na nandávání zákusků</h3><div>Umyj a osuš všechny nástroje na nabírání zákusků z vitríny, na chlebíčky i na drobnější zákusky.</div><br><h3>Šlehač na mléko (letní sezóna)</h3><div>Celý šlehač otři do čista, umyj šlehací nástavec a všechny nádoby na šlehání.</div><br><h3>Mytí kávovaru</h3><div>BEZ CHEMIE: páky vyjmi a pořádně umyj (i sítka a vnitřní strana), trysky odfoukni a omyj hadrem (na spodní straně nesmí zůstat zaschlé mléko), prostor pro páky otři, kávovar vypni (černý vypínač), vyjmi mříž a dolní odtokovou část, omyj a osuš a vrať zpět, kávovar otři vlhkým hadrem a vyleš modrou vodou + suchou utěrkou. Umyté suché páky nevracuj přímo do kávovaru, jen je polož na dolní mřížku.</div><img src=\"images/lesteni-kavovaru.jpg\" alt=\"Přípravek na leštění kávovaru (modrá voda)\"><br><div>S CHEMIÍ – čištění trysek: do konvičky na šlehání mléka dej polovinu odměrky modré vody na čištění trysek a dolij vodou po zobáček, trysku ponoř a nech odmočit, pak probublej jako při šlehání mléka, opakuj s obyčejnou vodou a nakonec pořádně odstříkni – na spodní straně nesmí zůstat zaschlé mléko.</div><img src=\"images/cisteni-trysek-pripravek.jpg\" alt=\"Přípravek na čištění trysek\"><br><div>S CHEMIÍ – kávovar: páky vyjmi, sítko vyndej a nacvakni slepé sítko na čištění, do páky nasyp trochu bílého prášku na čištění pák, páku vrať do kávovaru a pusť vodu jako espresso, párkrát opakuj, po chvíli páku povol, ať voda protéká pryč, propláchni vícekrát (v páce nesmí zůstat chemie) – postup zopakuj u obou pák. Poté vyndej sítka, páky umyj, otři prostor pro páky, kávovar vypni, vyjmi mříž a dolní odtok, umyj a osuš, otři vlhkým hadrem a vyleš modrou vodou. Obě páky a sítka naložíme přes noc do bílého kýble s trochou prášku na čištění pák zalitého horkou vodou (jednou za čas přihodíme i malé konvičky na mléko).</div><img src=\"images/cisteni-pak-sitko-pripravek.jpg\" alt=\"Slepé sítko a přípravek na čištění pák\"><br><h3>Mlýnek</h3><div>Podložku u mlýnku a celý mlýnek otři do čista, mlýnek vypni (tlačítko na zadní straně) a vypoj ze zásuvky.</div><br><div>Na konec: rychlovarnou konvici, mlýnek i šlehač na mléko vypoj ze zásuvky, konvice musí být přes noc prázdná a otevřená, vyndej lopatku na led, ve zmrzlinové sezóně zakryj kornoutky igelitovým pytlem. Celá pracovní plocha od umyvadla po kávovar musí být čistá.</div>",
-   "related": []
+   "related": [],
+   "checklist": true
   },
   {
    "id": "vecerni_uklid_vitrin",
@@ -530,7 +524,8 @@ const INITIAL_DATA = {
    "troubleshootTags": [],
    "videoUrl": "",
    "body": "<h3>1) Přeskládání na čisté tácy</h3><div>Začínáme cca od 17:30 (podle počtu zákazníků). Všechny zákusky přehoď na čisté tácy a doplň do plna – starší zákusky blíž k nandávajícímu, čerstvější blíž k zákazníkovi. Věnečky a větrníky vracíme přímo zpět do bedny (nemusí na nový tác). Zákusky jako tartaletka s malinovým sněhem nebo dubajská tartaletka vracíme na noc zpět do bedny, ať krém neosychá – u sezonních zákusků se domluv s cukrářkou. Nezapomeň doplnit i makronky, linecká kolečka, nanuky, cake popy a cookies.</div><br><h3>2) Úklid zákusků do lednice (po 18:00)</h3><div>Vypni chlazení a světlo ve vitrínách (zelená tlačítka na spodní straně). Zákusky určené do bedny (věnečky, větrníky) vrať do beden v lednici. Všechny tácy odnes do lednice nahoru na zavřené bedny, případně do chladicího boxu. Makronky ve stojánku zabal do pytlíku a dej do průhledné lednice, krabici mixu makronek ulož do chladicího boxu (mix nesmí zůstat v průhledné lednici!). Brownies přendej na talířek, zabal do pytlíku, do průhledné lednice. Rumové koule i s tácem zabal do pytlíku, do průhledné lednice. Cake pops – tác do průhledné lednice. Nanuky do chladicího boxu (podle potřeby doplň do plna). Panna cotta/Tiramisu do průhledné lednice nebo k ostatním zákuskům. Krájené i celé dorty na odnos odnes cukrářkám. Slané karamely ve skle a krabičky makronek do průhledné lednice. Nespotřebované chlebíčky můžou rozebrat kolegové nebo je zabalené dej do personální lednice.</div><br><h3>3) Čištění vitríny</h3><div>Obě vitríny nejprve uvnitř otři namočeným hadrem určeným na vitrínu a zbav je drobků. Poté všechna skla vyleš modrou vodou a suchou utěrkou (i dvířka). Skla ve spodním patře nadzvedni a vyčisti i pod nimi.</div><img src=\"images/lesteni-vitriny.jpg\" alt=\"Přípravek na leštění vitríny (modrá voda)\"><br><div>Každou STŘEDU umyj filtry z obou vitrín – vyndej oba filtry, omyj a utři prostor pod nimi, filtry umyj ve sprchovém koutě a nech okapat do druhého dne. Jiné dny umývej podle potřeby (pokud je filtr zanesený).</div><br><div>Vyleš obě vitríny zepředu, skla opatrně odklop (klidně s kolegou) a vyleš i vnitřní stranu předního skla. Dvířka vitrín musí přes noc zůstat otevřená (vitrína musí dýchat) – mezi dvířka a vitrínu dej tác na nádobí, ať se sama nezavřou.</div>",
-   "related": []
+   "related": [],
+   "checklist": true
   },
   {
    "id": "napoje_kava",
