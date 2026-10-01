@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v3.8 -->
+<!-- v3.9 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -25,7 +25,7 @@
     margin:0;
     background:var(--cream);
     color:var(--cocoa);
-    font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";
     font-size:14px;
   }
   h1,h2,h3{font-family:Georgia,"Iowan Old Style",serif;margin:0;}
@@ -116,7 +116,7 @@
   #printArea{display:none;}
   @media print{
     body > *:not(#printArea){display:none !important;}
-    #printArea{display:block !important;color:#222;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:13px;}
+    #printArea{display:block !important;color:#222;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif,"Segoe UI Emoji","Segoe UI Symbol";font-size:13px;}
     #printArea h1{font-family:Georgia,serif;font-size:20px;margin:0 0 4px;}
     #printArea .pr-group{margin-top:12px;break-inside:avoid;}
     #printArea .pr-group b{font-size:13px;}
@@ -377,7 +377,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v3.8';
+const APP_VERSION = 'v3.9';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1418,7 +1418,7 @@ function computeBadges(d){
     }
   });
   if(ALL_ITEM_IDS.every(id => d.checklist[id] === 2)){
-    badges.push({icon:'🥇', title:'Celá karta hotová – pracuje samostatně úplně ve všem'});
+    badges.push({icon:'🏅', title:'Celá karta hotová – pracuje samostatně úplně ve všem'});
   }
   const streak = cleanMonthsStreak(d.violations || [], d.startDate);
   if(streak >= 1){
@@ -1438,7 +1438,7 @@ function badgesHtml(d){
 function topBadgeIcon(d){
   const badges = computeBadges(d);
   if(!badges.length) return '';
-  const priority = ['🥇', '🏆', '☕', '🌱', '🛡️'];
+  const priority = ['🏅', '🏆', '☕', '🌱', '🛡️'];
   for(const p of priority){ const b = badges.find(x => x.icon === p); if(b) return b.icon; }
   return badges[0].icon;
 }
@@ -2584,7 +2584,7 @@ function helpContentHtml(){
 
   h += '<h3>Odznaky</h3>' +
     '<p>🌱☕🏆 se objeví, jakmile má zaměstnanec úplně všechny položky jedné fáze (Nováček/Pokročilý/Expert) na „samostatně“ – jen část skupiny nestačí. ' +
-    '🥇 je bonus za kompletně hotovou kartu včetně vstupní logistiky. 🛡️ s číslem ukazuje, kolik měsíců v kuse nemá zaměstnanec žádný prohřešek – počítá se od vyplněného data nástupu, bez něj se štít nezobrazí.</p>';
+    '🏅 je bonus za kompletně hotovou kartu včetně vstupní logistiky. 🛡️ s číslem ukazuje, kolik měsíců v kuse nemá zaměstnanec žádný prohřešek – počítá se od vyplněného data nástupu, bez něj se štít nezobrazí.</p>';
 
   if(leader){
     h += '<h3>Prohřešky</h3>' +
