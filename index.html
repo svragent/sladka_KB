@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.43 -->
+<!-- v2.44 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -555,7 +555,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.43';
+const APP_VERSION = 'v2.44';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1395,7 +1395,6 @@ function renderCatList(){
   };
   const chev = '<span class="cat-chev">▼</span>';
   axis.cats.forEach(cat=>{
-    if(!isEditor && role.allowedCats.indexOf(cat.id) === -1) return;
     const items = articles.filter(a=>a.section===sectionId && (a[axis.field]||[]).indexOf(cat.id) !== -1 &&
       (isEditor || articleVisibleToRole(a, role)));
     if(!isEditor && !items.length) return;
@@ -1652,7 +1651,6 @@ function categorySiblings(art){
     // celé pořadí sekce: kategorie za sebou, v každé její články
     const seq = [];
     ax.cats.forEach(c=>{
-      if(!isEditor && role && role.allowedCats.indexOf(c.id) === -1) return;
       articles.filter(a=>vis(a) && (a[ax.field] || []).indexOf(c.id) !== -1).forEach(a=>seq.push({a: a, cat: c}));
     });
     let i = seq.findIndex(p=>p.a.id === art.id && p.cat.id === navCatId);
@@ -2549,7 +2547,7 @@ function renderRolesMain(){
     }
   }
   let html = '<div class="art-title">Role</div>' +
-    '<div class="field-hint">Role určuje, které kategorie návodů (napříč všemi sekcemi) čtenář v této roli uvidí. Nová role zatím nevidí nic.</div>' +
+    '<div class="field-hint">Role určuje, které návody čtenář uvidí: článek se mu ukáže, když má role povolenou aspoň jednu z jeho kategorií. Pak ho vidí v obou pohledech (podle postupu i podle manuálu) – pohled mění jen řazení. Nová role zatím nevidí nic.</div>' +
     '<div class="row"><input class="f-title" id="newRoleName" placeholder="Název nové role (např. Plac, Kuchyně, Vedoucí)" style="flex:1;font-size:14px;font-weight:400;font-family:inherit;"><button class="btn" id="addRoleBtn">Přidat roli</button></div>';
   if(roles.length){
     html += roles.map(r=>
