@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v4.2 -->
+<!-- v4.3 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -435,6 +435,14 @@
   .seg button.on.v2{background:var(--sage);color:#fff;border-color:var(--sage);}
   .seg button.on.v3{background:var(--sky);color:#fff;border-color:var(--sky);}
   .mob-tools{display:none;}
+  body.emp-only .app{grid-template-columns:90px minmax(0,1fr);}
+  body.emp-only .sidebar{display:none !important;}
+  .me-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:16px;max-width:760px;}
+  .me-pick button{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;font-size:15px;font-weight:700;color:var(--cocoa);cursor:pointer;text-align:left;}
+  .me-pick button:hover{border-color:var(--caramel);}
+  .me-pick .eav{width:42px;height:42px;font-size:14px;}
+  .empbar a{color:#fff;text-decoration:underline;cursor:pointer;}
+  @media (max-width:760px){ body.emp-only .app{display:block;} }
   .pv{width:78px;flex-shrink:0;background:rgba(255,255,255,.06);border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;gap:4px;margin-top:4px;}
   .pv .pvh{font-size:9.5px;color:#C9B79D;text-align:center;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
   .pv button{border:none;border-radius:8px;padding:6px 2px;font-family:inherit;font-size:10.5px;font-weight:700;background:none;color:#E8DCC8;cursor:pointer;line-height:1.25;}
@@ -538,7 +546,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v4.2';
+const APP_VERSION = 'v4.3';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1425,6 +1433,9 @@ async function renderList(){
 
 function applyMode(){
   const leader = MODE === 'leader';
+  document.body.classList.toggle('emp-only', !leader);
+  if(!leader) document.body.classList.remove('m-panel');
+  $('railTeam').innerHTML = leader ? '<span class="ri">👥</span>Tým' : '<span class="ri">📇</span>Moje karta';
   $('pvLeader').className = leader ? 'on' : '';
   $('pvEmp').className = leader ? '' : 'on e';
   $('pvPopLeader').className = leader ? 'on' : '';
@@ -1448,11 +1459,35 @@ function setRail(v){
   if(map[v] && $(map[v])) $(map[v]).classList.add('on');
 }
 function empBarHtml(){
-  return MODE === 'employee' ? '<div class="empbar"><span style="font-size:20px">👤</span><span><b>Díváš se jako zaměstnanec</b><br>Úpravy, mzda, prohřešky a poznámky jsou skryté.</span><button class="empBack">Zpět na vedoucího</button></div>' : '';
+  if(MODE !== 'employee') return '';
+  const meName = activeData ? activeData.name : '';
+  return '<div class="empbar"><span style="font-size:20px">👤</span><span><b>Díváš se jako zaměstnanec</b><br>Vidíš jen svoji kartu – úpravy, mzda, prohřešky a poznámky jsou skryté.' +
+    (meName ? ' <a class="meChange">Nejsi ' + escapeHtml(meName) + '? Změnit</a>' : '') + '</span><button class="empBack">Zpět na vedoucího</button></div>';
 }
-function bindEmpBar(){ mainEl.querySelectorAll('.empBack').forEach(b=>{ b.onclick = ()=>setMode('leader'); }); }
+function bindEmpBar(){
+  mainEl.querySelectorAll('.empBack').forEach(b=>{ b.onclick = ()=>setMode('leader'); });
+  mainEl.querySelectorAll('.meChange').forEach(a=>{ a.onclick = ()=>{ setMe(''); openMyCard(); }; });
+}
 // Mobil: ukázat seznam zaměstnanců
-function showListMobile(){ document.body.classList.add('m-panel'); window.scrollTo(0, 0); }
+function showListMobile(){ if(MODE !== 'leader') return; document.body.classList.add('m-panel'); window.scrollTo(0, 0); }
+// Pohled zaměstnance: jen vlastní karta (výběr „Kdo jsi?“ si pamatuje tento prohlížeč)
+function getMe(){ try{ return localStorage.getItem('me-id') || ''; }catch(e){ return ''; } }
+function setMe(id){ try{ if(id) localStorage.setItem('me-id', id); else localStorage.removeItem('me-id'); }catch(e){} }
+async function openMyCard(){
+  const me = getMe();
+  if(me && employees.some(e=>e.id === me)){ await selectEmployee(me); return; }
+  setRail('team');
+  activeId = null; activeData = null;
+  const list = employees.slice().sort((a, b)=>a.name.localeCompare(b.name, 'cs'));
+  let h = empBarHtml() + '<h1 style="font-size:26px">Kdo jsi?</h1>' +
+    '<div class="muted" style="font-size:13.5px;margin-top:4px">Vyber své jméno – tento telefon nebo počítač si ho zapamatuje a příště se ti otevře rovnou tvoje karta.</div>';
+  h += list.length ? '<div class="me-pick">' + list.map(e=>'<button data-me="' + e.id + '">' + avatarHtml({name: e.name}, 'eav') + escapeHtml(e.name) + '</button>').join('') + '</div>'
+    : '<div class="empty-state">Zatím tu nejsou žádní zaměstnanci.</div>';
+  mainEl.innerHTML = h;
+  bindEmpBar();
+  window.scrollTo(0, 0);
+  mainEl.querySelectorAll('[data-me]').forEach(b=>{ b.onclick = ()=>{ setMe(b.dataset.me); selectEmployee(b.dataset.me); }; });
+}
 function initials(name){
   return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w=>w.charAt(0).toUpperCase()).join('') || '?';
 }
@@ -1902,9 +1937,9 @@ function renderMain(resetScroll){
 
   html += '<div class="det-grid"><div class="det-left">' + left + '</div><div class="det-side">' + side + '</div></div>';
 
-  mainEl.innerHTML = '<button class="to-list" id="toListBtn">‹ Tým</button>' + empBarHtml() + html;
+  mainEl.innerHTML = (leader ? '<button class="to-list" id="toListBtn">‹ Tým</button>' : '') + empBarHtml() + html;
   bindEmpBar();
-  $('toListBtn').onclick = ()=>{ renderTeam(); };
+  if($('toListBtn')) $('toListBtn').onclick = ()=>{ renderTeam(); };
   bindMainEvents();
   // záložky (přepínají se bez překreslení)
   mainEl.querySelectorAll('[data-tab]').forEach(b=>{
@@ -1943,6 +1978,7 @@ function lvlChipHtml(d){
 }
 function shortLabel(t){ return String(t).replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+/g, ' ').trim(); }
 async function renderTeam(){
+  if(MODE === 'employee') return openMyCard();
   setRail('team');
   activeId = null; activeData = null;
   document.body.classList.remove('m-panel');
@@ -2070,6 +2106,7 @@ async function renderTeam(){
 }
 
 async function selectEmployee(id){
+  if(MODE === 'employee'){ const me = getMe(); if(me && employees.some(e=>e.id === me)) id = me; }
   activeId = id;
   openItemId = null;
   quiz = null;
@@ -3015,7 +3052,7 @@ async function renderCardLog(){
 
 /* ==================== NÁPOVĚDA ==================== */
 function helpContentHtml_v41(){
-  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>🕘 Historie</b>, <b>⚙️ Nastavení</b>, <b>📚 Návody</b> a dole blok <b>Pohled</b> – zvýrazněné tlačítko Vedoucí / Zaměstnanec ukazuje, jak se na kartu právě díváš; klikem na druhé přepneš. V pohledu zaměstnance je nahoře modrý pruh s tlačítkem Zpět na vedoucího. Na mobilu je lišta dole a pohled vybereš tlačítkem 👁 Pohled.</p>' +
+  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>🕘 Historie</b>, <b>⚙️ Nastavení</b>, <b>📚 Návody</b> a dole blok <b>Pohled</b> – zvýrazněné tlačítko Vedoucí / Zaměstnanec ukazuje, jak se na kartu právě díváš; klikem na druhé přepneš. V pohledu zaměstnance je nahoře modrý pruh s tlačítkem Zpět na vedoucího. Zaměstnanec si při prvním přepnutí vybere své jméno („Kdo jsi?“) a dál vidí jen svoji kartu – zařízení si to pamatuje, změnit jde odkazem „Nejsi …? Změnit“ v pruhu. Na mobilu je lišta dole a pohled vybereš tlačítkem 👁 Pohled.</p>' +
     '<p>V detailu zaměstnance jsou nahoře úrovně jako kroky (klikem zobrazíš položky dané úrovně), vpravo <b>Další krok</b>. Prohřešky a poznámky jsou v záložkách. Stav položky změníš klikem na štítek, nebo v rozbalené položce tlačítky ČEKÁ / TEST / DOHLED / SAMOSTATNĚ.</p>' +
     '<p>V tabulce <b>Kdo co umí</b> klik na políčko přepne stav (čeká → test → dohled → samostatně). Spodní řádek ukáže, kolik lidí danou věc zvládá samostatně.</p>';
 }
@@ -3078,7 +3115,7 @@ $('helpOverlay').addEventListener('click', e=>{ if(e.target.id === 'helpOverlay'
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeHelp(); });
 
 $('reportBtn').onclick = ()=>{ renderMonthReport(); };
-$('railTeam').onclick = ()=>{ renderTeam(); };
+$('railTeam').onclick = ()=>{ if(MODE === 'employee') openMyCard(); else renderTeam(); };
 $('logBtn').onclick = ()=>{ renderCardLog(); };
 $('cfgBtn').onclick = ()=>{ cfgDraft = null; cfgWork = null; cfgWorkDirty = false; renderSettings(); };
 
@@ -3091,7 +3128,9 @@ function setMode(m){
   reviewId = null;
   applyMode();
   renderList();
-  if(activeData) renderMain(); else if($('railTeam').classList.contains('on')) renderTeam();
+  if(MODE === 'employee') openMyCard();
+  else if(activeData) renderMain();
+  else renderTeam();
   if($('helpOverlay').style.display === 'flex') openHelp();
 }
 $('pvLeader').onclick = ()=>setMode('leader');
