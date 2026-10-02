@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.49 -->
+<!-- v2.50 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -158,9 +158,10 @@
   }
   .backup-btn:hover{background:var(--line-soft);}
   .sidebar-spacer{flex:1;}
-  .ed-foot{position:sticky;bottom:0;margin:12px -16px -20px;padding:10px 16px 12px;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -6px 14px rgba(59,42,32,.06);z-index:5;}
+  .ed-foot{position:sticky;bottom:-20px;margin:12px -16px -20px;padding:10px 16px 12px;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -6px 14px rgba(59,42,32,.06);z-index:5;}
   .ed-foot .status{margin:0 0 8px;}
   .ed-foot .status:empty{display:none;}
+  .ed-foot .version-tag{margin:6px 0 0;color:var(--cocoa-soft);opacity:.7;}
   .ed-row{display:flex;gap:6px;}
   .ed-btn{min-width:0;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 7px;font:inherit;font-size:12.5px;font-weight:700;color:var(--cocoa);cursor:pointer;white-space:nowrap;}
   .ed-btn:hover{background:var(--line-soft);}
@@ -592,7 +593,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.49';
+const APP_VERSION = 'v2.50';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1089,7 +1090,7 @@ function init(){
   if(useLocal){
     loadEditableCats();
     articles = existing;
-    roles = loadRoles();
+    roles = loadJSON('kb-roles') ? loadRoles() : (Array.isArray(_initData.roles) ? JSON.parse(JSON.stringify(_initData.roles)) : []);
   } else {
     articles = JSON.parse(JSON.stringify(SEED_ALL));
     roles = Array.isArray(_initData.roles) ? JSON.parse(JSON.stringify(_initData.roles)) : loadRoles();
@@ -1168,6 +1169,8 @@ function applyMode(){
   $('pvMenuEditor').style.display = hasEditorToken() ? 'flex' : 'none';
   $('railCard').style.display = isEditor ? 'flex' : 'none';
   $('edFoot').style.display = isEditor ? 'block' : 'none';
+  if(isEditor) $('edFoot').appendChild($('versionTag'));
+  else $('panel').insertBefore($('versionTag'), $('edFoot'));
   $('toolsMenu').classList.remove('open');
   renderRoleSelect();
   updateRailRole();
