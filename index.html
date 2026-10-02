@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.51 -->
+<!-- v2.52 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -542,7 +542,7 @@
     <div class="rail-secs" id="sectionSwitch"></div>
     <div class="rail-spacer"></div>
     <a class="rail-btn" id="railCard" href="karta/" style="display:none;text-decoration:none"><span class="ri">📇</span>Karta</a>
-    <button class="rail-btn rail-desk" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
+    <button class="rail-btn" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
     <div class="pv" id="pvBlock"><div class="pvh">Pohled</div><button id="pvEditor" title="Upravovat znalostní bázi">✏️<br>Editor</button><button id="pvReader" title="Zobrazit jako čtenář – vyber roli">👤<br><span id="pvReaderLbl">Čtenář</span></button></div>
     <button class="rail-btn" id="railRole" title="Zobrazit jako…"><span class="ri">👁</span><span id="railRoleLbl">Pohled</span></button>
   </nav>
@@ -556,7 +556,6 @@
       <div id="catList"></div>
     </div>
     <div class="sidebar-spacer"></div>
-    <button class="plain-btn mob-only" id="helpBtnM" style="margin-top:14px">❓ Nápověda</button>
     <div class="version-tag" id="versionTag"></div>
     <div class="ed-foot" id="edFoot" style="display:none">
       <div class="status" id="status"></div>
@@ -592,7 +591,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.51';
+const APP_VERSION = 'v2.52';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -3068,7 +3067,7 @@ function renderHelpMain(){
     '<li><b>📄 Tisk</b> vytiskne jen samotný článek.</li>' +
     '<li>Video v článku spustíš kliknutím na náhled.</li>' +
     '<li>U postupů s <b>odškrtávacím seznamem</b> (např. ranní příprava, večerní úklid) si kliknutím odškrtáváš hotové kroky. Ukládá se jen ve tvém telefonu a druhý den se seznam vynuluje.</li>' +
-    '<li>Na mobilu je dole lišta: <b>🏠 Úvod</b> a sekce; hledání je nahoře v seznamu sekce. Z článku se do seznamu vrátíš odkazem <b>‹</b> nahoře.</li>' +
+    '<li>Na mobilu je dole lišta: <b>🏠 Úvod</b>, sekce a <b>❓ Nápověda</b>; hledání je nahoře v seznamu sekce. Z článku se do seznamu vrátíš odkazem <b>‹</b> nahoře.</li>' +
     '<li><b>Přílohy</b> (PDF, Excel) najdeš pod textem článku – kliknutím je otevřeš nebo stáhneš.</li>' +
     '<li>U dlouhých článků je nahoře <b>Obsah článku</b> – kliknutím skočíš na danou část.</li>' +
     '<li>Obrázek zvětšíš kliknutím, zavřeš ho dalším kliknutím.</li>' +
@@ -3204,7 +3203,6 @@ $('pvMenuEditor').onclick = ()=>{ setKbMode('editor'); };
 $('pvReader').onclick = e=>{ e.stopPropagation(); if($('roleMenu').hidden) openRoleMenu(); else $('roleMenu').hidden = true; };
 $('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'help'; render(); scrollToMainOnMobile(); };
 $('homeLink').onclick = ()=>{ goHome(); };
-$('helpBtnM').onclick = ()=>$('helpBtn').onclick();
 $('railHome').onclick = ()=>{ goHome(); };
 $('railRole').onclick = e=>{ e.stopPropagation(); if($('roleMenu').hidden) openRoleMenu(); else $('roleMenu').hidden = true; };
 $('toolsBtn').onclick = e=>{ e.stopPropagation(); $('toolsMenu').classList.toggle('open'); };
