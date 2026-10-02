@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v4.1 -->
+<!-- v4.2 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -435,6 +435,22 @@
   .seg button.on.v2{background:var(--sage);color:#fff;border-color:var(--sage);}
   .seg button.on.v3{background:var(--sky);color:#fff;border-color:var(--sky);}
   .mob-tools{display:none;}
+  .pv{width:78px;flex-shrink:0;background:rgba(255,255,255,.06);border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+  .pv .pvh{font-size:9.5px;color:#C9B79D;text-align:center;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+  .pv button{border:none;border-radius:8px;padding:6px 2px;font-family:inherit;font-size:10.5px;font-weight:700;background:none;color:#E8DCC8;cursor:pointer;line-height:1.25;}
+  .pv button:hover{background:rgba(255,255,255,.08);}
+  .pv button.on{background:#FFFDF8;color:var(--cocoa);}
+  .pv button.on.e{background:#DCE6F0;color:#2F4E6B;}
+  #modeLabel{display:none;}
+  .empbar{display:flex;align-items:center;gap:12px;background:#2F4E6B;color:#fff;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.35;}
+  .empbar b{font-size:14px;}
+  .empbar button{margin-left:auto;border:none;background:#fff;color:#2F4E6B;border-radius:8px;padding:7px 12px;font:inherit;font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer;}
+  .pvpop{position:fixed;left:10px;right:10px;bottom:84px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 12px 32px rgba(59,42,32,.25);z-index:60;}
+  .pvpop .h{font-size:11px;font-weight:700;color:var(--caramel-deep);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .pvpop button{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 12px;margin-top:6px;font:inherit;font-size:14px;text-align:left;color:var(--cocoa);cursor:pointer;}
+  .pvpop button.on{border-color:var(--caramel-deep);background:var(--cream);font-weight:700;}
+  .pvpop small{display:block;font-size:11.5px;color:var(--cocoa-soft);font-weight:400;}
+  @media (max-width:760px){ .pv{display:none;} #modeLabel{display:block;} .empbar{flex-wrap:wrap;} .empbar button{margin-left:0;} }
   @media (max-width:760px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .team-head h1{font-size:24px;} .mob-tools{display:inline-block;} .tcards{grid-template-columns:1fr;} }
   .card-head input.name-input{font-family:Georgia,serif;font-size:22px;font-weight:700;}
   .show-all{border:none;background:none;font:inherit;font-size:12px;color:var(--caramel-deep);text-decoration:underline;cursor:pointer;padding:0;margin-top:8px;}
@@ -474,7 +490,8 @@
     <div class="rail-spacer"></div>
     <a class="rail-btn" id="kbLink" href="../"><span class="ri">📚</span>Návody</a>
     <button class="rail-btn" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
-    <button class="rail-btn" id="modeLabel" title="Přepnout vedoucí / zaměstnanec"></button>
+    <div class="pv" id="modeBlock"><div class="pvh">Pohled</div><button id="pvLeader" title="Zobrazit kartu jako vedoucí">✏️<br>Vedoucí</button><button id="pvEmp" title="Zobrazit kartu jako zaměstnanec">👤<br>Zaměstnanec</button></div>
+    <button class="rail-btn" id="modeLabel" title="Zobrazit kartu jako…"><span class="ri">👁</span>Pohled</button>
   </nav>
   <div class="sidebar">
     <div class="panel-title">Karta zaměstnance</div>
@@ -505,6 +522,11 @@
   </div>
 </div>
 
+<div class="pvpop" id="pvPop" hidden>
+  <div class="h">Zobrazit kartu jako</div>
+  <button id="pvPopLeader">✏️ <span>Vedoucí<small>úpravy, mzda, prohřešky, poznámky</small></span></button>
+  <button id="pvPopEmp">👤 <span>Zaměstnanec<small>jen návody, přečtení a testy</small></span></button>
+</div>
 <div class="help-overlay" id="helpOverlay" style="display:none">
   <div class="help-modal" id="helpModalBox"></div>
 </div>
@@ -516,7 +538,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v4.1';
+const APP_VERSION = 'v4.2';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1403,9 +1425,12 @@ async function renderList(){
 
 function applyMode(){
   const leader = MODE === 'leader';
-  const lbl = $('modeLabel');
-  lbl.innerHTML = leader ? '<span class="ri">✏️</span>Vedoucí' : '<span class="ri">👤</span>Zaměstnanec';
-  lbl.className = 'rail-btn' + (leader ? '' : ' emp-mode');
+  $('pvLeader').className = leader ? 'on' : '';
+  $('pvEmp').className = leader ? '' : 'on e';
+  $('pvPopLeader').className = leader ? 'on' : '';
+  $('pvPopEmp').className = leader ? '' : 'on';
+  $('modeLabel').className = 'rail-btn' + (leader ? '' : ' emp-mode');
+  $('publishBtn').style.display = (onWeb && leader) ? 'block' : 'none';
   $('addBtn').style.display = leader ? 'block' : 'none';
   $('addForm').style.display = 'none';
   $('backupRow').style.display = leader ? 'flex' : 'none';
@@ -1413,8 +1438,8 @@ function applyMode(){
   $('cfgBtn').style.display = leader ? 'block' : 'none';
   $('logBtn').style.display = (leader && onWeb) ? 'block' : 'none';
   $('modeHint').textContent = leader
-    ? 'Režim vedoucí. Tlačítkem ✏️ Vedoucí v liště přepneš na pohled zaměstnance – skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení, přepnout zpět může kdokoli.'
-    : 'Pohled zaměstnance: návody, přečtení a testy. Zpět na vedoucího přepneš tlačítkem 👤 Zaměstnanec v liště.';
+    ? 'Pohled vedoucí. Dole v liště (na mobilu 👁 Pohled) přepneš na pohled zaměstnance – skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení, přepnout zpět může kdokoli.'
+    : 'Pohled zaměstnance: návody, přečtení a testy.';
 }
 // Zvýraznění aktivní položky v liště
 function setRail(v){
@@ -1422,6 +1447,10 @@ function setRail(v){
   const map = {team:'railTeam', month:'reportBtn', log:'logBtn', cfg:'cfgBtn'};
   if(map[v] && $(map[v])) $(map[v]).classList.add('on');
 }
+function empBarHtml(){
+  return MODE === 'employee' ? '<div class="empbar"><span style="font-size:20px">👤</span><span><b>Díváš se jako zaměstnanec</b><br>Úpravy, mzda, prohřešky a poznámky jsou skryté.</span><button class="empBack">Zpět na vedoucího</button></div>' : '';
+}
+function bindEmpBar(){ mainEl.querySelectorAll('.empBack').forEach(b=>{ b.onclick = ()=>setMode('leader'); }); }
 // Mobil: ukázat seznam zaměstnanců
 function showListMobile(){ document.body.classList.add('m-panel'); window.scrollTo(0, 0); }
 function initials(name){
@@ -1873,7 +1902,8 @@ function renderMain(resetScroll){
 
   html += '<div class="det-grid"><div class="det-left">' + left + '</div><div class="det-side">' + side + '</div></div>';
 
-  mainEl.innerHTML = '<button class="to-list" id="toListBtn">‹ Tým</button>' + html;
+  mainEl.innerHTML = '<button class="to-list" id="toListBtn">‹ Tým</button>' + empBarHtml() + html;
+  bindEmpBar();
   $('toListBtn').onclick = ()=>{ renderTeam(); };
   bindMainEvents();
   // záložky (přepínají se bez překreslení)
@@ -2007,7 +2037,8 @@ async function renderTeam(){
       '<div class="tlegend"><span><i style="background:var(--sage)"></i>✓ samostatně</span><span><i style="background:var(--honey)"></i>D dohled</span><span><i style="background:var(--sky)"></i>T čeká na test</span><span><i style="background:#EDEAE2"></i>– čeká na zaučení</span>' +
       (leader ? '<span>Klik na políčko přepne stav.</span>' : '') + '</div>';
   }
-  mainEl.innerHTML = h;
+  mainEl.innerHTML = empBarHtml() + h;
+  bindEmpBar();
   window.scrollTo(0, 0);
   mainEl.querySelectorAll('[data-tv]').forEach(b=>{
     b.onclick = ()=>{ teamView = b.dataset.tv; try{ localStorage.setItem('team-view', teamView); }catch(e){} renderTeam(); };
@@ -2984,7 +3015,7 @@ async function renderCardLog(){
 
 /* ==================== NÁPOVĚDA ==================== */
 function helpContentHtml_v41(){
-  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>🕘 Historie</b>, <b>⚙️ Nastavení</b>, <b>📚 Návody</b> a dole přepínač vedoucí / zaměstnanec. Na mobilu je lišta dole.</p>' +
+  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>🕘 Historie</b>, <b>⚙️ Nastavení</b>, <b>📚 Návody</b> a dole blok <b>Pohled</b> – zvýrazněné tlačítko Vedoucí / Zaměstnanec ukazuje, jak se na kartu právě díváš; klikem na druhé přepneš. V pohledu zaměstnance je nahoře modrý pruh s tlačítkem Zpět na vedoucího. Na mobilu je lišta dole a pohled vybereš tlačítkem 👁 Pohled.</p>' +
     '<p>V detailu zaměstnance jsou nahoře úrovně jako kroky (klikem zobrazíš položky dané úrovně), vpravo <b>Další krok</b>. Prohřešky a poznámky jsou v záložkách. Stav položky změníš klikem na štítek, nebo v rozbalené položce tlačítky ČEKÁ / TEST / DOHLED / SAMOSTATNĚ.</p>' +
     '<p>V tabulce <b>Kdo co umí</b> klik na políčko přepne stav (čeká → test → dohled → samostatně). Spodní řádek ukáže, kolik lidí danou věc zvládá samostatně.</p>';
 }
@@ -3051,8 +3082,10 @@ $('railTeam').onclick = ()=>{ renderTeam(); };
 $('logBtn').onclick = ()=>{ renderCardLog(); };
 $('cfgBtn').onclick = ()=>{ cfgDraft = null; cfgWork = null; cfgWorkDirty = false; renderSettings(); };
 
-$('modeLabel').onclick = ()=>{
-  MODE = (MODE === 'leader') ? 'employee' : 'leader';
+function setMode(m){
+  $('pvPop').hidden = true;
+  if(MODE === m) return;
+  MODE = m;
   try{ localStorage.setItem('ui-mode', MODE); }catch(e){}
   quiz = null;
   reviewId = null;
@@ -3060,7 +3093,16 @@ $('modeLabel').onclick = ()=>{
   renderList();
   if(activeData) renderMain(); else if($('railTeam').classList.contains('on')) renderTeam();
   if($('helpOverlay').style.display === 'flex') openHelp();
-};
+}
+$('pvLeader').onclick = ()=>setMode('leader');
+$('pvEmp').onclick = ()=>setMode('employee');
+$('pvPopLeader').onclick = ()=>setMode('leader');
+$('pvPopEmp').onclick = ()=>setMode('employee');
+$('modeLabel').onclick = e=>{ e.stopPropagation(); $('pvPop').hidden = !$('pvPop').hidden; };
+document.addEventListener('click', e=>{
+  const p = $('pvPop');
+  if(!p.hidden && !p.contains(e.target) && !e.target.closest('#modeLabel')) p.hidden = true;
+});
 
 // Záloha (nutná u staženého .html, kde se data drží jen v tomto prohlížeči)
 $('exportBtn').onclick = async ()=>{
