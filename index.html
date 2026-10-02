@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.45 -->
+<!-- v2.46 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -560,7 +560,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.45';
+const APP_VERSION = 'v2.46';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1947,6 +1947,7 @@ function homeNewList(visible){
   }
   return {title: title, list: list};
 }
+let homeListOpen = {};   // které seznamy na úvodu jsou rozbalené
 function homeListIds(){ return Array.isArray(HOME.lists) ? HOME.lists : ['troubleshooting', 'wiki']; }
 // Seznamy článků vybraných sekcí pod dlaždicemi
 function homeListsHtml(visible, isEditor){
@@ -1958,16 +1959,24 @@ function homeListsHtml(visible, isEditor){
     if(!arts.length && !isEditor) return;
     h += '<div><div class="home-h">' + escapeHtml(s.label) + '</div><div class="hl-box">' +
       (arts.length
-        ? arts.slice(0, 6).map(a=>'<button class="hl-item" data-home-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + '</button>').join('')
+        ? (homeListOpen[s.id] ? arts : arts.slice(0, 6)).map(a=>'<button class="hl-item" data-home-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + '</button>').join('')
         : '<div class="hl-item more">Zatím tu nejsou žádné články.</div>') +
-      (arts.length > 6 ? '<button class="hl-item more" data-home-sec="' + s.id + '">Všech ' + arts.length + ' ›</button>' : '') +
+      (arts.length > 6 ? '<button class="hl-item more" data-home-more="' + s.id + '">' + (homeListOpen[s.id] ? 'Zobrazit méně ▴' : 'Zobrazit všech ' + arts.length + ' ▾') + '</button>' : '') +
       '</div></div>';
   });
   return h ? '<div class="home-lists">' + h + '</div>' : '';
 }
 function bindHomeLists(){
   $('main').querySelectorAll('[data-home-open]').forEach(li=>{ li.onclick = ()=>openArticle(li.dataset.homeOpen); });
-  $('main').querySelectorAll('[data-home-sec]').forEach(b=>{ b.onclick = ()=>openSection(b.dataset.homeSec); });
+  $('main').querySelectorAll('[data-home-more]').forEach(b=>{
+    b.onclick = ()=>{
+      const id = b.dataset.homeMore;
+      homeListOpen[id] = !homeListOpen[id];
+      const y = window.scrollY;
+      if(MODE === 'editor') renderHomeEditor(); else renderHome();
+      window.scrollTo(0, y);
+    };
+  });
 }
 function renderHome(){
   const isEditor = MODE === 'editor';
