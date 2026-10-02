@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-02T00:17:40.427Z",
+ "publishedAt": "2026-10-02T00:53:29.498Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
@@ -189,6 +189,7 @@ const INITIAL_DATA = {
    "name": "Čakovice"
   }
  ],
+ "sectionIcons": {},
  "roles": [
   {
    "id": "a1790205245446stjm9",
