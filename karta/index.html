@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v3.10 -->
+<!-- v4.1 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -29,7 +29,7 @@
     font-size:14px;
   }
   h1,h2,h3{font-family:Georgia,"Iowan Old Style",serif;margin:0;}
-  .app{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+
   @media (max-width:760px){
     .app{grid-template-columns:1fr;}
     .sidebar{border-right:none;border-bottom:1px solid var(--line);}
@@ -123,7 +123,7 @@
     #printArea ul{margin:4px 0 0 18px;padding:0;}
     #printArea li{margin-bottom:2px;}
   }
-  .main{padding:26px 30px 60px;max-width:760px;}
+
   .empty-state{color:var(--cocoa-soft);padding-top:60px;text-align:center;}
   .stamp{
     display:inline-flex;align-items:center;justify-content:center;
@@ -324,18 +324,160 @@
   .note-item:last-child{border-bottom:none;}
   .note-date{font-size:10.5px;color:var(--cocoa-soft);margin-bottom:2px;}
   .danger-link{color:var(--cherry);font-size:11px;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
+  /* ===== v4.0: lišta + panel + detail ===== */
+  .app{display:grid;grid-template-columns:90px 270px minmax(0,1fr);min-height:100vh;}
+  .rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--cocoa);display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 0;z-index:40;}
+  .rail-btn{display:block;width:78px;flex-shrink:0;border:none;background:none;border-radius:12px;color:#E8DCC8;font-family:inherit;font-size:10.5px;font-weight:600;text-align:center;padding:8px 2px;cursor:pointer;line-height:1.15;text-decoration:none;}
+  .rail-btn .ri{display:block;font-size:21px;line-height:1;margin-bottom:3px;}
+  .rail-btn:hover{background:rgba(255,255,255,.08);}
+  .rail-btn.on{background:#6B4A33;color:#FFFDF8;}
+  .rail-btn.emp-mode{background:#2F4E6B;color:#fff;}
+  .rail-spacer{flex:1;}
+  .sidebar{display:flex;flex-direction:column;}
+  .sidebar-spacer{flex:1;min-height:16px;}
+  .panel-title{font-family:Georgia,serif;font-size:15px;font-weight:700;color:var(--cocoa-soft);margin-bottom:10px;}
+  .emp-item{gap:10px;justify-content:flex-start;padding:8px 10px;}
+  .eav{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--cocoa);overflow:hidden;}
+  .eav img{width:100%;height:100%;object-fit:cover;}
+  .einfo{flex:1;min-width:0;}
+  .einfo .nm{display:block;font-size:13.5px;}
+  .esub{display:block;font-size:11.5px;color:var(--cocoa-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .esub .warn{color:#A06A12;font-weight:700;}
+  .esub .bad{color:var(--cherry);font-weight:700;}
+  .ebar{display:block;height:4px;border-radius:2px;background:var(--line-soft);margin-top:4px;overflow:hidden;}
+  .ebar span{display:block;height:100%;background:var(--sage);}
+  .main{padding:24px 32px 60px;max-width:1080px;}
+  .hero{display:flex;gap:18px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:14px;}
+  .hero .card-head{margin:0;flex:1;min-width:0;}
+  .ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .ring > div{width:64px;height:64px;border-radius:50%;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:16px;line-height:1.1;}
+  .ring small{font-size:9.5px;font-weight:600;color:var(--cocoa-soft);}
+  .head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+  .steps{display:flex;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:14px;gap:6px;}
+  .step{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:none;font-family:inherit;color:var(--cocoa);cursor:pointer;padding:4px 2px;border-radius:10px;text-align:center;}
+  .step:hover{background:var(--line-soft);}
+  .step.sel{background:var(--cream);}
+  .step b{font-size:12.5px;}
+  .step small{font-size:11px;color:var(--cocoa-soft);}
+  .sdot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:#EDEAE2;color:var(--cocoa-soft);}
+  .step.done .sdot{background:var(--sage);color:#fff;}
+  .step.cur .sdot{background:var(--caramel-deep);color:#fff;}
+  .step-line{flex:0 1 60px;height:4px;border-radius:2px;background:var(--line);margin-top:20px;}
+  .step-line.on{background:var(--sage);}
+  .det-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start;}
+  .det-side{display:flex;flex-direction:column;gap:12px;}
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:12px;}
+  .tab{border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--cocoa-soft);padding:9px 14px;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-1px;}
+  .tab.on{color:var(--cocoa);border-bottom-color:var(--caramel-deep);}
+  .tab .cnt{font-size:10.5px;background:var(--line-soft);border-radius:10px;padding:1px 7px;margin-left:4px;}
+  .tab .cnt.warn{background:#F6E3B4;color:#7A5A0E;}
+  .side-card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px 15px;font-size:13px;}
+  .side-card b.t{display:block;margin-bottom:4px;}
+  .side-dark{background:var(--cocoa);color:#FFFDF8;border-color:var(--cocoa);}
+  .side-dark .lbl{font-size:10.5px;color:#E8DCC8;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+  .side-dark .big{font-family:Georgia,serif;font-size:18px;font-weight:700;margin:4px 0;}
+  .side-dark .sub2{font-size:12.5px;color:#E8DCC8;}
+  .side-dark button{margin-top:10px;border:none;background:#FFFDF8;color:var(--cocoa);border-radius:8px;padding:7px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .ck{display:inline-flex;width:20px;height:20px;border-radius:6px;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0;vertical-align:-4px;border:2px solid #D9CBB3;color:#fff;}
+  .ck1{background:var(--honey);border-color:var(--honey);}
+  .ck2{background:var(--sage);border-color:var(--sage);}
+  .ck3{background:var(--sky);border-color:var(--sky);}
+  .item.open{background:var(--cream);border-radius:8px;}
+  .team-head{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .team-head h1{font-size:28px;}
+  .team-head .muted{font-size:13px;}
+  .vt{display:flex;background:var(--line-soft);border-radius:10px;padding:3px;}
+  .vt button{border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--cocoa-soft);padding:6px 12px;border-radius:8px;cursor:pointer;}
+  .vt button.on{background:var(--paper);color:var(--cocoa);box-shadow:0 1px 2px rgba(59,42,32,.12);}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:11px 14px;}
+  .kpi b{display:block;font-family:Georgia,serif;font-size:24px;}
+  .kpi span{font-size:12px;color:var(--cocoa-soft);}
+  .tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+  .tcard{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:9px;cursor:pointer;text-align:left;font-family:inherit;color:var(--cocoa);}
+  .tcard:hover{border-color:var(--caramel);}
+  .tcard.warn{border-color:#E2B45C;}
+  .tcard.bad{border-color:var(--cherry);}
+  .tcard .top{display:flex;gap:10px;align-items:center;}
+  .tcard .tav{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;overflow:hidden;}
+  .tcard .tav img{width:100%;height:100%;object-fit:cover;}
+  .tcard .nm2{font-weight:700;font-size:15px;}
+  .lvlchip{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:2px 8px;margin-top:2px;}
+  .tseg{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#EDEAE2;}
+  .tseg span{display:block;height:100%;}
+  .tline{display:flex;justify-content:space-between;gap:8px;font-size:12px;background:var(--cream);border-radius:8px;padding:5px 8px;}
+  .tline b{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tline.warn{background:#FBEFD3;}
+  .tline.bad{background:#F7DDE0;}
+  .tlegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--cocoa-soft);margin-top:12px;}
+  .tlegend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+  .mx-wrap{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow-x:auto;}
+  .mx{border-collapse:collapse;width:100%;}
+  .mx th{font-size:11px;font-weight:600;color:var(--cocoa-soft);padding:8px 3px;vertical-align:bottom;text-align:center;line-height:1.2;}
+  .mx th.grp{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--caramel-deep);padding:8px 3px 0;}
+  .mx th .hl{display:block;max-width:78px;margin:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mx td{padding:4px 3px;text-align:center;border-top:1px solid var(--line-soft);}
+  .mx td.nm3{text-align:left;padding:8px 12px;font-size:13.5px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:var(--paper);}
+  .mx .gs{border-left:1px solid var(--line-soft);}
+  .cell{display:inline-flex;width:34px;height:26px;border-radius:7px;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:none;font-family:inherit;}
+  .cell.c0{background:#EDEAE2;color:#9A8A76;}
+  .cell.c1{background:var(--honey);color:#fff;}
+  .cell.c2{background:var(--sage);color:#fff;}
+  .cell.c3{background:var(--sky);color:#fff;}
+  button.cell{cursor:pointer;}
+  button.cell:hover{outline:2px solid var(--caramel);}
+  .mx tr.sum td{font-size:12px;color:var(--cocoa-soft);}
+  .mx tr.sum td.zero{color:var(--cherry);font-weight:700;}
+  .seg{display:flex;gap:4px;margin:2px 0 8px;flex-wrap:wrap;}
+  .seg button{flex:1;min-width:70px;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:7px 4px;font:inherit;font-size:11px;font-weight:700;color:var(--cocoa-soft);cursor:pointer;}
+  .seg button.on.v0{background:#EDEAE2;color:var(--cocoa);border-color:#D9CBB3;}
+  .seg button.on.v1{background:var(--honey);color:#fff;border-color:var(--honey);}
+  .seg button.on.v2{background:var(--sage);color:#fff;border-color:var(--sage);}
+  .seg button.on.v3{background:var(--sky);color:#fff;border-color:var(--sky);}
+  .mob-tools{display:none;}
+  @media (max-width:760px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .team-head h1{font-size:24px;} .mob-tools{display:inline-block;} .tcards{grid-template-columns:1fr;} }
+  .card-head input.name-input{font-family:Georgia,serif;font-size:22px;font-weight:700;}
+  .show-all{border:none;background:none;font:inherit;font-size:12px;color:var(--caramel-deep);text-decoration:underline;cursor:pointer;padding:0;margin-top:8px;}
+  @media (min-width:761px){ .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;align-self:start;} }
+  @media (max-width:980px){ .det-grid{grid-template-columns:1fr;} .det-side{order:-1;} }
+  @media (max-width:760px){
+    .app{display:block;}
+    .rail{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px 6px calc(6px + env(safe-area-inset-bottom, 0px));gap:2px;}
+    .rail-btn{width:auto;min-width:50px;flex:1 0 auto;padding:6px 4px;font-size:9.5px;white-space:nowrap;}
+    .rail-btn .ri{font-size:19px;}
+    .rail-spacer, #helpBtn{display:none;}
+    .sidebar{display:none !important;position:static;height:auto;min-height:100vh;border-right:none;border-bottom:none;padding:16px 14px 96px;}
+    body.m-panel .sidebar{display:flex !important;}
+    body.m-panel .main{display:none;}
+    .main{padding:16px 14px 100px;max-width:none;}
+    .hero{display:block;position:relative;padding:14px;}
+    .hero .card-head{padding-right:62px;flex-direction:column;align-items:flex-start;gap:10px;}
+    .hero .card-head .fields{width:100%;}
+    .ring{position:absolute;top:12px;right:12px;width:56px;height:56px;}
+    .ring > div{width:42px;height:42px;font-size:12px;}
+    .ring small{display:none;}
+    .steps{padding:10px 6px;}
+    .step b{font-size:11px;}
+    .step-line{display:none;}
+    .to-list{display:inline-block !important;}
+  }
   button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--caramel);outline-offset:2px;}
 </style>
 </head>
 <body>
 <div class="app">
+  <nav class="rail" id="rail" aria-label="Menu">
+    <button class="rail-btn" id="railTeam"><span class="ri">👥</span>Tým</button>
+    <button class="rail-btn" id="reportBtn"><span class="ri">📅</span>Měsíc</button>
+    <button class="rail-btn" id="logBtn"><span class="ri">🕘</span>Historie</button>
+    <button class="rail-btn" id="cfgBtn"><span class="ri">⚙️</span>Nastavení</button>
+    <div class="rail-spacer"></div>
+    <a class="rail-btn" id="kbLink" href="../"><span class="ri">📚</span>Návody</a>
+    <button class="rail-btn" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
+    <button class="rail-btn" id="modeLabel" title="Přepnout vedoucí / zaměstnanec"></button>
+  </nav>
   <div class="sidebar">
-    <div class="title-row">
-      <h1>Karta zaměstnance</h1>
-      <button class="help-btn" id="helpBtn" title="Nápověda" aria-label="Nápověda">?</button>
-    </div>
-    <div class="sub">Digitální adaptační checklist</div>
-    <button type="button" class="mode-badge" id="modeLabel" title="Kliknutím přepneš roli"></button>
+    <div class="panel-title">Karta zaměstnance</div>
     <input class="search-input" id="empSearch" placeholder="Hledat zaměstnance…" autocomplete="off">
     <button class="link-btn" id="sortToggle" style="margin:0 0 8px;text-align:left"></button>
     <ul class="emp-list" id="empList"></ul>
@@ -347,16 +489,13 @@
         <button class="cancel" id="cancelAdd">Zrušit</button>
       </div>
     </div>
+    <div class="sidebar-spacer"></div>
+    <button class="mode-btn" id="publishBtn" style="display:none">☁ Publikovat na web</button>
     <div class="backup-row" id="backupRow">
       <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
       <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
     </div>
-    <button class="mode-btn" id="reportBtn">📅 Měsíční report a uzávěrka</button>
-    <button class="mode-btn" id="cfgBtn">⚙ Nastavení karty</button>
-    <button class="mode-btn" id="logBtn">🕘 Historie změn</button>
-    <button class="mode-btn" id="publishBtn" style="display:none">☁ Publikovat na web</button>
-    <a class="mode-btn" id="kbLink" href="../" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box;">📚 Znalostní báze</a>
     <div class="version-tag" id="versionTag"></div>
     <div class="mode-note" id="modeHint"></div>
     <div class="mode-note" id="modeNote"></div>
@@ -377,7 +516,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v3.10';
+const APP_VERSION = 'v4.1';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1217,7 +1356,7 @@ async function renderList(){
     const d = (e.id === activeId && activeData) ? activeData : normalize(await loadEmployee(e.id));
     const done = d ? ALL_ITEM_IDS.filter(id => d.checklist[id] === 2).length : 0;
     const badge = d ? topBadgeIcon(d) : '';
-    return {e, done, badge};
+    return {e, done, badge, d};
   }));
   if(sidebarSort === 'progress'){
     withData.sort((a, b) => b.done - a.done || a.e.name.localeCompare(b.e.name, 'cs'));
@@ -1237,7 +1376,19 @@ async function renderList(){
   filtered.forEach(x=>{
     const li = document.createElement('li');
     li.className = 'emp-item' + (x.e.id === activeId ? ' active' : '');
-    li.innerHTML = '<span class="nm">' + escapeHtml(x.e.name) + '</span>' +
+    const d = x.d;
+    let sub = d && LEVELS[d.level] ? LEVELS[d.level].label : '';
+    if(d && MODE === 'leader'){
+      const waitT = ALL_ITEM_IDS.filter(id=>d.checklist[id] === 3).length;
+      if(waitT) sub += ' · ' + waitT + ' čeká na test';
+      const ev = evaluateViolations(d.violations || []);
+      if(ev.reds.length) sub += ' · <span class="bad">červená karta</span>';
+      else if(ev.active.length) sub += ' · <span class="warn">žlutá karta</span>';
+    }
+    const pct = ALL_ITEM_IDS.length ? Math.round(x.done / ALL_ITEM_IDS.length * 100) : 0;
+    li.innerHTML = avatarHtml(d || {name: x.e.name}, 'eav') +
+      '<span class="einfo"><span class="nm">' + escapeHtml(x.e.name) + '</span>' +
+      '<span class="esub">' + sub + '</span><span class="ebar"><span style="width:' + pct + '%"></span></span></span>' +
       (x.badge ? '<span class="emp-badge">' + x.badge + '</span>' : '');
     li.onclick = ()=>selectEmployee(x.e.id);
     empListEl.appendChild(li);
@@ -1253,8 +1404,8 @@ async function renderList(){
 function applyMode(){
   const leader = MODE === 'leader';
   const lbl = $('modeLabel');
-  lbl.textContent = (leader ? 'Režim: Vedoucí' : 'Režim: Zaměstnanec') + ' ⇄';
-  lbl.className = 'mode-badge' + (leader ? '' : ' employee');
+  lbl.innerHTML = leader ? '<span class="ri">✏️</span>Vedoucí' : '<span class="ri">👤</span>Zaměstnanec';
+  lbl.className = 'rail-btn' + (leader ? '' : ' emp-mode');
   $('addBtn').style.display = leader ? 'block' : 'none';
   $('addForm').style.display = 'none';
   $('backupRow').style.display = leader ? 'flex' : 'none';
@@ -1262,8 +1413,25 @@ function applyMode(){
   $('cfgBtn').style.display = leader ? 'block' : 'none';
   $('logBtn').style.display = (leader && onWeb) ? 'block' : 'none';
   $('modeHint').textContent = leader
-    ? 'Klikni na roli nahoře pro přepnutí. Režim Zaměstnanec skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení – kdokoli může přepnout zpět.'
-    : 'Klikni na roli nahoře pro přepnutí zpět. Tady může zaměstnanec číst návody, zaškrtávat přečtení a dělat testy.';
+    ? 'Režim vedoucí. Tlačítkem ✏️ Vedoucí v liště přepneš na pohled zaměstnance – skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení, přepnout zpět může kdokoli.'
+    : 'Pohled zaměstnance: návody, přečtení a testy. Zpět na vedoucího přepneš tlačítkem 👤 Zaměstnanec v liště.';
+}
+// Zvýraznění aktivní položky v liště
+function setRail(v){
+  ['railTeam', 'reportBtn', 'logBtn', 'cfgBtn'].forEach(id=>{ const b = $(id); if(b) b.classList.remove('on'); });
+  const map = {team:'railTeam', month:'reportBtn', log:'logBtn', cfg:'cfgBtn'};
+  if(map[v] && $(map[v])) $(map[v]).classList.add('on');
+}
+// Mobil: ukázat seznam zaměstnanců
+function showListMobile(){ document.body.classList.add('m-panel'); window.scrollTo(0, 0); }
+function initials(name){
+  return String(name || '?').trim().split(/\s+/).slice(0, 2).map(w=>w.charAt(0).toUpperCase()).join('') || '?';
+}
+function avatarHtml(d, cls){
+  if(d && d.photo) return '<span class="' + cls + '"><img src="' + d.photo + '" alt=""></span>';
+  const col = {zelena:'#DFE9DA', karamel:'#F6E3C3', vinova:'#F2D6DA', modra:'#DCE6F0', cokolada:'#E8DCC8'};
+  const key = (d && LEVELS[d.level] && LEVELS[d.level].color) || defaultColorKey(d ? d.level : '');
+  return '<span class="' + cls + '" style="background:' + (col[key] || '#E8DCC8') + '">' + escapeHtml(initials(d ? d.name : '')) + '</span>';
 }
 
 function itemHtml(id, label, d, leader){
@@ -1272,9 +1440,9 @@ function itemHtml(id, label, d, leader){
   const open = (openItemId === id);
   const chips = (L.read ? '<span class="chip">přečteno</span>' : '') +
                 (L.passed ? '<span class="chip ok">test ' + L.score + ' %</span>' : '');
-  return '<div class="item">' +
+  return '<div class="item' + (open ? ' open' : '') + '" id="it-' + id + '">' +
     '<div class="item-row" data-toggle="' + id + '">' +
-      '<span class="txt"><span class="chev">' + (open ? '▾' : '▸') + '</span>' + escapeHtml(label) + ' ' + chips + '</span>' +
+      '<span class="txt"><span class="ck ck' + st + '">' + ({0:'', 1:'~', 2:'✓', 3:'?'}[st] || '') + '</span>' + escapeHtml(label) + ' ' + chips + '</span>' +
       '<span class="state-pill s' + st + '"' + (leader ? ' data-cycle="' + id + '" title="Klikni pro změnu stavu" style="cursor:pointer"' : '') + '>' + STATES[st] + '</span>' +
     '</div>' +
     (open ? detailHtml(id, d, leader) : '') +
@@ -1286,6 +1454,12 @@ function detailHtml(id, d, leader){
   const g = guides[id] || '';
   const T = TESTS[id];
   let h = '<div class="item-detail">';
+  if(leader){
+    const st = d.checklist[id];
+    h += '<div class="dl">Stav</div><div class="seg">' + [0, 3, 1, 2].map(v=>
+      '<button class="v' + v + (st === v ? ' on' : '') + '" data-set-state="' + id + ':' + v + '">' + STATES[v].toUpperCase() + '</button>'
+    ).join('') + '</div>';
+  }
   h += '<div class="dl">Návod</div>';
   if(KB_LINKS[id]){
     h += '<div class="row" style="margin:0 0 8px">' + KB_LINKS[id].map(l=>
@@ -1516,6 +1690,33 @@ function violationsChartHtml(evList){
     '<div class="muted" style="margin-top:2px"><span style="color:#C98B1F;font-weight:700">■</span> žlutá &nbsp; <span style="color:#A63446;font-weight:700">■</span> červená</div>';
 }
 
+let cardTab = 'learn';   // 'learn' | 'vio' | 'notes'
+let stepGroup = null;    // index zobrazené úrovně; null = aktuální, 'all' = všechny
+// Další krok: první položka (v pořadí úrovní), která ještě není „samostatně“
+function nextStep(d){
+  for(let gi = 0; gi < CHECKLIST_GROUPS.length; gi++){
+    for(const it of CHECKLIST_GROUPS[gi].items){
+      if(d.checklist[it[0]] !== 2) return {gi: gi, id: it[0], label: it[1], st: d.checklist[it[0]]};
+    }
+  }
+  return null;
+}
+function currentGroupIdx(d){
+  const ns = nextStep(d);
+  return ns ? ns.gi : Math.max(0, CHECKLIST_GROUPS.length - 1);
+}
+function nextStepHtml(d, leader){
+  const ns = nextStep(d);
+  if(!ns) return '<div class="side-card side-dark"><div class="lbl">Hotovo</div><div class="big">Celá karta splněná 👑</div><div class="sub2">Pracuje samostatně ve všem.</div></div>';
+  const L = d.learn[ns.id] || {};
+  let big, sub;
+  if(ns.st === 3){ big = (TESTS[ns.id] ? 'Test: ' : 'Čeká na test: ') + ns.label; sub = L.read ? 'Návod je přečtený – zbývá test.' : 'Nejdřív přečíst návod, pak udělat test.'; }
+  else if(ns.st === 1){ big = 'Dohled: ' + ns.label; sub = leader ? 'Zaučeno – až zvládne samostatně, přepni stav.' : 'Zatím pod dohledem.'; }
+  else { big = (leader ? 'Zaučit: ' : '') + ns.label; sub = KB_LINKS[ns.id] ? 'Začni návodem ve znalostní bázi.' : 'Ještě nezačato.'; }
+  return '<div class="side-card side-dark"><div class="lbl">' + (leader ? 'Další krok' : 'Tvůj další krok') + '</div>' +
+    '<div class="big">' + escapeHtml(big) + '</div><div class="sub2">' + escapeHtml(sub) + '</div>' +
+    '<button id="nextStepBtn" data-next="' + ns.id + '" data-next-g="' + ns.gi + '">Otevřít ›</button></div>';
+}
 function renderMain(resetScroll){
   const y = window.scrollY;
   const d = activeData;
@@ -1524,17 +1725,19 @@ function renderMain(resetScroll){
   const ev = evaluateViolations(d.violations);
   const bonusAmount = Math.round(lvl.bonus * (ev.bonusPct / 100));
   const total = lvl.base + bonusAmount;
-
   const totalItems = ALL_ITEM_IDS.length;
   const doneItems = ALL_ITEM_IDS.filter(id=>d.checklist[id] === 2).length;
+  const pct = totalItems ? Math.round(doneItems / totalItems * 100) : 0;
+  if(!leader) cardTab = 'learn';
+  setRail('team');
 
   const stampColor = levelColor(d.level);
   const photoHtml = d.photo
     ? '<img src="' + d.photo + '" alt="Foto">'
     : '<div class="stamp" style="color:' + stampColor + '">' + lvl.label + '</div>';
+  const ring = '<div class="ring" style="background:conic-gradient(var(--sage) 0 ' + pct + '%, var(--line-soft) ' + pct + '% 100%)" title="' + doneItems + ' z ' + totalItems + ' položek samostatně"><div>' + pct + ' %<small>zaučeno</small></div></div>';
 
-  let html = '';
-
+  let html = '<div class="hero">';
   if(leader){
     html += '<div class="card-head">' +
       '<label class="photo-wrap photo-click" title="Klikni a nahraj fotku">' + photoHtml +
@@ -1551,8 +1754,8 @@ function renderMain(resetScroll){
           '</select></label>' +
         '</div>' +
         '<div class="wage-line">Sazba: ' + lvl.base + ' Kč/h + ' + bonusAmount + ' Kč osobní ohodnocení (' + ev.bonusPct + ' %) = <b>' + total + ' Kč/h</b></div>' +
-        '<div class="row" style="margin-top:6px">' +
-          '<button class="btn ghost" id="reportOneBtn">✉ Report tohoto zaměstnance</button>' +
+        '<div class="head-actions">' +
+          '<button class="btn ghost" id="reportOneBtn">✉ Report</button>' +
           '<button class="btn ghost" id="printBtn">📄 Vytisknout kartu</button>' +
         '</div>' +
       '</div></div>';
@@ -1562,24 +1765,52 @@ function renderMain(resetScroll){
       '<div class="fields"><div class="name-input">' + escapeHtml(d.name) + '</div>' +
       badgesHtml(d) +
       '<div class="meta-row"><span>Úroveň: ' + lvl.label + '</span></div>' +
-      '<div class="row" style="margin-top:6px"><button class="btn ghost" id="printBtn">📄 Vytisknout kartu</button></div>' +
+      '<div class="head-actions"><button class="btn ghost" id="printBtn">📄 Vytisknout kartu</button></div>' +
       '</div></div>';
   }
+  html += ring + '</div>';
 
-  html += '<section class="block"><h2>Adaptační postup</h2>' +
+  // úrovně jako kroky
+  const curIdx = currentGroupIdx(d);
+  const shownIdx = stepGroup === 'all' ? -1 : (stepGroup == null ? curIdx : stepGroup);
+  html += '<div class="steps">' + CHECKLIST_GROUPS.map((g, i)=>{
+    const ids = g.items.map(x=>x[0]);
+    const done = ids.filter(id=>d.checklist[id] === 2).length;
+    const complete = ids.length > 0 && done === ids.length;
+    const prevComplete = i > 0 && CHECKLIST_GROUPS[i - 1].items.every(it=>d.checklist[it[0]] === 2);
+    return (i ? '<span class="step-line' + (prevComplete ? ' on' : '') + '"></span>' : '') +
+      '<button class="step' + (complete ? ' done' : (i === curIdx ? ' cur' : '')) + (shownIdx === i ? ' sel' : '') + '" data-step="' + i + '">' +
+      '<span class="sdot">' + (complete ? '✓' : (i + 1)) + '</span><b>' + escapeHtml(g.group) + '</b>' +
+      '<small>' + done + ' / ' + ids.length + (i === curIdx && !complete ? ' · teď tady' : '') + '</small></button>';
+  }).join('') + '</div>';
+
+  // levý sloupec: záložky
+  const vioCnt = ev.active.length + ev.reds.length;
+  let left = '';
+  if(leader){
+    left += '<div class="tabs">' +
+      '<button class="tab' + (cardTab === 'learn' ? ' on' : '') + '" data-tab="learn">Zaučení</button>' +
+      '<button class="tab' + (cardTab === 'vio' ? ' on' : '') + '" data-tab="vio">Prohřešky' + (vioCnt ? '<span class="cnt warn">' + vioCnt + '</span>' : '') + '</button>' +
+      '<button class="tab' + (cardTab === 'notes' ? ' on' : '') + '" data-tab="notes">Poznámky' + (d.notes.length ? '<span class="cnt">' + d.notes.length + '</span>' : '') + '</button>' +
+    '</div>';
+  }
+  const groupsShown = CHECKLIST_GROUPS.map((g, i)=>({g: g, i: i})).filter(x=>shownIdx === -1 || x.i === shownIdx);
+  left += '<section class="block" data-pane="learn"' + (cardTab === 'learn' ? '' : ' hidden') + '>' +
     '<div class="legend">' +
       '<span><span class="dot" style="background:#B8B2A2"></span>čeká na zaučení</span>' +
-      '<span><span class="dot" style="background:#4B6E8C"></span>čeká se na splnění testu</span>' +
-      '<span><span class="dot" style="background:#C98B1F"></span>zaučen, nutný dohled</span>' +
-      '<span><span class="dot" style="background:#5B7B52"></span>pracuje samostatně</span>' +
+      '<span><span class="dot" style="background:#4B6E8C"></span>čeká na test</span>' +
+      '<span><span class="dot" style="background:#C98B1F"></span>zaučen, dohled</span>' +
+      '<span><span class="dot" style="background:#5B7B52"></span>samostatně</span>' +
     '</div>' +
     progressBarHtml(d) +
     '<div class="muted" style="margin-bottom:8px">Klikni na položku pro návod a test.' + (leader ? ' Klikem na stav ho změníš ručně.' : '') + '</div>' +
-    CHECKLIST_GROUPS.map(g=>
-      '<div class="group-label">' + g.group + '</div>' + g.items.map(it=>itemHtml(it[0], it[1], d, leader)).join('')
+    groupsShown.map(x=>
+      '<div class="group-label">' + x.g.group + '</div>' + x.g.items.map(it=>itemHtml(it[0], it[1], d, leader)).join('')
     ).join('') +
+    '<button class="show-all" id="showAllSteps">' + (shownIdx === -1 ? 'Zobrazit jen aktuální úroveň' : 'Zobrazit všechny úrovně') + '</button>' +
   '</section>';
 
+  let side = nextStepHtml(d, leader);
   if(leader){
     let banner;
     if(ev.reds.length){
@@ -1605,7 +1836,7 @@ function renderMain(resetScroll){
         '<button class="danger-link" data-del-vio="' + v.id + '" data-armed="0">Smazat</button></div>';
     }).join('');
 
-    html += '<section class="block"><h2>Prohřešky a osobní ohodnocení</h2>' + banner +
+    left += '<section class="block" data-pane="vio"' + (cardTab === 'vio' ? '' : ' hidden') + '><h2>Prohřešky a osobní ohodnocení</h2>' + banner +
       '<div class="bonus-summary"><span>Osobní ohodnocení nyní</span><b>' + ev.bonusPct + ' %</b></div>' +
       '<div class="vio-form">' +
         '<select id="vioCat">' + CATEGORIES.map(c=>'<option value="' + c.id + '" title="' + escapeHtml(c.desc) + '">' + escapeHtml(c.name) + '</option>').join('') + '</select>' +
@@ -1619,7 +1850,7 @@ function renderMain(resetScroll){
       (hist ? '<div class="dl" style="margin-top:14px">Historie</div>' + hist : '') +
     '</section>';
 
-    html += '<section class="block"><h2>Poznámky</h2>' +
+    left += '<section class="block" data-pane="notes"' + (cardTab === 'notes' ? '' : ' hidden') + '><h2>Poznámky</h2>' +
       '<div class="note-form"><div style="display:flex;flex-direction:column;gap:6px;flex:1;">' +
         '<input id="noteAuthor" placeholder="Jméno (kdo zapisuje)" style="font-family:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;">' +
         '<textarea id="noteText" placeholder="Nový záznam…"></textarea></div>' +
@@ -1628,14 +1859,183 @@ function renderMain(resetScroll){
         (d.notes.slice().reverse().map(n=>
           '<div class="note-item"><div class="note-date">' + escapeHtml(n.date) + (n.author ? ' · ' + escapeHtml(n.author) : '') + '</div><div>' + escapeHtml(n.text) + '</div></div>').join('')
           || '<div class="muted">Zatím žádné poznámky.</div>') +
-      '</div></section>' +
-      '<button class="danger-link" id="deleteEmp" data-armed="0">Smazat kartu zaměstnance</button>';
+      '</div>' +
+      '<div style="margin-top:16px"><button class="danger-link" id="deleteEmp" data-armed="0">Smazat kartu zaměstnance</button></div></section>';
+
+    side += '<div class="side-card"><b class="t">Prohřešky</b>' +
+      (ev.reds.length ? '<span style="color:var(--cherry);font-weight:700">Červená karta</span>' :
+        (ev.active.length ? '<span style="color:#A06A12;font-weight:700">Žlutá karta do ' + fmtMs(ev.until) + '</span>' : 'Žádný platný')) +
+      ' · ohodnocení <b>' + ev.bonusPct + ' %</b></div>';
+    const lastNote = d.notes[d.notes.length - 1];
+    side += '<div class="side-card"><b class="t">Poslední poznámka</b>' +
+      (lastNote ? '„' + escapeHtml(lastNote.text.length > 140 ? lastNote.text.slice(0, 140) + '…' : lastNote.text) + '“<div class="muted" style="margin-top:4px">' + escapeHtml(lastNote.date) + (lastNote.author ? ' · ' + escapeHtml(lastNote.author) : '') + '</div>' : '<span class="muted">Zatím žádná.</span>') + '</div>';
   }
 
-  mainEl.innerHTML = '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button>' + html;
-  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  html += '<div class="det-grid"><div class="det-left">' + left + '</div><div class="det-side">' + side + '</div></div>';
+
+  mainEl.innerHTML = '<button class="to-list" id="toListBtn">‹ Tým</button>' + html;
+  $('toListBtn').onclick = ()=>{ renderTeam(); };
   bindMainEvents();
+  // záložky (přepínají se bez překreslení)
+  mainEl.querySelectorAll('[data-tab]').forEach(b=>{
+    b.onclick = ()=>{
+      cardTab = b.dataset.tab;
+      mainEl.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on', x === b));
+      mainEl.querySelectorAll('[data-pane]').forEach(p=>{ p.hidden = p.dataset.pane !== cardTab; });
+    };
+  });
+  mainEl.querySelectorAll('[data-step]').forEach(b=>{
+    b.onclick = ()=>{ stepGroup = parseInt(b.dataset.step, 10); cardTab = 'learn'; renderMain(); };
+  });
+  $('showAllSteps').onclick = ()=>{ stepGroup = (shownIdx === -1) ? null : 'all'; renderMain(); };
+  const nsb = $('nextStepBtn');
+  if(nsb) nsb.onclick = ()=>{
+    openItemId = nsb.dataset.next;
+    stepGroup = parseInt(nsb.dataset.nextG, 10);
+    cardTab = 'learn';
+    quiz = null; reviewId = null;
+    renderMain();
+    const el = $('it-' + openItemId);
+    if(el) el.scrollIntoView({block:'center'});
+  };
   window.scrollTo(0, resetScroll ? 0 : y);
+}
+
+/* ==================== TÝM (přehled + tabulka „Kdo co umí“) ==================== */
+let teamView = 'cards';
+try{ teamView = localStorage.getItem('team-view') || 'cards'; }catch(e){}
+let teamCache = {};
+const LVL_CHIP = {zelena:['#DFE9DA','#3E5C36'], karamel:['#F6E3C3','#7A4F12'], vinova:['#F2D6DA','#7A2233'], modra:['#DCE6F0','#2F4E6B'], cokolada:['#E8DCC8','#3B2A20']};
+function lvlChipHtml(d){
+  const key = (LEVELS[d.level] && LEVELS[d.level].color) || defaultColorKey(d.level);
+  const c = LVL_CHIP[key] || LVL_CHIP.cokolada;
+  return '<span class="lvlchip" style="background:' + c[0] + ';color:' + c[1] + '">' + escapeHtml(LEVELS[d.level] ? LEVELS[d.level].label : d.level) + '</span>';
+}
+function shortLabel(t){ return String(t).replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+/g, ' ').trim(); }
+async function renderTeam(){
+  setRail('team');
+  activeId = null; activeData = null;
+  document.body.classList.remove('m-panel');
+  await renderList();
+  const leader = MODE === 'leader';
+  teamCache = {};
+  const rows = [];
+  for(const e of employees){
+    const d = normalize(await loadEmployee(e.id));
+    if(!d) continue;
+    teamCache[d.id] = d;
+    rows.push(d);
+  }
+  rows.sort((a, b)=>a.name.localeCompare(b.name, 'cs'));
+  const N = ALL_ITEM_IDS.length;
+  let h = '<div class="team-head"><div style="flex:1;min-width:200px"><h1>Tým</h1><div class="muted">' +
+    (rows.length ? rows.length + ' ' + (rows.length === 1 ? 'zaměstnanec' : (rows.length < 5 ? 'zaměstnanci' : 'zaměstnanců')) + ' · klikni na kartu pro detail' : 'Zatím tu nikdo není') + '</div></div>' +
+    '<div class="vt"><button class="' + (teamView === 'cards' ? 'on' : '') + '" data-tv="cards">Karty</button><button class="' + (teamView === 'table' ? 'on' : '') + '" data-tv="table">Kdo co umí</button></div>' +
+    (leader ? '<button class="btn" id="teamAdd">+ Zaměstnanec</button>' : '') +
+    '<button class="btn ghost mob-tools" id="teamTools">☰ Seznam a nástroje</button></div>';
+  if(leader && rows.length){
+    let waitT = 0, sup = 0, yellow = 0, red = 0;
+    rows.forEach(d=>{
+      ALL_ITEM_IDS.forEach(id=>{ if(d.checklist[id] === 3) waitT++; if(d.checklist[id] === 1) sup++; });
+      const ev = evaluateViolations(d.violations || []);
+      if(ev.reds.length) red++; else if(ev.active.length) yellow++;
+    });
+    const now = new Date();
+    const daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+    h += '<div class="kpis">' +
+      '<div class="kpi"><b>' + waitT + '</b><span>položek čeká na test</span></div>' +
+      '<div class="kpi"><b>' + sup + '</b><span>položek pod dohledem</span></div>' +
+      '<div class="kpi"><b style="color:' + (red ? 'var(--cherry)' : (yellow ? '#A06A12' : 'inherit')) + '">' + (yellow + red) + '</b><span>' + (red ? red + '× červená, ' + yellow + '× žlutá' : 'platné žluté karty') + '</span></div>' +
+      '<div class="kpi"><b>' + daysLeft + ' ' + (daysLeft === 1 ? 'den' : (daysLeft >= 2 && daysLeft <= 4 ? 'dny' : 'dní')) + '</b><span>do konce měsíce (report)</span></div>' +
+    '</div>';
+  }
+  if(!rows.length){
+    h += '<div class="empty-state">' + (leader ? 'Přidej prvního zaměstnance tlačítkem „+ Zaměstnanec“.' : 'Zatím tu nejsou žádní zaměstnanci.') + '</div>';
+  } else if(teamView === 'cards'){
+    h += '<div class="tcards">' + rows.map(d=>{
+      const cnt = {0:0, 1:0, 2:0, 3:0};
+      ALL_ITEM_IDS.forEach(id=>{ cnt[d.checklist[id] || 0]++; });
+      const seg = [[2, 'var(--sage)'], [1, 'var(--honey)'], [3, 'var(--sky)']].map(x=>
+        cnt[x[0]] ? '<span style="width:' + (cnt[x[0]] / N * 100) + '%;background:' + x[1] + '"></span>' : '').join('');
+      const ev = evaluateViolations(d.violations || []);
+      const ns = nextStep(d);
+      let cls = '', vio = '';
+      if(leader){
+        if(ev.reds.length){ cls = ' bad'; vio = '<div class="tline bad"><span>Červená karta</span><b>' + ev.bonusPct + ' %</b></div>'; }
+        else if(ev.active.length){ cls = ' warn'; vio = '<div class="tline warn"><span>Žlutá karta do ' + fmtMs(ev.until) + '</span><b>' + ev.bonusPct + ' %</b></div>'; }
+      }
+      return '<button class="tcard' + cls + '" data-emp="' + d.id + '">' +
+        '<div class="top">' + avatarHtml(d, 'tav') + '<div><div class="nm2">' + escapeHtml(d.name) + '</div>' + lvlChipHtml(d) + '</div></div>' +
+        '<div class="tseg">' + seg + '</div>' +
+        '<div class="muted">' + cnt[2] + ' / ' + N + ' samostatně' + (d.startDate ? ' · od ' + fmtStr(d.startDate) : '') + '</div>' +
+        (cnt[3] ? '<div class="tline"><span>Čeká na test</span><b>' + cnt[3] + '</b></div>' : '') +
+        vio +
+        '<div class="tline"><span>Další krok</span><b>' + (ns ? escapeHtml(shortLabel(ns.label)) : 'hotovo 👑') + '</b></div>' +
+      '</button>';
+    }).join('') + '</div>' +
+    '<div class="tlegend"><span><i style="background:var(--sage)"></i>samostatně</span><span><i style="background:var(--honey)"></i>dohled</span><span><i style="background:var(--sky)"></i>čeká na test</span><span><i style="background:#EDEAE2"></i>čeká na zaučení</span></div>';
+  } else {
+    const sym = {0:'–', 1:'D', 2:'✓', 3:'T'};
+    let head1 = '<tr><th></th>', head2 = '<tr><th style="text-align:left;padding-left:12px">Zaměstnanec</th>';
+    CHECKLIST_GROUPS.forEach(g=>{
+      if(!g.items.length) return;
+      head1 += '<th class="grp gs" colspan="' + g.items.length + '">' + escapeHtml(g.group) + '</th>';
+      g.items.forEach((it, j)=>{ head2 += '<th' + (j === 0 ? ' class="gs"' : '') + ' title="' + escapeHtml(it[1]) + '"><span class="hl">' + escapeHtml(shortLabel(it[1])) + '</span></th>'; });
+    });
+    head1 += '</tr>'; head2 += '</tr>';
+    const body = rows.map(d=>{
+      let r = '<tr><td class="nm3"><a href="#" data-emp="' + d.id + '" style="color:inherit;text-decoration:none">' + escapeHtml(d.name) + '</a></td>';
+      CHECKLIST_GROUPS.forEach(g=>{
+        g.items.forEach((it, j)=>{
+          const st = d.checklist[it[0]] || 0;
+          r += '<td' + (j === 0 ? ' class="gs"' : '') + '>' + (leader
+            ? '<button class="cell c' + st + '" data-mx="' + d.id + ':' + it[0] + '" title="' + escapeHtml(it[1]) + ' – ' + STATES[st] + ' (klik = další stav)">' + sym[st] + '</button>'
+            : '<span class="cell c' + st + '" title="' + escapeHtml(it[1]) + ' – ' + STATES[st] + '">' + sym[st] + '</span>') + '</td>';
+        });
+      });
+      return r + '</tr>';
+    }).join('');
+    let sum = '<tr class="sum"><td class="nm3" style="font-weight:400;font-size:12px;color:var(--cocoa-soft)">Zvládá samostatně</td>';
+    CHECKLIST_GROUPS.forEach(g=>{
+      g.items.forEach((it, j)=>{
+        const n = rows.filter(d=>d.checklist[it[0]] === 2).length;
+        sum += '<td class="' + (j === 0 ? 'gs ' : '') + (n ? '' : 'zero') + '">' + n + '/' + rows.length + '</td>';
+      });
+    });
+    sum += '</tr>';
+    h += '<div class="mx-wrap"><table class="mx">' + head1 + head2 + body + sum + '</table></div>' +
+      '<div class="tlegend"><span><i style="background:var(--sage)"></i>✓ samostatně</span><span><i style="background:var(--honey)"></i>D dohled</span><span><i style="background:var(--sky)"></i>T čeká na test</span><span><i style="background:#EDEAE2"></i>– čeká na zaučení</span>' +
+      (leader ? '<span>Klik na políčko přepne stav.</span>' : '') + '</div>';
+  }
+  mainEl.innerHTML = h;
+  window.scrollTo(0, 0);
+  mainEl.querySelectorAll('[data-tv]').forEach(b=>{
+    b.onclick = ()=>{ teamView = b.dataset.tv; try{ localStorage.setItem('team-view', teamView); }catch(e){} renderTeam(); };
+  });
+  mainEl.querySelectorAll('[data-emp]').forEach(b=>{
+    b.onclick = e=>{ e.preventDefault(); selectEmployee(b.dataset.emp); };
+  });
+  mainEl.querySelectorAll('[data-mx]').forEach(b=>{
+    b.onclick = async ()=>{
+      const p = b.dataset.mx.split(':');
+      const d = teamCache[p[0]];
+      if(!d) return;
+      d.checklist[p[1]] = CYCLE[(CYCLE.indexOf(d.checklist[p[1]] || 0) + 1) % CYCLE.length];
+      try{ await saveEmployee(d); }catch(err){ $('modeNote').textContent = 'Uložení selhalo – zkus to znovu.'; return; }
+      const sym2 = {0:'–', 1:'D', 2:'✓', 3:'T'};
+      const st = d.checklist[p[1]];
+      b.className = 'cell c' + st;
+      b.textContent = sym2[st];
+      b.title = itemLabel(p[1]) + ' – ' + STATES[st] + ' (klik = další stav)';
+      await renderList();
+    };
+  });
+  const ta = $('teamAdd');
+  if(ta) ta.onclick = ()=>{
+    if(window.matchMedia('(max-width:760px)').matches) showListMobile();
+    $('addBtn').onclick();
+  };
+  $('teamTools').onclick = showListMobile;
 }
 
 async function selectEmployee(id){
@@ -1643,12 +2043,14 @@ async function selectEmployee(id){
   openItemId = null;
   quiz = null;
   reviewId = null;
+  stepGroup = null;
+  cardTab = 'learn';
   mainEl.innerHTML = '<div class="empty-state">Načítám…</div>';
   activeData = await loadEmployee(id);
   if(!activeData){ activeData = blankEmployee('Nový zaměstnanec'); activeData.id = id; }
   await renderList();
   renderMain(true);
-  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({behavior:'smooth', block:'start'});
+  document.body.classList.remove('m-panel');
 }
 
 /* ==================== UDÁLOSTI ==================== */
@@ -1749,6 +2151,17 @@ function bindMainEvents(){
     };
   });
 
+  // rychlé nastavení stavu tlačítky
+  mainEl.querySelectorAll('[data-set-state]').forEach(b=>{
+    b.onclick = async e=>{
+      e.stopPropagation();
+      const p = b.dataset.setState.split(':');
+      d.checklist[p[0]] = parseInt(p[1], 10);
+      await persist();
+      renderMain();
+    };
+  });
+
   // návody (sdílené)
   mainEl.querySelectorAll('[data-guide]').forEach(ta=>{
     ta.onchange = async ()=>{
@@ -1839,8 +2252,7 @@ function bindMainEvents(){
     employees = employees.filter(x=>x.id !== d.id);
     await saveIndex();
     activeId = null; activeData = null; openItemId = null; quiz = null;
-    await renderList();
-    mainEl.innerHTML = '<div class="empty-state">Vyber zaměstnance vlevo, nebo přidej nového.</div>';
+    await renderTeam();
   };
 }
 
@@ -1963,12 +2375,13 @@ async function buildMonthText(){
   return lines.join('\n');
 }
 async function renderMonthReport(){
+  setRail('month');
   activeId = null;
   activeData = null;
   await renderList();
   const rows = await buildMonthRows();
   const text = await buildMonthText();
-  let h = '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button>' +
+  let h = '<button class="to-list" id="toListBtn">‹ Zaměstnanci</button>' +
     '<section class="block"><h2>Měsíční report a uzávěrka</h2>' +
     '<div class="muted">Období: <b>' + periodText() + '</b>. Na začátku měsíce report odešli a pak období uzavři – prohřešky se tím vynulují a osobní ohodnocení začne nový měsíc od 100 %. Pokrok v checklistu a testy zůstávají.</div>';
   if(!rows.length){
@@ -2001,8 +2414,8 @@ async function renderMonthReport(){
   }
   mainEl.innerHTML = h;
   window.scrollTo(0, 0);
-  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({behavior:'smooth', block:'start'});
-  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  document.body.classList.remove('m-panel');
+  $('toListBtn').onclick = showListMobile;
   $('mailTo').onchange = async ()=>{ SETTINGS.emails = $('mailTo').value.trim(); await saveSettings(); };
   $('mailReport').onclick = async ()=>{
     SETTINGS.emails = $('mailTo').value.trim();
@@ -2043,7 +2456,7 @@ let cfgWorkDirty = false;
 let cfgWorkTab = null;
 function itemLabel(id){ const it = CHECKLIST_GROUPS.flatMap(g=>g.items).find(x=>x[0] === id); return it ? it[1] : id; }
 function cfgShell(inner){
-  return '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button>' +
+  return '<button class="to-list" id="toListBtn">‹ Zaměstnanci</button>' +
     '<section class="block"><h2>Nastavení karty</h2>' +
     '<div class="cfg-tabs"><button class="cfg-tab' + (cfgTab === 'tests' ? ' on' : '') + '" data-cfg-tab="tests">Testy</button>' +
     '<button class="cfg-tab' + (cfgTab === 'kb' ? ' on' : '') + '" data-cfg-tab="kb">Návody ze znalostní báze</button>' +
@@ -2053,6 +2466,7 @@ function cfgShell(inner){
     inner + '</section>';
 }
 async function renderSettings(){
+  setRail('cfg');
   activeId = null; activeData = null;
   await renderList();
   if(cfgWorkTab !== cfgTab){ cfgWork = null; cfgWorkDirty = false; cfgWorkTab = cfgTab; }
@@ -2062,10 +2476,10 @@ async function renderSettings(){
   else if(cfgTab === 'vio') renderCfgViolations();
   else renderCfgTests();
   window.scrollTo(0, 0);
-  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({block:'start'});
+  document.body.classList.remove('m-panel');
 }
 function bindCfgShell(){
-  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  $('toListBtn').onclick = showListMobile;
   mainEl.querySelectorAll('[data-cfg-tab]').forEach(b=>{
     b.onclick = ()=>{
       if((cfgDraft || cfgWorkDirty) && !confirm('Máš neuložené změny. Zahodit je?')) return;
@@ -2527,14 +2941,15 @@ function diffCardData(prev, cur){
   return groups;
 }
 async function renderCardLog(){
+  setRail('log');
   activeId = null; activeData = null;
   await renderList();
-  const head = '<button class="to-list" id="toListBtn">↑ Seznam zaměstnanců</button><section class="block"><h2>Historie změn</h2>' +
+  const head = '<button class="to-list" id="toListBtn">‹ Zaměstnanci</button><section class="block"><h2>Historie změn</h2>' +
     '<div class="muted">Všechny publikace karty (posledních 30), od nejnovější. U každé je vidět, co se od předchozí publikace změnilo. Nepublikované změny z prohlížeče tu nejsou.</div>';
   mainEl.innerHTML = head + '<div class="muted" id="logProgress" style="margin-top:12px">Načítám historii…</div></section>';
   window.scrollTo(0, 0);
-  if(window.matchMedia('(max-width:760px)').matches) mainEl.scrollIntoView({block:'start'});
-  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  document.body.classList.remove('m-panel');
+  $('toListBtn').onclick = showListMobile;
   let entries = [];
   try{
     const commits = (await fetchCardCommits()).reverse();
@@ -2564,10 +2979,15 @@ async function renderCardLog(){
       e.groups.map(g=>'<div style="margin-top:4px"><b style="color:var(--caramel-deep)">' + escapeHtml(g.label) + ':</b> ' + g.items.map(escapeHtml).join(' · ') + '</div>').join('') + '</div>';
   }).join('') : '<div class="muted" style="margin-top:12px">Zatím žádné publikované změny.</div>';
   mainEl.innerHTML = head + body + '</section>';
-  $('toListBtn').onclick = ()=>{ window.scrollTo({top:0, behavior:'smooth'}); };
+  $('toListBtn').onclick = showListMobile;
 }
 
 /* ==================== NÁPOVĚDA ==================== */
+function helpContentHtml_v41(){
+  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>🕘 Historie</b>, <b>⚙️ Nastavení</b>, <b>📚 Návody</b> a dole přepínač vedoucí / zaměstnanec. Na mobilu je lišta dole.</p>' +
+    '<p>V detailu zaměstnance jsou nahoře úrovně jako kroky (klikem zobrazíš položky dané úrovně), vpravo <b>Další krok</b>. Prohřešky a poznámky jsou v záložkách. Stav položky změníš klikem na štítek, nebo v rozbalené položce tlačítky ČEKÁ / TEST / DOHLED / SAMOSTATNĚ.</p>' +
+    '<p>V tabulce <b>Kdo co umí</b> klik na políčko přepne stav (čeká → test → dohled → samostatně). Spodní řádek ukáže, kolik lidí danou věc zvládá samostatně.</p>';
+}
 function helpContentHtml(){
   const leader = MODE === 'leader';
   let h = '<h2>Nápověda</h2>' +
@@ -2609,6 +3029,7 @@ function helpContentHtml(){
       'Mzdu, prohřešky, poznámky a úpravy karty řeší vedoucí ve svém pohledu.</p>';
   }
 
+  h += helpContentHtml_v41();
   h += '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn" id="helpCloseBtn">Zavřít</button></div>';
   return h;
 }
@@ -2626,6 +3047,7 @@ $('helpOverlay').addEventListener('click', e=>{ if(e.target.id === 'helpOverlay'
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeHelp(); });
 
 $('reportBtn').onclick = ()=>{ renderMonthReport(); };
+$('railTeam').onclick = ()=>{ renderTeam(); };
 $('logBtn').onclick = ()=>{ renderCardLog(); };
 $('cfgBtn').onclick = ()=>{ cfgDraft = null; cfgWork = null; cfgWorkDirty = false; renderSettings(); };
 
@@ -2635,7 +3057,8 @@ $('modeLabel').onclick = ()=>{
   quiz = null;
   reviewId = null;
   applyMode();
-  if(activeData) renderMain();
+  renderList();
+  if(activeData) renderMain(); else if($('railTeam').classList.contains('on')) renderTeam();
   if($('helpOverlay').style.display === 'flex') openHelp();
 };
 
@@ -2691,8 +3114,7 @@ $('publishBtn').onclick = ()=>{ publishToGitHub(); };
   await loadSettings();
   applyConfig();
   applyMode();
-  await renderList();
-  if(employees.length) await selectEmployee(employees[0].id);
+  await renderTeam();
 })();
 </script>
 </body>
