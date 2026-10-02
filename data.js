@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-02T00:53:29.498Z",
+ "publishedAt": "2026-10-02T00:59:13.161Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
@@ -82,6 +82,10 @@ const INITIAL_DATA = {
   {
    "id": "jak_se_to_vari",
    "label": "Jak se to vaří (limo/svařák/čoko)"
+  },
+  {
+   "id": "a17908666195430yuf7",
+   "label": "TEST"
   }
  ],
  "wikiCats": [
@@ -120,9 +124,17 @@ const INITIAL_DATA = {
    "label": "Kam volat v nouzi"
   }
  ],
- "customSections": [],
+ "customSections": [
+  {
+   "id": "sec_mupwrdx4",
+   "label": "✅ TESTOVACI SEKCE",
+   "cats": []
+  }
+ ],
  "baseSections": {
-  "renamed": {},
+  "renamed": {
+   "troubleshooting": "🛟 Troubleshooting"
+  },
   "deleted": []
  },
  "home": {
@@ -130,16 +142,16 @@ const INITIAL_DATA = {
   "sub": "Vyber téma, nebo použij hledání vlevo nahoře.",
   "tiles": [
    {
-    "ico": "☕",
-    "lbl": "Kávovar a káva",
-    "dsc": "Obsluha kávovaru a recepty na kávu",
-    "id": "napoje_kava"
-   },
-   {
     "ico": "🍹",
     "lbl": "Ostatní nápoje",
     "dsc": "Teplé, studené i alkoholické nápoje",
     "id": "napoje_studene"
+   },
+   {
+    "ico": "☕",
+    "lbl": "Kávovar a káva",
+    "dsc": "Obsluha kávovaru a recepty na kávu",
+    "id": "napoje_kava"
    },
    {
     "ico": "🍦",
@@ -176,6 +188,12 @@ const INITIAL_DATA = {
     "lbl": "Když se něco pokazí",
     "dsc": "Rychlá pomoc v nestandardní situaci",
     "section": "troubleshooting"
+   },
+   {
+    "ico": "📄",
+    "lbl": "testgdgdg",
+    "dsc": "ddd",
+    "id": "a1790866626938swfjm"
    }
   ]
  },
@@ -230,7 +248,10 @@ const INITIAL_DATA = {
    "id": "a1790891330009xgrqi",
    "label": "řidič",
    "allowedCats": [
-    "a17908913465847el8f"
+    "a17908913465847el8f",
+    "konec_dne",
+    "napojovy_manual",
+    "nouze"
    ]
   }
  ],
@@ -867,6 +888,108 @@ const INITIAL_DATA = {
    "updatedAt": "2026-10-01T21:58:27.209Z",
    "files": [],
    "branches": []
+  },
+  {
+   "id": "a1790902438210go3rl",
+   "section": "troubleshooting",
+   "title": "qqqqq",
+   "body": "",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "customTags": [],
+   "videoUrl": "",
+   "related": [],
+   "files": [],
+   "branches": [],
+   "checklist": false,
+   "updatedAt": "2026-10-02T00:54:03.274Z"
+  },
+  {
+   "id": "a1790902444514i0s2k",
+   "section": "troubleshooting",
+   "title": "wwwwwwwww",
+   "body": "",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "customTags": [],
+   "videoUrl": "",
+   "related": [],
+   "files": [],
+   "branches": [],
+   "checklist": false,
+   "updatedAt": "2026-10-02T00:54:07.976Z"
+  },
+  {
+   "id": "a1790902449551vhglu",
+   "section": "troubleshooting",
+   "title": "rrrrrrrr",
+   "body": "",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "customTags": [],
+   "videoUrl": "",
+   "related": [],
+   "files": [],
+   "branches": [],
+   "checklist": false,
+   "updatedAt": "2026-10-02T00:54:12.717Z"
+  },
+  {
+   "id": "a1790902461392owm0z",
+   "section": "troubleshooting",
+   "title": "ttttttttt",
+   "body": "",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "customTags": [],
+   "videoUrl": "",
+   "related": [],
+   "files": [],
+   "branches": [],
+   "checklist": false,
+   "updatedAt": "2026-10-02T00:54:24.583Z"
+  },
+  {
+   "id": "a1790902472194bfyce",
+   "section": "troubleshooting",
+   "title": "zzzzzzzzzzzzz",
+   "body": "",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "customTags": [],
+   "videoUrl": "",
+   "related": [],
+   "files": [],
+   "branches": [],
+   "checklist": false,
+   "updatedAt": "2026-10-02T00:54:36.456Z"
+  },
+  {
+   "id": "a1790902478064iuzm6",
+   "section": "troubleshooting",
+   "title": "uuuuuuuuuu",
+   "body": "",
+   "postupTags": [],
+   "manualTags": [],
+   "wikiTags": [],
+   "troubleshootTags": [],
+   "customTags": [],
+   "videoUrl": "",
+   "related": [],
+   "files": [],
+   "branches": [],
+   "checklist": false,
+   "updatedAt": "2026-10-02T00:54:41.294Z"
   }
  ]
 };
