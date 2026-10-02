@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.44 -->
+<!-- v2.45 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -249,6 +249,11 @@
   .te-ico img{width:40px;height:40px;object-fit:contain;display:block;}
   .home-tile .tile-img{width:56px;height:56px;object-fit:contain;display:block;}
   .pick-img{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .art-body a.kb-link{color:var(--caramel-deep);font-weight:600;text-decoration:underline;text-underline-offset:2px;cursor:pointer;}
+  .edit-tabs{display:flex;gap:4px;margin-bottom:8px;}
+  .edit-tab{border:1px solid var(--line);background:var(--paper);color:var(--cocoa-soft);border-radius:8px;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .edit-tab.on{background:var(--cocoa);border-color:var(--cocoa);color:#fff;}
+  .edit-preview{border:1px dashed var(--line);border-radius:8px;padding:12px 16px;background:var(--cream);}
   .home-hero{display:flex;align-items:center;gap:24px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 22px;margin-bottom:22px;}
   .home-hero.nohero{display:block;background:none;border:none;padding:0;border-radius:0;}
   .hero-img{max-width:280px;max-height:150px;display:block;object-fit:contain;}
@@ -555,7 +560,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.44';
+const APP_VERSION = 'v2.45';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -2091,6 +2096,7 @@ function renderMain(){
   const artBody = document.querySelector('#main .art-body');
   $('mBack').onclick = ()=>{ document.body.classList.add('m-panel'); renderCatList(); window.scrollTo(0, 0); };
   if(artBody) processBranchBlocks(artBody, isEditor);
+  if(artBody) bindArticleLinks(artBody, isEditor ? null : currentRole(), isEditor, false);
   if(artBody){ bindInlineVideos(artBody); buildToc(artBody); bindLightbox(artBody); if(art.checklist) buildChecklist(art, artBody); }
   $('main').querySelectorAll('[data-pn]').forEach(b=>{ b.onclick = ()=>{ navCatId = b.dataset.pnCat; openArticle(b.dataset.pn); }; });
   if(markSeen(art)) renderCatList();
@@ -2131,6 +2137,19 @@ function processBranchBlocks(box, isEditor){
       else { el.remove(); return; }
     }
     el.setAttribute('data-label', 'Jen pobočka ' + name);
+  });
+}
+// Odkaz na jiný článek v textu: <a class="kb-link" data-art="id">text</a>
+function bindArticleLinks(box, role, isEditor, inert){
+  Array.from(box.querySelectorAll('a.kb-link')).forEach(a=>{
+    const target = articles.find(x=>x.id === a.getAttribute('data-art'));
+    if(!target || (!isEditor && !articleVisibleToRole(target, role))){   // smazaný nebo pro roli skrytý článek → jen text
+      a.replaceWith(document.createTextNode(a.textContent));
+      return;
+    }
+    a.setAttribute('href', '#' + target.id);
+    a.title = target.title;
+    a.onclick = e=>{ e.preventDefault(); if(inert) return; navCatId = null; openArticle(target.id); };
   });
 }
 function fileIcon(name){ return /\.pdf$/i.test(name || '') ? '📄' : '📊'; }
@@ -2210,6 +2229,7 @@ function editFormHtml(art){
     '<select class="f-select" id="f-section">' + SECTIONS.map(s=>'<option value="' + s.id + '"' + (s.id===sec ? ' selected' : '') + '>' + escapeHtml(s.label) + '</option>').join('') + '</select>' +
     '<div class="field-label">Obsah</div>' +
     '<div class="field-hint">Napiš text, vyber ho a klikni na tučně/nadpis/odrážku (tlačítkem "Normální" zrušíš formátování zpátky). Obrázek vlož tlačítkem 📷, nebo ho sem rovnou vlož (Ctrl+V) – obrázek v textu smažeš kliknutím na něj.</div>' +
+    '<div class="edit-tabs"><button type="button" class="edit-tab on" id="tabEdit">✎ Upravit</button><button type="button" class="edit-tab" id="tabPrev">👁 Náhled</button></div>' +
     '<div class="fmt-toolbar">' +
       '<button type="button" class="fmt-btn" id="fmtBold"><b>B</b></button>' +
       '<button type="button" class="fmt-btn" id="fmtHeading">Nadpis</button>' +
@@ -2217,12 +2237,19 @@ function editFormHtml(art){
       '<button type="button" class="fmt-btn" id="fmtClear">Normální</button>' +
       '<button type="button" class="fmt-btn" id="fmtImg">📷 Obrázek</button>' +
       '<button type="button" class="fmt-btn" id="fmtVideo">🎬 Video</button>' +
+      '<select class="fmt-sel" id="fmtLink" title="Odkaz na jiný článek (označ slovo, nebo se vloží název článku)"><option value="">🔗 Odkaz na článek…</option>' +
+        SECTIONS.map(sx=>{
+          const list = articles.filter(a=>a.section === sx.id && a.id !== art.id);
+          return list.length ? '<optgroup label="' + escapeHtml(sx.label) + '">' + list.map(a=>'<option value="' + a.id + '">' + escapeHtml(a.title) + '</option>').join('') + '</optgroup>' : '';
+        }).join('') +
+        '<option value="__off">✕ Zrušit odkaz</option></select>' +
       (BRANCHES.length ? '<select class="fmt-sel" id="fmtBranch" title="Označený odstavec jen pro jednu pobočku"><option value="">🏪 Jen pro pobočku…</option>' +
         BRANCHES.map(b=>'<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>').join('') +
         '<option value="__off">✕ Zrušit blok pobočky</option></select>' : '') +
     '</div>' +
     '<input type="file" id="bodyImgInput" accept="image/*" style="display:none;">' +
     '<div class="art-body rich-editor" id="f-body" contenteditable="true">' + (art.body || '') + '</div>' +
+    '<div class="art-body edit-preview" id="f-preview" hidden></div>' +
     '<label class="tag-check" style="margin-top:14px"><input type="checkbox" id="f-checklist"' + (art.checklist ? ' checked' : '') + '> ☑ Odškrtávací postup – zaměstnanec si během směny odškrtává jednotlivé kroky (odstavce a odrážky)</label>' +
     '<div class="field-label">Přílohy (PDF, Excel)</div>' +
     '<div class="field-hint">Soubor se hned nahraje na GitHub do složky files/ (nejvýš 20 MB). Pozor: repozitář je veřejný – kdo zná odkaz, soubor si stáhne. Nedávej sem citlivé dokumenty.</div>' +
@@ -2381,6 +2408,66 @@ function bindEditForm(art){
     const text = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
     document.execCommand('insertText', false, text);
   });
+
+  // --- odkaz na jiný článek ---
+  const fmtLink = $('fmtLink');
+  fmtLink.addEventListener('mousedown', saveRange);
+  fmtLink.onchange = ()=>{
+    const v = fmtLink.value;
+    fmtLink.value = '';
+    if(!v) return;
+    bodyEl.focus();
+    restoreRange();
+    const sel = window.getSelection();
+    const r = (sel.rangeCount && bodyEl.contains(sel.anchorNode)) ? sel.getRangeAt(0) : null;
+    if(v === '__off'){
+      let n = r ? r.startContainer : null;
+      while(n && n !== bodyEl && !(n.tagName === 'A' && n.classList.contains('kb-link'))) n = n.parentNode;
+      if(n && n !== bodyEl) n.replaceWith(...Array.from(n.childNodes));
+      return;
+    }
+    const target = articles.find(a=>a.id === v);
+    if(!target) return;
+    const a = document.createElement('a');
+    a.className = 'kb-link';
+    a.setAttribute('data-art', v);
+    a.setAttribute('href', '#' + v);
+    if(r && !r.collapsed){
+      a.textContent = r.toString();
+      r.deleteContents();
+      r.insertNode(a);
+    } else {
+      a.textContent = target.title;
+      if(r) r.insertNode(a); else bodyEl.appendChild(a);
+    }
+    sel.removeAllRanges();
+    const after = document.createRange();
+    after.setStartAfter(a);
+    after.collapse(true);
+    sel.addRange(after);
+  };
+  // klik na odkaz v editoru nikam nevede (aby šel upravit)
+  bodyEl.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('a.kb-link')) e.preventDefault(); });
+
+  // --- Upravit / Náhled ---
+  function showPreview(on){
+    $('tabEdit').classList.toggle('on', !on);
+    $('tabPrev').classList.toggle('on', on);
+    document.querySelector('.fmt-toolbar').style.display = on ? 'none' : '';
+    bodyEl.hidden = on;
+    const pv = $('f-preview');
+    pv.hidden = !on;
+    if(!on){ pv.innerHTML = ''; return; }
+    const clone = bodyEl.cloneNode(true);
+    clone.querySelectorAll('.img-del-overlay').forEach(x=>x.remove());
+    pv.innerHTML = '<div class="art-title">' + escapeHtml($('f-title').value || 'Bez názvu') + '</div>' + clone.innerHTML.replace(/ data-label="[^"]*"/g, '');
+    processBranchBlocks(pv, false);
+    bindArticleLinks(pv, null, true, true);
+    bindInlineVideos(pv);
+    bindLightbox(pv);
+  }
+  $('tabEdit').onclick = ()=>showPreview(false);
+  $('tabPrev').onclick = ()=>showPreview(true);
 
   // --- blok textu jen pro pobočku ---
   bodyEl.querySelectorAll('.br-only').forEach(el=>{ el.setAttribute('data-label', 'Jen pobočka ' + (branchName(el.getAttribute('data-branch')) || '?')); });
@@ -2938,6 +3025,8 @@ function renderHelpMain(){
       '<li><b>Normální</b> zruší veškeré formátování označeného textu.</li>' +
       '<li>Obrázek vložíš tlačítkem <b>📷 Obrázek</b> nebo Ctrl+V. Kliknutím na obrázek ho smažeš.</li>' +
       '<li>Zaškrtnutím <b>☑ Odškrtávací postup</b> v editoru článku si zaměstnanci budou moci odškrtávat jednotlivé odstavce a odrážky.</li>' +
+      '<li><b>🔗 Odkaz na článek…</b> – označ slovo v textu a vyber článek, slovo se stane odkazem (bez označení se vloží název článku). Odkaz zrušíš stejnou nabídkou (✕ Zrušit odkaz).</li>' +
+      '<li><b>👁 Náhled</b> nad textem ukáže článek tak, jak ho uvidí zaměstnanci; <b>✎ Upravit</b> vrátí úpravy.</li>' +
       '<li>Video vložíš kamkoli do textu tlačítkem <b>🎬 Video</b> (odkaz na YouTube nebo Dropbox), videí může být víc. Kliknutím na video v editoru ho smažeš.</li>' +
       '<li>Když odcházíš z rozpracovaného článku bez uložení, aplikace se zeptá.</li>' +
       '</ul>' +
