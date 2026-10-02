@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v4.3 -->
+<!-- v4.4 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -335,6 +335,21 @@
   .rail-spacer{flex:1;}
   .sidebar{display:flex;flex-direction:column;}
   .sidebar-spacer{flex:1;min-height:16px;}
+  .ed-foot{position:sticky;bottom:0;margin:12px -16px -20px;padding:10px 16px 12px;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -6px 14px rgba(59,42,32,.06);z-index:5;}
+  .ed-foot .mode-note{margin:0 0 8px;}
+  .ed-foot .mode-note:empty{display:none;}
+  .ed-foot .add-form{margin:0 0 8px;}
+  .ed-row{display:flex;gap:6px;}
+  .ed-btn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 7px;font:inherit;font-size:12.5px;font-weight:700;color:var(--cocoa);cursor:pointer;white-space:nowrap;}
+  .ed-btn:hover{background:var(--line-soft);}
+  .ed-btn.pub{background:var(--caramel-deep);border-color:var(--caramel-deep);color:#fff;}
+  .ed-btn.pub:disabled{opacity:.6;cursor:default;}
+  .ed-row #addBtn{flex:0 0 auto;}
+  .ed-btn.gear{flex:0 0 auto;font-size:16px;padding:6px 11px;line-height:1;}
+  .tools-menu{display:none;position:absolute;right:12px;bottom:calc(100% + 6px);width:220px;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(59,42,32,.2);padding:6px;}
+  .tools-menu.open{display:block;}
+  .tools-menu button{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;color:var(--cocoa);cursor:pointer;}
+  .tools-menu button:hover{background:var(--line-soft);}
   .panel-title{font-family:Georgia,serif;font-size:15px;font-weight:700;color:var(--cocoa-soft);margin-bottom:10px;}
   .emp-item{gap:10px;justify-content:flex-start;padding:8px 10px;}
   .eav{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--cocoa);overflow:hidden;}
@@ -472,6 +487,7 @@
     .rail-spacer, #helpBtn{display:none;}
     .sidebar{display:none !important;position:static;height:auto;min-height:100vh;border-right:none;border-bottom:none;padding:16px 14px 96px;}
     body.m-panel .sidebar{display:flex !important;}
+    .ed-foot{bottom:calc(58px + env(safe-area-inset-bottom, 0px));margin:12px -14px -38px;padding:10px 14px 12px;}
     body.m-panel .main{display:none;}
     .main{padding:16px 14px 100px;max-width:none;}
     .hero{display:block;position:relative;padding:14px;}
@@ -506,24 +522,29 @@
     <input class="search-input" id="empSearch" placeholder="Hledat zaměstnance…" autocomplete="off">
     <button class="link-btn" id="sortToggle" style="margin:0 0 8px;text-align:left"></button>
     <ul class="emp-list" id="empList"></ul>
-    <button class="add-btn" id="addBtn">+ Přidat zaměstnance</button>
-    <div class="add-form" id="addForm" style="display:none;">
-      <input id="newNameInput" placeholder="Jméno zaměstnance" autocomplete="off">
-      <div class="row">
-        <button class="confirm" id="confirmAdd">Přidat</button>
-        <button class="cancel" id="cancelAdd">Zrušit</button>
-      </div>
-    </div>
     <div class="sidebar-spacer"></div>
-    <button class="mode-btn" id="publishBtn" style="display:none">☁ Publikovat na web</button>
-    <div class="backup-row" id="backupRow">
-      <button class="backup-btn" id="exportBtn">⬇ Uložit zálohu</button>
-      <button class="backup-btn" id="importBtn">⬆ Nahrát zálohu</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none;">
-    </div>
     <div class="version-tag" id="versionTag"></div>
     <div class="mode-note" id="modeHint"></div>
-    <div class="mode-note" id="modeNote"></div>
+    <div class="ed-foot" id="edFoot">
+      <div class="mode-note" id="modeNote"></div>
+      <div class="add-form" id="addForm" style="display:none;">
+        <input id="newNameInput" placeholder="Jméno zaměstnance" autocomplete="off">
+        <div class="row">
+          <button class="confirm" id="confirmAdd">Přidat</button>
+          <button class="cancel" id="cancelAdd">Zrušit</button>
+        </div>
+      </div>
+      <div class="ed-row">
+        <button class="ed-btn" id="addBtn">+ Přidat</button>
+        <button class="ed-btn pub" id="publishBtn" style="display:none">☁ Publikovat</button>
+        <button class="ed-btn gear" id="toolsBtn" title="Další nástroje">⚙</button>
+      </div>
+      <div class="tools-menu" id="toolsMenu">
+        <button id="exportBtn">⬇ Uložit zálohu</button>
+        <button id="importBtn">⬆ Nahrát zálohu</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+    </div>
   </div>
   <div class="main" id="main">
     <div class="empty-state">Vyber zaměstnance vlevo, nebo přidej nového.</div>
@@ -546,7 +567,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v4.3';
+const APP_VERSION = 'v4.4';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1444,7 +1465,7 @@ function applyMode(){
   $('publishBtn').style.display = (onWeb && leader) ? 'block' : 'none';
   $('addBtn').style.display = leader ? 'block' : 'none';
   $('addForm').style.display = 'none';
-  $('backupRow').style.display = leader ? 'flex' : 'none';
+  $('toolsMenu').classList.remove('open');
   $('reportBtn').style.display = leader ? 'block' : 'none';
   $('cfgBtn').style.display = leader ? 'block' : 'none';
   $('logBtn').style.display = (leader && onWeb) ? 'block' : 'none';
@@ -3137,6 +3158,11 @@ $('pvLeader').onclick = ()=>setMode('leader');
 $('pvEmp').onclick = ()=>setMode('employee');
 $('pvPopLeader').onclick = ()=>setMode('leader');
 $('pvPopEmp').onclick = ()=>setMode('employee');
+$('toolsBtn').onclick = e=>{ e.stopPropagation(); $('toolsMenu').classList.toggle('open'); };
+$('toolsMenu').addEventListener('click', e=>{ if(e.target.tagName === 'BUTTON') $('toolsMenu').classList.remove('open'); });
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#toolsBtn')) $('toolsMenu').classList.remove('open');
+});
 $('modeLabel').onclick = e=>{ e.stopPropagation(); $('pvPop').hidden = !$('pvPop').hidden; };
 document.addEventListener('click', e=>{
   const p = $('pvPop');
