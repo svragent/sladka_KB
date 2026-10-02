@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-02T00:59:15.598Z",
+ "publishedAt": "2026-10-02T01:00:50.410Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
