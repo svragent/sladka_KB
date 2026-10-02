@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#3B2A20">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.42 -->
+<!-- v2.43 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -243,6 +249,18 @@
   .te-ico img{width:40px;height:40px;object-fit:contain;display:block;}
   .home-tile .tile-img{width:56px;height:56px;object-fit:contain;display:block;}
   .pick-img{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .home-hero{display:flex;align-items:center;gap:24px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 22px;margin-bottom:22px;}
+  .home-hero.nohero{display:block;background:none;border:none;padding:0;border-radius:0;}
+  .hero-img{max-width:280px;max-height:150px;display:block;object-fit:contain;}
+  .hero-txt{flex:1;min-width:0;}
+  .home-hero .home-sub{margin-bottom:0;}
+  .hero-tools{display:flex;gap:4px;margin-top:6px;}
+  .hero-add{border:1px dashed var(--line);background:none;color:var(--cocoa-soft);font:inherit;font-size:12px;border-radius:8px;padding:4px 10px;cursor:pointer;margin-bottom:8px;}
+  .hero-add:hover{border-color:var(--caramel);color:var(--caramel-deep);}
+  .ri-img{width:24px;height:24px;object-fit:contain;display:block;}
+  .sec-ico img{width:20px;height:20px;object-fit:contain;display:block;margin:auto;}
+  .sec-title-img{width:24px;height:24px;object-fit:contain;vertical-align:-4px;margin-right:4px;}
+  @media (max-width:760px){ .home-hero{flex-direction:column;align-items:flex-start;gap:10px;} .hero-img{max-width:100%;} }
   .te-tools{display:flex;gap:2px;opacity:.35;}
   .tile-e:hover .te-tools, .tile-e:focus-within .te-tools{opacity:1;}
   @media (hover:none){ .te-tools{opacity:1;} }
@@ -537,7 +555,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.42';
+const APP_VERSION = 'v2.43';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -556,6 +574,13 @@ let TROUBLESHOOT_CATS = _initData.troubleshootCats.slice();
 const SEED_ALL = _initData.seedAll.slice();
 // Vlastní sekce vytvořené editorem: [{id, label, cats:[{id,label}]}]; články v nich mají kategorie v poli customTags
 let CUSTOM_SECTIONS = JSON.parse(JSON.stringify(_initData.customSections || []));
+// Vlastní obrázky sekcí místo emoji: {idSekce: obrázek}
+let SECTION_ICONS = JSON.parse(JSON.stringify(_initData.sectionIcons || {}));
+function saveSectionIcons(){ if(saveJSON('kb-section-icons', SECTION_ICONS, 'Uložení obrázků sekcí selhalo.')) markUnpublished(); }
+function secIconHtml(s, p){
+  const img = SECTION_ICONS[s.id];
+  return img ? '<img class="ri-img" src="' + escapeHtml(img) + '" alt="">' : escapeHtml(p.ico || '📁');
+}
 // Pobočky: [{id, name}] – přepínač v panelu; článek může platit jen pro některé (pole branches)
 let BRANCHES = JSON.parse(JSON.stringify(_initData.branches || []));
 let branchId = '';
@@ -785,13 +810,16 @@ async function publishToGitHub(){
         }
       }
     });
-    HOME.tiles.forEach(t=>{
-      const m = String(t.img || '').match(/^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/);
-      if(m && imgMap[t.img] === undefined){
-        imgMap[t.img] = '';
-        found.push({dataUrl: t.img, ext: (m[1] === 'jpeg' ? 'jpg' : m[1]), b64: m[2]});
+    const addImg = v=>{
+      const m = String(v || '').match(/^data:image\/(png|jpe?g|gif|webp);base64,(.+)$/);
+      if(m && imgMap[v] === undefined){
+        imgMap[v] = '';
+        found.push({dataUrl: v, ext: (m[1] === 'jpeg' ? 'jpg' : m[1]), b64: m[2]});
       }
-    });
+    };
+    HOME.tiles.forEach(t=>addImg(t.img));
+    addImg(HOME.hero);
+    Object.keys(SECTION_ICONS).forEach(k=>addImg(SECTION_ICONS[k]));
     for(let i = 0; i < found.length; i++){
       $('status').textContent = 'Nahrávám obrázky ' + (i + 1) + '/' + found.length + '…';
       const f = found[i];
@@ -814,8 +842,12 @@ async function publishToGitHub(){
       troubleshootCats: TROUBLESHOOT_CATS,
       customSections: CUSTOM_SECTIONS,
       baseSections: BASE_SECTION_STATE,
-      home: Object.assign({}, HOME, {tiles: HOME.tiles.map(t=> (t.img && imgMap[t.img]) ? Object.assign({}, t, {img: imgMap[t.img]}) : t)}),
+      home: Object.assign({}, HOME, {
+        hero: (HOME.hero && imgMap[HOME.hero]) ? imgMap[HOME.hero] : HOME.hero,
+        tiles: HOME.tiles.map(t=> (t.img && imgMap[t.img]) ? Object.assign({}, t, {img: imgMap[t.img]}) : t)
+      }),
       branches: BRANCHES,
+      sectionIcons: Object.keys(SECTION_ICONS).reduce((o, k)=>{ o[k] = imgMap[SECTION_ICONS[k]] || SECTION_ICONS[k]; return o; }, {}),
       roles: roles,
       seedAll: articles.map(a=>{
         const c = Object.assign({}, a);
@@ -866,6 +898,8 @@ function loadEditableCats(){
   if(bs && typeof bs === 'object'){ BASE_SECTION_STATE = bs; normBaseState(); }
   const hm = loadJSON('kb-home');
   if(hm && Array.isArray(hm.tiles)) HOME = hm;
+  const si = loadJSON('kb-section-icons');
+  if(si && typeof si === 'object') SECTION_ICONS = si;
   const br = loadJSON('kb-branches');
   if(Array.isArray(br)) BRANCHES = br;
   rebuildSections();
@@ -1062,6 +1096,7 @@ function init(){
     saveBaseSections();
     saveHome();
     saveBranches();
+    saveSectionIcons();
     setUnpublishedFlag('0');
     saveJSON('kb-base-published-at', publishedAt);
   }
@@ -1132,7 +1167,7 @@ function renderRoleSelect(){
 }
 
 let secEdit = null;   // null | 'new' | id sekce, která se přejmenovává
-let secIcoV = '', secNameV = '', secPickOpen = false;
+let secIcoV = '', secNameV = '', secPickOpen = false, secImgV = '';
 // Rozdělí název sekce na ikonu (emoji na začátku) a text
 function splitSecLabel(l){
   const m = String(l || '').match(/^(\S+)\s+(.+)$/);
@@ -1142,12 +1177,15 @@ function splitSecLabel(l){
 function secStart(id, label){
   const p = splitSecLabel(label);
   secEdit = id; secIcoV = p.ico || (id === 'new' ? '📁' : ''); secNameV = p.name; secPickOpen = false;
+  secImgV = (id !== 'new' && SECTION_ICONS[id]) || '';
 }
 function secFormHtml(){
-  return '<div class="sec-form"><button class="sec-ico" id="secIcoBtn" title="Vybrat ikonu sekce">' + escapeHtml(secIcoV || '+') + '</button>' +
+  return '<div class="sec-form"><button class="sec-ico" id="secIcoBtn" title="Vybrat ikonu nebo obrázek sekce">' + (secImgV ? '<img src="' + escapeHtml(secImgV) + '" alt="">' : escapeHtml(secIcoV || '+')) + '</button>' +
     '<input id="secInput" maxlength="40" placeholder="Název sekce" value="' + escapeHtml(secNameV) + '">' +
     '<button class="ok" id="secOk" title="Uložit">✓</button><button class="no" id="secNo" title="Zrušit">✕</button></div>' +
-    (secPickOpen ? '<div class="sec-pick">' + icoPickerHtml() + '</div>' : '');
+    (secPickOpen ? '<div class="sec-pick"><div class="pick-img"><button type="button" class="btn ghost" id="secImgBtn">🖼 Obrázek z počítače…</button>' +
+      (secImgV ? '<button type="button" class="btn ghost" id="secImgDel">✕ Odebrat</button>' : '') +
+      '<input type="file" id="secImgInput" accept="image/*" style="display:none;"></div>' + icoPickerHtml() + '</div>' : '');
 }
 function shortSec(n){ return String(n || '').replace(/\s*\(.*?\)\s*/g, ' ').trim(); }
 function renderSectionSwitch(){
@@ -1156,7 +1194,7 @@ function renderSectionSwitch(){
   $('sectionSwitch').innerHTML = SECTIONS.map(s=>{
     const p = splitSecLabel(s.label);
     return '<button class="rail-btn' + (!onHome && s.id === sectionId ? ' on' : '') + '" data-section="' + s.id + '" title="' + escapeHtml(s.label) + '">' +
-      '<span class="ri">' + escapeHtml(p.ico || '📁') + '</span>' + escapeHtml(shortSec(p.name)) + '</button>';
+      '<span class="ri">' + secIconHtml(s, p) + '</span>' + escapeHtml(shortSec(p.name)) + '</button>';
   }).join('') + (isEditor ? '<button class="rail-add" id="secAddBtn" title="Přidat sekci">+</button>' : '');
   $('railHome').classList.toggle('on', onHome);
   let head = '';
@@ -1166,7 +1204,7 @@ function renderSectionSwitch(){
     const s = SECTIONS.find(x=>x.id === sectionId);
     if(s){
       if(isEditor && secEdit === s.id) head = secFormHtml();
-      else head = '<div class="sec-head"><span class="sec-title">' + escapeHtml(s.label) + '</span>' +
+      else head = '<div class="sec-head"><span class="sec-title">' + (SECTION_ICONS[s.id] ? '<img class="sec-title-img" src="' + escapeHtml(SECTION_ICONS[s.id]) + '" alt="">' + escapeHtml(splitSecLabel(s.label).name) : escapeHtml(s.label)) + '</span>' +
         (isEditor ? '<button class="sec-tool" data-sec-rename="' + s.id + '" title="Přejmenovat sekci a změnit ikonu">✎</button><button class="sec-tool" data-sec-del="' + s.id + '" title="Smazat sekci">✕</button>' : '') +
         '</div>';
     }
@@ -1221,7 +1259,18 @@ function bindSectionTools(){
     input.oninput = ()=>{ secNameV = input.value; };
     $('secIcoBtn').onclick = ()=>{ secPickOpen = !secPickOpen; renderSectionSwitch(); };
     $('secHead').querySelectorAll('[data-ico-cat]').forEach(b=>{ b.onclick = ()=>{ icoCat = +b.dataset.icoCat; renderSectionSwitch(); }; });
-    $('secHead').querySelectorAll('[data-ico]').forEach(b=>{ b.onclick = ()=>{ secIcoV = b.dataset.ico; secPickOpen = false; renderSectionSwitch(); $('secInput').focus(); }; });
+    $('secHead').querySelectorAll('[data-ico]').forEach(b=>{ b.onclick = ()=>{ secIcoV = b.dataset.ico; secImgV = ''; secPickOpen = false; renderSectionSwitch(); $('secInput').focus(); }; });
+    if($('secImgBtn')){
+      $('secImgBtn').onclick = ()=>$('secImgInput').click();
+      $('secImgInput').onchange = async ()=>{
+        const f = $('secImgInput').files[0];
+        $('secImgInput').value = '';
+        if(!f) return;
+        try{ secImgV = await resizeTileImage(f, 96); secPickOpen = false; renderSectionSwitch(); }
+        catch(e){ $('status').textContent = 'Obrázek se nepodařilo načíst.'; }
+      };
+    }
+    if($('secImgDel')) $('secImgDel').onclick = ()=>{ secImgV = ''; secPickOpen = false; renderSectionSwitch(); };
     const finish = ok=>{
       const name = input.value.trim() ? ((secIcoV ? secIcoV + ' ' : '') + input.value.trim()) : '';
       if(ok && name){
@@ -1237,6 +1286,9 @@ function bindSectionTools(){
           else { BASE_SECTION_STATE.renamed[secEdit] = name; saveBaseSections(); }
           rebuildSections();
         }
+        const tid = secEdit === 'new' ? sectionId : secEdit;
+        if(secImgV) SECTION_ICONS[tid] = secImgV; else delete SECTION_ICONS[tid];
+        saveSectionIcons();
       }
       secEdit = null;
       render();
@@ -1301,10 +1353,10 @@ function renderCatList(){
     $('catList').innerHTML = '<div class="status">Klikni v liště na 👤 a vyber svou roli – appka ti pak ukáže návody pro tebe.</div>';
     return;
   }
-  const q = searchQuery.trim().toLowerCase();
+  const q = fold(searchQuery.trim());
   if(q){
     let pool = articles.filter(a=> isEditor || articleVisibleToRole(a, role));
-    pool = pool.filter(a=> (a.title||'').toLowerCase().indexOf(q)!==-1 || plainText(a.body).toLowerCase().indexOf(q)!==-1);
+    pool = pool.filter(a=> fold(a.title).indexOf(q)!==-1 || fold(plainText(a.body)).indexOf(q)!==-1);
     let html = '<div class="cat-group search-results"><div class="cat-label">Výsledky hledání (' + pool.length + ')</div>';
     html += pool.length
       ? '<ul class="art-list">' + pool.map(a=>'<li class="art-item' + (a.id===activeId ? ' active' : '') + '" data-open="' + a.id + '">' + escapeHtml(a.title) + artBadge(a) + searchSnippet(a, q) + '</li>').join('') + '</ul>'
@@ -1770,8 +1822,12 @@ function openTile(t){
 // Úvodní stránka v režimu Editor – vše se upravuje přímo na ní a hned ukládá
 function renderHomeEditor(){
   const H = HOME;
-  let html = '<input class="home-hello hin" id="hTitle" value="' + escapeHtml(H.title) + '" placeholder="Nadpis úvodní stránky">' +
+  let html = '<div class="home-hero' + (H.hero ? '' : ' nohero') + '">' +
+    (H.hero ? '<div><img class="hero-img" src="' + escapeHtml(H.hero) + '" alt=""><div class="hero-tools"><button type="button" class="tile-tool" id="heroImgBtn">🖼 Změnit</button><button type="button" class="tile-tool" id="heroImgDel">✕ Odebrat</button></div></div>' : '') +
+    '<div class="hero-txt">' + (H.hero ? '' : '<button type="button" class="hero-add" id="heroImgBtn">🖼 Přidat obrázek do záhlaví</button>') +
+    '<input class="home-hello hin" id="hTitle" value="' + escapeHtml(H.title) + '" placeholder="Nadpis úvodní stránky">' +
     '<input class="home-sub hin" id="hSub" value="' + escapeHtml(H.sub || '') + '" placeholder="Podtitulek (nepovinný)">' +
+    '</div></div><input type="file" id="heroImgInput" accept="image/*" style="display:none;">' +
     '<div class="home-tiles edit">';
   H.tiles.forEach((t, i)=>{
     const bad = t.section ? !sectionExists(t.section) : !articles.some(x=>x.id === t.id);
@@ -1805,6 +1861,15 @@ function renderHomeEditor(){
     };
   });
   bindHomeLists();
+  $('heroImgBtn').onclick = ()=>$('heroImgInput').click();
+  $('heroImgInput').onchange = async ()=>{
+    const file = $('heroImgInput').files[0];
+    $('heroImgInput').value = '';
+    if(!file) return;
+    try{ H.hero = await resizeTileImage(file, 560); saveHome(); renderHomeEditor(); }
+    catch(e){ $('status').textContent = 'Obrázek se nepodařilo načíst. Zkus jiný soubor (PNG, JPG, SVG).'; }
+  };
+  if($('heroImgDel')) $('heroImgDel').onclick = ()=>{ delete H.hero; saveHome(); renderHomeEditor(); };
   $('hTitle').oninput = e=>{ H.title = e.target.value; saveHome(); };
   $('hSub').oninput = e=>{ H.sub = e.target.value; saveHome(); };
   $('main').querySelectorAll('[data-t]').forEach(el=>{
@@ -1905,15 +1970,18 @@ function renderHome(){
   const isEditor = MODE === 'editor';
   if(isEditor){ renderHomeEditor(); return; }
   const role = currentRole();
-  let html = '<div class="home-hello">' + escapeHtml(HOME.title) + '</div>';
+  const heroClose = HOME.hero ? '</div></div>' : '';
+  let html = (HOME.hero ? '<div class="home-hero"><img class="hero-img" src="' + escapeHtml(HOME.hero) + '" alt=""><div class="hero-txt">' : '') +
+    '<div class="home-hello">' + escapeHtml(HOME.title) + '</div>';
   if(!role){
     html += '<div class="home-sub">Nejdřív si vyber <b>svou roli</b> – pak tu uvidíš návody, které se týkají tvé práce.</div>' +
-      '<button class="btn" id="pickRoleBtn">👤 Vybrat roli</button>';
+      '<button class="btn" id="pickRoleBtn">👤 Vybrat roli</button>' + heroClose;
     $('main').innerHTML = html;
     $('pickRoleBtn').onclick = e=>{ e.stopPropagation(); openRoleMenu(); };
     return;
   }
   if(HOME.sub) html += '<div class="home-sub">' + escapeHtml(HOME.sub) + '</div>';
+  html += heroClose;
   const visible = a => articleVisibleToRole(a, role);
   const tiles = HOME.tiles.filter(t=>{
     if(t.section) return articles.some(a=>a.section === t.section && visible(a));
@@ -1940,6 +2008,8 @@ function renderHome(){
 }
 
 /* ---------- hledání: ukázka textu ---------- */
+// Malá písmena bez háčků a čárek: „Čištění“ → „cisteni“
+function fold(t){ return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
 function plainText(html){
   const d = document.createElement('div');
   d.innerHTML = String(html || '').replace(/<img[^>]*>/g, ' ').replace(/<\/(div|h3|li|p)>/g, ' ');
@@ -1947,7 +2017,7 @@ function plainText(html){
 }
 function searchSnippet(a, q){
   const t = plainText(a.body);
-  const i = t.toLowerCase().indexOf(q);
+  const i = fold(t).indexOf(q);
   if(i === -1) return '';
   const from = Math.max(0, i - 40), to = Math.min(t.length, i + q.length + 60);
   return '<span class="search-snippet">' + (from > 0 ? '…' : '') + escapeHtml(t.slice(from, i)) +
@@ -2836,7 +2906,8 @@ function renderHelpMain(){
     '<li>Sekce přepínáš v <b>tmavé liště</b> vlevo (na mobilu dole). Vedle v panelu jsou kategorie a návody vybrané sekce, nahoře hledání.</li>' +
     '<li>Když má Sladká dílna víc poboček, vyber si nahoře v panelu <b>🏪 svou pobočku</b> – uvidíš návody a části textu, které platí pro ni.</li>' +
     '<li>U Postupů můžeš procházet <b>podle postupu</b> (jak jdeš zaškolením) nebo <b>podle manuálu</b> (kapitoly provozního manuálu).</li>' +
-    '<li><b>Hledání</b> prohledá názvy i texty všech článků a ukáže, kde se hledané slovo v textu vyskytuje.</li>' +
+    '<li><b>Hledání</b> prohledá názvy i texty všech článků a ukáže, kde se hledané slovo v textu vyskytuje. Háčky a čárky psát nemusíš („cisteni“ najde „čištění“).</li>' +
+    '<li>Na telefonu si znalostní bázi dej <b>na plochu</b> (v prohlížeči „Přidat na plochu“ / „Přidat na plochu domů“) – otevře se jako aplikace a jednou načtená funguje i bez internetu.</li>' +
     '<li>Značka <b>Nové</b> nebo <b>Upraveno</b> v seznamu upozorní na články, které se změnily od tvé poslední návštěvy. Po otevření článku zmizí.</li>' +
     '</ul>' +
     '<h3>V článku</h3><ul>' +
@@ -2876,6 +2947,7 @@ function renderHelpMain(){
       '<li>V <b>🔑 Role</b> (dole v panelu) nastavíš, které kategorie uvidí která role.</li>' +
       '<li><b>🏪 Pobočky</b> (dole v panelu) – seznam poboček. U článku zaškrtneš, pro které pobočky platí. Odstavce, které platí jen pro jednu pobočku, označ a v liště nástrojů vyber <b>🏪 Jen pro pobočku…</b>; blok zrušíš stejnou nabídkou (✕ Zrušit blok).</li>' +
       '<li><b>📎 Přidat přílohu</b> v úpravě článku nahraje PDF nebo Excel. Soubory jsou veřejně dostupné, nedávej sem citlivé dokumenty.</li>' +
+      '<li>Nad nadpisem úvodu přidáš <b>obrázek do záhlaví</b>. Vlastní obrázek můžeš dát i sekci – při přejmenování ✎ klikni na její ikonu a zvol 🖼 Obrázek z počítače.</li>' +
       '<li>Pod dlaždicemi na úvodu zaškrtneš, které sekce se ukážou jako <b>seznam článků</b>.</li>' +
       '<li><b>Úvodní stránku</b> upravíš přímo na ní: klikni do nadpisu, názvu nebo popisu dlaždice a piš. Kliknutím na ikonu ji změníš – nebo tam dáš vlastní obrázek z počítače (🖼 Vybrat obrázek…, nejlépe PNG s průhledným pozadím nebo SVG), dole v dlaždici vybereš, kam vede, šipkami ← → měníš pořadí. Prázdná čárkovaná dlaždice přidá novou. Ukládá se hned.</li>' +
       '<li><b>🔖 QR štítky</b> (dole v panelu) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
@@ -3022,7 +3094,8 @@ $('exportBtn').onclick = ()=>{
     customSections: CUSTOM_SECTIONS,
     baseSections: BASE_SECTION_STATE,
     home: HOME,
-    branches: BRANCHES
+    branches: BRANCHES,
+    sectionIcons: SECTION_ICONS
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -3070,6 +3143,7 @@ $('importFile').addEventListener('change', ()=>{
       }
       if(!Array.isArray(parsed) && parsed.home && Array.isArray(parsed.home.tiles)){ HOME = parsed.home; saveHome(); }
       if(!Array.isArray(parsed) && Array.isArray(parsed.branches)){ BRANCHES = parsed.branches; saveBranches(); }
+      if(!Array.isArray(parsed) && parsed.sectionIcons && typeof parsed.sectionIcons === 'object'){ SECTION_ICONS = parsed.sectionIcons; saveSectionIcons(); }
       rebuildSections();
       articles.forEach(a=>{ if(!sectionExists(a.section)) a.section = firstSectionId(); });
       sectionId = firstSectionId(); axisId = currentAxes()[0].id;
@@ -3109,6 +3183,10 @@ $('importFile').addEventListener('change', ()=>{
   $('importFile').value = '';
 });
 
+// Offline: jednou načtená znalostní báze se otevře i bez internetu (soubor sw.js)
+if('serviceWorker' in navigator && location.protocol === 'https:' && /github\.io$/.test(location.hostname)){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 init();
 </script>
 </body>
