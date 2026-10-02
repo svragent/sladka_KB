@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Karta zaměstnance</title>
-<!-- v4.4 -->
+<!-- v4.6 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -348,9 +348,25 @@
   .ed-btn.gear{flex:0 0 auto;font-size:16px;padding:6px 11px;line-height:1;}
   .tools-menu{display:none;position:absolute;right:12px;bottom:calc(100% + 6px);width:220px;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(59,42,32,.2);padding:6px;}
   .tools-menu.open{display:block;}
-  .tools-menu button{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;color:var(--cocoa);cursor:pointer;}
-  .tools-menu button:hover{background:var(--line-soft);}
-  .panel-title{font-family:Georgia,serif;font-size:15px;font-weight:700;color:var(--cocoa-soft);margin-bottom:10px;}
+  .tools-menu button, .tools-menu a{display:block;width:100%;box-sizing:border-box;text-align:left;border:none;background:none;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;color:var(--cocoa);cursor:pointer;text-decoration:none;}
+  .tools-menu button:hover, .tools-menu a:hover{background:var(--line-soft);}
+  .tools-menu hr{border:none;border-top:1px solid var(--line-soft);margin:4px 0;}
+  .branch-filter{width:100%;margin:0 0 8px;font-family:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--cocoa);}
+  .panel-title{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--cocoa-soft);margin-bottom:10px;}
+  .sidebar .search-input{box-sizing:border-box;padding:8px 10px;border-radius:8px;margin-bottom:12px;}
+  .branch-btn{width:100%;display:flex;align-items:center;gap:10px;background:var(--cocoa);color:#FFFDF8;border:none;border-radius:12px;padding:8px 12px;font:inherit;text-align:left;cursor:pointer;margin-bottom:10px;}
+  .branch-btn .bl{display:block;font-size:10.5px;color:#E8DCC8;}
+  .branch-btn b{font-size:13.5px;}
+  .branch-menu{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:4px;margin:-4px 0 10px;box-shadow:0 8px 20px rgba(59,42,32,.12);}
+  .branch-opt{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--cocoa);}
+  .branch-opt:hover{background:var(--line-soft);}
+  .branch-opt.on{background:var(--line-soft);font-weight:700;}
+  .log-entry{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:10px 14px;margin-top:10px;}
+  .log-head{font-size:13px;margin-bottom:4px;color:var(--cocoa-soft);}
+  .log-head b{color:var(--cocoa);}
+  .log-line{font-size:13px;line-height:1.6;}
+  .log-label{font-weight:700;color:var(--caramel-deep);}
+  .log-sep{margin:0 6px;color:var(--line);}
   .emp-item{gap:10px;justify-content:flex-start;padding:8px 10px;}
   .eav{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--cocoa);overflow:hidden;}
   .eav img{width:100%;height:100%;object-fit:cover;}
@@ -509,8 +525,6 @@
   <nav class="rail" id="rail" aria-label="Menu">
     <button class="rail-btn" id="railTeam"><span class="ri">👥</span>Tým</button>
     <button class="rail-btn" id="reportBtn"><span class="ri">📅</span>Měsíc</button>
-    <button class="rail-btn" id="logBtn"><span class="ri">🕘</span>Historie</button>
-    <button class="rail-btn" id="cfgBtn"><span class="ri">⚙️</span>Nastavení</button>
     <div class="rail-spacer"></div>
     <a class="rail-btn" id="kbLink" href="../"><span class="ri">📚</span>Návody</a>
     <button class="rail-btn" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
@@ -518,13 +532,13 @@
     <button class="rail-btn" id="modeLabel" title="Zobrazit kartu jako…"><span class="ri">👁</span>Pohled</button>
   </nav>
   <div class="sidebar">
-    <div class="panel-title">Karta zaměstnance</div>
-    <input class="search-input" id="empSearch" placeholder="Hledat zaměstnance…" autocomplete="off">
+    <div class="panel-title">Karta zaměstnance · Sladká dílna</div>
+    <div id="branchWrap"></div>
+    <input class="search-input" id="empSearch" placeholder="🔍 Hledat zaměstnance…" autocomplete="off">
     <button class="link-btn" id="sortToggle" style="margin:0 0 8px;text-align:left"></button>
     <ul class="emp-list" id="empList"></ul>
     <div class="sidebar-spacer"></div>
-    <div class="version-tag" id="versionTag"></div>
-    <div class="mode-note" id="modeHint"></div>
+    <div class="version-tag" id="versionTag" style="margin:0 0 4px"></div>
     <div class="ed-foot" id="edFoot">
       <div class="mode-note" id="modeNote"></div>
       <div class="add-form" id="addForm" style="display:none;">
@@ -540,6 +554,10 @@
         <button class="ed-btn gear" id="toolsBtn" title="Další nástroje">⚙</button>
       </div>
       <div class="tools-menu" id="toolsMenu">
+        <button id="cfgBtn">⚙ Nastavení</button>
+        <button id="logBtn">🕘 Historie změn</button>
+        <a id="branchLink" href="../#pobocky" target="sladka_kb">🏪 Pobočky</a>
+        <hr>
         <button id="exportBtn">⬇ Uložit zálohu</button>
         <button id="importBtn">⬆ Nahrát zálohu</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
@@ -567,7 +585,7 @@
 
 <script>
 /* ==================== KONFIGURACE ==================== */
-const APP_VERSION = 'v4.4';
+const APP_VERSION = 'v4.6';
 
 // Znalostní báze – články k jednotlivým položkám checklistu (id článku, název tlačítka)
 const KB_URL = 'https://svragent.github.io/sladka_KB/';
@@ -1415,7 +1433,7 @@ async function renderList(){
     withData.sort((a, b) => a.e.name.localeCompare(b.e.name, 'cs'));
   }
   const term = searchTerm.trim().toLowerCase();
-  const filtered = term ? withData.filter(x => x.e.name.toLowerCase().includes(term)) : withData;
+  const filtered = withData.filter(x => branchOk(x.d) && (!term || x.e.name.toLowerCase().includes(term)));
   empListEl.innerHTML = '';
   if(term && !filtered.length){
     const li = document.createElement('li');
@@ -1429,6 +1447,7 @@ async function renderList(){
     li.className = 'emp-item' + (x.e.id === activeId ? ' active' : '');
     const d = x.d;
     let sub = d && LEVELS[d.level] ? LEVELS[d.level].label : '';
+    if(d && d.branch && branchName(d.branch) && !branchFilter) sub += ' · ' + escapeHtml(branchName(d.branch));
     if(d && MODE === 'leader'){
       const waitT = ALL_ITEM_IDS.filter(id=>d.checklist[id] === 3).length;
       if(waitT) sub += ' · ' + waitT + ' čeká na test';
@@ -1467,11 +1486,7 @@ function applyMode(){
   $('addForm').style.display = 'none';
   $('toolsMenu').classList.remove('open');
   $('reportBtn').style.display = leader ? 'block' : 'none';
-  $('cfgBtn').style.display = leader ? 'block' : 'none';
   $('logBtn').style.display = (leader && onWeb) ? 'block' : 'none';
-  $('modeHint').textContent = leader
-    ? 'Pohled vedoucí. Dole v liště (na mobilu 👁 Pohled) přepneš na pohled zaměstnance – skryje mzdu, prohřešky a poznámky a zamkne úpravy. Není to zabezpečení, přepnout zpět může kdokoli.'
-    : 'Pohled zaměstnance: návody, přečtení a testy.';
 }
 // Zvýraznění aktivní položky v liště
 function setRail(v){
@@ -1834,6 +1849,9 @@ function renderMain(resetScroll){
         '<div class="meta-row">' +
           '<label>Telefon<input id="f-phone" value="' + escapeHtml(d.phone) + '" placeholder="000 000 000"></label>' +
           '<label>Datum nástupu<input id="f-start" type="date" value="' + (d.startDate || '') + '"></label>' +
+          (kbBranches.length ? '<label>Pobočka<select id="f-branch" class="level-select"><option value="">— nezařazeno —</option>' +
+            kbBranches.map(b=>'<option value="' + b.id + '"' + (b.id === d.branch ? ' selected' : '') + '>' + escapeHtml(b.name) + '</option>').join('') +
+          '</select></label>' : '') +
           '<label>Úroveň<select id="f-level" class="level-select">' +
             Object.keys(LEVELS).map(k=>'<option value="' + k + '"' + (k === d.level ? ' selected' : '') + '>' + LEVELS[k].label + '</option>').join('') +
           '</select></label>' +
@@ -2011,6 +2029,7 @@ async function renderTeam(){
     const d = normalize(await loadEmployee(e.id));
     if(!d) continue;
     teamCache[d.id] = d;
+    if(!branchOk(d)) continue;
     rows.push(d);
   }
   rows.sort((a, b)=>a.name.localeCompare(b.name, 'cs'));
@@ -2037,7 +2056,8 @@ async function renderTeam(){
     '</div>';
   }
   if(!rows.length){
-    h += '<div class="empty-state">' + (leader ? 'Přidej prvního zaměstnance tlačítkem „+ Zaměstnanec“.' : 'Zatím tu nejsou žádní zaměstnanci.') + '</div>';
+    if(branchFilter) h += '<div class="empty-state">Na pobočce ' + escapeHtml(branchName(branchFilter)) + ' zatím nikdo není. Pobočku zaměstnanci nastavíš v jeho kartě.</div>';
+    else h += '<div class="empty-state">' + (leader ? 'Přidej prvního zaměstnance tlačítkem „+ Zaměstnanec“.' : 'Zatím tu nejsou žádní zaměstnanci.') + '</div>';
   } else if(teamView === 'cards'){
     h += '<div class="tcards">' + rows.map(d=>{
       const cnt = {0:0, 1:0, 2:0, 3:0};
@@ -2054,7 +2074,7 @@ async function renderTeam(){
       return '<button class="tcard' + cls + '" data-emp="' + d.id + '">' +
         '<div class="top">' + avatarHtml(d, 'tav') + '<div><div class="nm2">' + escapeHtml(d.name) + '</div>' + lvlChipHtml(d) + '</div></div>' +
         '<div class="tseg">' + seg + '</div>' +
-        '<div class="muted">' + cnt[2] + ' / ' + N + ' samostatně' + (d.startDate ? ' · od ' + fmtStr(d.startDate) : '') + '</div>' +
+        '<div class="muted">' + cnt[2] + ' / ' + N + ' samostatně' + (d.startDate ? ' · od ' + fmtStr(d.startDate) : '') + (d.branch && branchName(d.branch) ? ' · ' + escapeHtml(branchName(d.branch)) : '') + '</div>' +
         (cnt[3] ? '<div class="tline"><span>Čeká na test</span><b>' + cnt[3] + '</b></div>' : '') +
         vio +
         '<div class="tline"><span>Další krok</span><b>' + (ns ? escapeHtml(shortLabel(ns.label)) : 'hotovo 👑') + '</b></div>' +
@@ -2293,6 +2313,7 @@ function bindMainEvents(){
   };
   $('f-phone').onchange = async e=>{ d.phone = e.target.value; await persist(); };
   $('f-start').onchange = async e=>{ d.startDate = e.target.value; await persist(); };
+  if($('f-branch')) $('f-branch').onchange = async e=>{ d.branch = e.target.value; await persist(); await renderList(); };
   $('f-level').onchange = async e=>{ d.level = e.target.value; await persist(); renderMain(); };
   $('photoInput').addEventListener('change', async e=>{
     const file = e.target.files[0];
@@ -2540,6 +2561,34 @@ let cfgTestId = null;
 let cfgDraft = null;       // rozpracovaná kopie testu
 let kbArticles = null;     // seznam článků ze znalostní báze (načtený z ../data.js)
 let kbLoadError = '';
+let kbBranches = [];       // pobočky ze znalostní báze (společný seznam)
+let branchFilter = '';
+try{ branchFilter = localStorage.getItem('card-branch') || ''; }catch(e){}
+function branchName(id){ const b = kbBranches.find(x=>x.id === id); return b ? b.name : ''; }
+function branchOk(d){ return !branchFilter || (d && d.branch === branchFilter); }
+let branchMenuOpen = false;
+function renderBranchFilter(){
+  const w = $('branchWrap');
+  if(!kbBranches.length){ w.innerHTML = ''; branchFilter = ''; return; }
+  if(branchFilter && !kbBranches.some(b=>b.id === branchFilter)) branchFilter = '';
+  let h = '<button class="branch-btn" id="branchBtn"><span style="font-size:18px">🏪</span><span style="flex:1;min-width:0"><span class="bl">Pobočka</span><b>' +
+    escapeHtml(branchFilter ? branchName(branchFilter) : 'Všechny pobočky') + '</b></span><span>▾</span></button>';
+  if(branchMenuOpen){
+    h += '<div class="branch-menu">' + kbBranches.map(b=>'<button class="branch-opt' + (b.id === branchFilter ? ' on' : '') + '" data-branch-pick="' + b.id + '">' + escapeHtml(b.name) + '</button>').join('') +
+      '<button class="branch-opt' + (!branchFilter ? ' on' : '') + '" data-branch-pick="">Všechny pobočky</button></div>';
+  }
+  w.innerHTML = h;
+  $('branchBtn').onclick = ()=>{ branchMenuOpen = !branchMenuOpen; renderBranchFilter(); };
+  w.querySelectorAll('[data-branch-pick]').forEach(b=>{
+    b.onclick = async ()=>{
+      branchFilter = b.dataset.branchPick;
+      branchMenuOpen = false;
+      try{ localStorage.setItem('card-branch', branchFilter); }catch(err){}
+      renderBranchFilter();
+      if(activeId) await renderList(); else await renderTeam();
+    };
+  });
+}
 let cfgWork = null;        // rozpracovaná kopie (checklist / úrovně / prohřešky)
 let cfgWorkDirty = false;
 let cfgWorkTab = null;
@@ -2916,6 +2965,7 @@ async function loadKbArticles(){
     const t = await res.text();
     const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
     kbArticles = (j.seedAll || []).map(a=>({id:a.id, title:a.title, section:a.section}));
+    kbBranches = j.branches || [];
     kbArticles.sort((a, b)=>a.title.localeCompare(b.title, 'cs'));
   }catch(e){
     kbArticles = [];
@@ -2984,6 +3034,7 @@ function diffEmployee(p, c){
   if(p.level !== c.level) out.push('úroveň ' + ((LEVELS[p.level] || {}).label || p.level) + ' → ' + ((LEVELS[c.level] || {}).label || c.level));
   if((p.phone || '') !== (c.phone || '')) out.push('telefon');
   if((p.startDate || '') !== (c.startDate || '')) out.push('datum nástupu');
+  if((p.branch || '') !== (c.branch || '')) out.push('pobočka');
   if((p.photo || '') !== (c.photo || '')) out.push('fotka');
   const ids = Object.keys(Object.assign({}, p.checklist || {}, c.checklist || {}));
   ids.forEach(id=>{
@@ -3033,9 +3084,9 @@ async function renderCardLog(){
   setRail('log');
   activeId = null; activeData = null;
   await renderList();
-  const head = '<button class="to-list" id="toListBtn">‹ Zaměstnanci</button><section class="block"><h2>Historie změn</h2>' +
-    '<div class="muted">Všechny publikace karty (posledních 30), od nejnovější. U každé je vidět, co se od předchozí publikace změnilo. Nepublikované změny z prohlížeče tu nejsou.</div>';
-  mainEl.innerHTML = head + '<div class="muted" id="logProgress" style="margin-top:12px">Načítám historii…</div></section>';
+  const head = '<button class="to-list" id="toListBtn">‹ Zaměstnanci</button><div class="team-head"><div><h1>Historie změn</h1>' +
+    '<div class="muted">Všechny publikace karty (posledních 30), od nejnovější. U každé je vidět, co se od předchozí publikace změnilo. Nepublikované změny z prohlížeče tu nejsou.</div></div></div>';
+  mainEl.innerHTML = head + '<div class="muted" id="logProgress">Načítám historii…</div>';
   window.scrollTo(0, 0);
   document.body.classList.remove('m-panel');
   $('toListBtn').onclick = showListMobile;
@@ -3064,17 +3115,17 @@ async function renderCardLog(){
   const body = entries.length ? entries.map(e=>{
     const d = new Date(e.date);
     const when = d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
-    return '<div class="hist-item"><div><b>' + when + '</b> · <span class="muted">' + escapeHtml(e.who) + '</span></div>' +
-      e.groups.map(g=>'<div style="margin-top:4px"><b style="color:var(--caramel-deep)">' + escapeHtml(g.label) + ':</b> ' + g.items.map(escapeHtml).join(' · ') + '</div>').join('') + '</div>';
-  }).join('') : '<div class="muted" style="margin-top:12px">Zatím žádné publikované změny.</div>';
-  mainEl.innerHTML = head + body + '</section>';
+    return '<div class="log-entry"><div class="log-head"><b>' + when + '</b> · ' + escapeHtml(e.who) + '</div>' +
+      e.groups.map(g=>'<div class="log-line"><span class="log-label">' + escapeHtml(g.label) + ':</span> ' + g.items.map(it=>'<span>' + escapeHtml(it) + '</span>').join('<span class="log-sep">·</span>') + '</div>').join('') + '</div>';
+  }).join('') : '<div class="muted">Zatím žádné publikované změny.</div>';
+  mainEl.innerHTML = head + body;
   $('toListBtn').onclick = showListMobile;
 }
 
 /* ==================== NÁPOVĚDA ==================== */
 function helpContentHtml_v41(){
-  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>🕘 Historie</b>, <b>⚙️ Nastavení</b>, <b>📚 Návody</b> a dole blok <b>Pohled</b> – zvýrazněné tlačítko Vedoucí / Zaměstnanec ukazuje, jak se na kartu právě díváš; klikem na druhé přepneš. V pohledu zaměstnance je nahoře modrý pruh s tlačítkem Zpět na vedoucího. Zaměstnanec si při prvním přepnutí vybere své jméno („Kdo jsi?“) a dál vidí jen svoji kartu – zařízení si to pamatuje, změnit jde odkazem „Nejsi …? Změnit“ v pruhu. Na mobilu je lišta dole a pohled vybereš tlačítkem 👁 Pohled.</p>' +
-    '<p>V detailu zaměstnance jsou nahoře úrovně jako kroky (klikem zobrazíš položky dané úrovně), vpravo <b>Další krok</b>. Prohřešky a poznámky jsou v záložkách. Stav položky změníš klikem na štítek, nebo v rozbalené položce tlačítky ČEKÁ / TEST / DOHLED / SAMOSTATNĚ.</p>' +
+  return '<h3>Nový vzhled (v4)</h3><p>Vlevo je tmavá lišta: <b>👥 Tým</b> (přehled všech, přepínač Karty / Kdo co umí), <b>📅 Měsíc</b> (report a uzávěrka), <b>📚 Návody</b> a dole blok <b>Pohled</b> – zvýrazněné tlačítko Vedoucí / Zaměstnanec ukazuje, jak se na kartu právě díváš; klikem na druhé přepneš. V pohledu zaměstnance je nahoře modrý pruh s tlačítkem Zpět na vedoucího. Zaměstnanec si při prvním přepnutí vybere své jméno („Kdo jsi?“) a dál vidí jen svoji kartu – zařízení si to pamatuje, změnit jde odkazem „Nejsi …? Změnit“ v pruhu. Na mobilu je lišta dole a pohled vybereš tlačítkem 👁 Pohled.</p>' +
+    '<p>Dole v panelu je lišta <b>+ Přidat</b> / <b>☁ Publikovat</b> / <b>⚙</b> – pod ozubeným kolečkem najdeš Nastavení, Historii změn, Pobočky a zálohy. Nahoře v panelu přepneš pobočku; pobočku zaměstnance nastavíš v jeho kartě.</p><p>V detailu zaměstnance jsou nahoře úrovně jako kroky (klikem zobrazíš položky dané úrovně), vpravo <b>Další krok</b>. Prohřešky a poznámky jsou v záložkách. Stav položky změníš klikem na štítek, nebo v rozbalené položce tlačítky ČEKÁ / TEST / DOHLED / SAMOSTATNĚ.</p>' +
     '<p>V tabulce <b>Kdo co umí</b> klik na políčko přepne stav (čeká → test → dohled → samostatně). Spodní řádek ukáže, kolik lidí danou věc zvládá samostatně.</p>';
 }
 function helpContentHtml(){
@@ -3159,7 +3210,7 @@ $('pvEmp').onclick = ()=>setMode('employee');
 $('pvPopLeader').onclick = ()=>setMode('leader');
 $('pvPopEmp').onclick = ()=>setMode('employee');
 $('toolsBtn').onclick = e=>{ e.stopPropagation(); $('toolsMenu').classList.toggle('open'); };
-$('toolsMenu').addEventListener('click', e=>{ if(e.target.tagName === 'BUTTON') $('toolsMenu').classList.remove('open'); });
+$('toolsMenu').addEventListener('click', e=>{ if(e.target.tagName === 'BUTTON' || e.target.tagName === 'A') $('toolsMenu').classList.remove('open'); });
 document.addEventListener('click', e=>{
   if(!e.target.closest('#toolsBtn')) $('toolsMenu').classList.remove('open');
 });
@@ -3220,6 +3271,8 @@ $('publishBtn').onclick = ()=>{ publishToGitHub(); };
   await loadGuides();
   await loadSettings();
   applyConfig();
+  await loadKbArticles();
+  renderBranchFilter();
   applyMode();
   await renderTeam();
 })();

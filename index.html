@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.47 -->
+<!-- v2.49 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -441,6 +441,18 @@
   .rail-btn.on{background:#6B4A33;color:#FFFDF8;}
   .rail-sep{width:40px;height:1px;background:#6B5744;margin:4px 0;flex-shrink:0;}
   .rail-spacer{flex:1;}
+  .pv{width:80px;flex-shrink:0;background:rgba(255,255,255,.06);border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;gap:4px;margin-top:4px;box-sizing:border-box;}
+  .pv .pvh{font-size:9.5px;color:#C9B79D;text-align:center;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+  .pv button{border:none;border-radius:8px;padding:6px 2px;font-family:inherit;font-size:10.5px;font-weight:700;background:none;color:#E8DCC8;cursor:pointer;line-height:1.25;overflow-wrap:break-word;}
+  .pv button:hover{background:rgba(255,255,255,.08);}
+  .pv button.on{background:#FFFDF8;color:var(--cocoa);}
+  .pv button.on.e{background:#DCE6F0;color:#2F4E6B;}
+  #railRole{display:none;}
+  .rail-btn.emp-mode{background:#2F4E6B;color:#fff;}
+  .pvm-h{font-size:11px;font-weight:700;color:var(--caramel-deep);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+  .pvm-opt, #roleOpts .role-opt{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;margin-top:6px;font:inherit;font-size:13.5px;text-align:left;color:var(--cocoa);cursor:pointer;}
+  .pvm-opt.on, #roleOpts .role-opt.on{border-color:var(--caramel-deep);background:var(--cream);font-weight:700;}
+  .pvm-opt small{display:block;font-size:11.5px;color:var(--cocoa-soft);font-weight:400;}
   .rail-add{flex-shrink:0;border:1px dashed #8A7462;background:none;color:#E8DCC8;border-radius:10px;width:40px;height:30px;cursor:pointer;font-size:16px;margin-top:2px;}
   .rail-add:hover{border-color:#E8DCC8;}
   .rail-mob{display:none;}
@@ -513,6 +525,8 @@
     body.m-panel .main{display:none;}
     .main{padding:18px 14px 100px;max-width:none;}
     .role-menu{left:10px;right:10px;width:auto;bottom:84px;}
+    .pv{display:none;}
+    #railRole{display:flex;}
     .mob-only{display:block;}
     .m-back{display:inline-block;border:none;background:none;padding:0;margin-bottom:10px;font:inherit;font-size:13.5px;font-weight:600;color:var(--caramel-deep);cursor:pointer;}
   }
@@ -527,8 +541,10 @@
     <div class="rail-sep"></div>
     <div class="rail-secs" id="sectionSwitch"></div>
     <div class="rail-spacer"></div>
+    <a class="rail-btn" id="railCard" href="karta/" style="display:none;text-decoration:none"><span class="ri">📇</span>Karta</a>
     <button class="rail-btn rail-desk" id="helpBtn" title="Nápověda"><span class="ri">❓</span>Nápověda</button>
-    <button class="rail-btn" id="railRole" title="Moje role"><span class="ri" id="railRoleIco">👤</span><span id="railRoleLbl">Role</span></button>
+    <div class="pv" id="pvBlock"><div class="pvh">Pohled</div><button id="pvEditor" title="Upravovat znalostní bázi">✏️<br>Editor</button><button id="pvReader" title="Zobrazit jako čtenář – vyber roli">👤<br><span id="pvReaderLbl">Čtenář</span></button></div>
+    <button class="rail-btn" id="railRole" title="Zobrazit jako…"><span class="ri">👁</span><span id="railRoleLbl">Pohled</span></button>
   </nav>
   <div class="sidebar" id="panel">
     <div>
@@ -558,8 +574,6 @@
         <button id="exportBtn">⬇ Uložit zálohu</button>
         <button id="importBtn">⬆ Nahrát zálohu</button>
         <input type="file" id="importFile" accept="application/json" style="display:none;">
-        <hr>
-        <a id="cardLink" href="karta/">👤 Karta zaměstnance</a>
       </div>
     </div>
   </div>
@@ -568,15 +582,17 @@
   </div>
 </div>
 <div class="role-menu" id="roleMenu" hidden>
-  <div id="roleSelectWrap"><div class="field-label" style="margin:0 0 4px">Moje role</div><div id="roleOpts"></div></div>
-  <button class="role-mode" id="modeToggleBtn"></button>
+  <div class="pvm-h">Zobrazit jako</div>
+  <button class="pvm-opt" id="pvMenuEditor">✏️ <span>Editor<small>úpravy článků, publikování, správa</small></span></button>
+  <div class="pvm-h" style="margin-top:10px">Čtenář – role</div>
+  <div id="roleOpts"></div>
 </div>
 
 <!-- NAČTENÍ DAT ZE SOUBORU data.js -->
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.47';
+const APP_VERSION = 'v2.49';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -1131,7 +1147,8 @@ function init(){
   }
   const fromLink = openFromHash();
   if(!fromLink){ view = 'home'; activeId = null; }
-  window.addEventListener('hashchange', ()=>{ if(handleEditorHash()){ location.reload(); return; } if(openFromHash()){ render(); scrollToMainOnMobile(); } });
+  if(openBranchesHash()) activeId = null;
+  window.addEventListener('hashchange', ()=>{ if(handleEditorHash()){ location.reload(); return; } if(openBranchesHash()){ render(); return; } if(openFromHash()){ render(); scrollToMainOnMobile(); } });
   let versionText = APP_VERSION;
   if(publishedAt){
     const d = new Date(publishedAt);
@@ -1147,37 +1164,57 @@ function init(){
 
 function applyMode(){
   const isEditor = MODE === 'editor';
-  $('modeToggleBtn').style.display = hasEditorToken() ? 'block' : 'none';
-  $('modeToggleBtn').textContent = isEditor ? '👁 Přepnout na čtenáře' : '✏️ Přepnout na editora';
+  $('pvEditor').style.display = hasEditorToken() ? 'block' : 'none';
+  $('pvMenuEditor').style.display = hasEditorToken() ? 'flex' : 'none';
+  $('railCard').style.display = isEditor ? 'flex' : 'none';
   $('edFoot').style.display = isEditor ? 'block' : 'none';
   $('toolsMenu').classList.remove('open');
-  $('roleSelectWrap').style.display = isEditor ? 'none' : 'block';
-  if(!isEditor) renderRoleSelect();
+  renderRoleSelect();
   updateRailRole();
   updatePublishStatus();
 }
 function updateRailRole(){
   const isEditor = MODE === 'editor';
   const r = currentRole();
-  $('railRoleIco').textContent = isEditor ? '✏️' : '👤';
-  $('railRoleLbl').textContent = isEditor ? 'Editor' : (r ? r.label : 'Role');
+  $('pvEditor').className = isEditor ? 'on' : '';
+  $('pvReader').className = isEditor ? '' : 'on e';
+  $('pvReaderLbl').textContent = r ? r.label : 'Čtenář';
+  $('pvMenuEditor').className = 'pvm-opt' + (isEditor ? ' on' : '');
+  $('railRoleLbl').textContent = isEditor ? 'Editor' : (r ? r.label : 'Pohled');
+  $('railRole').className = 'rail-btn' + (!isEditor && hasEditorToken() ? ' emp-mode' : '');
 }
 function openRoleMenu(){
-  if(MODE !== 'editor') renderRoleSelect();
+  renderRoleSelect();
   $('roleMenu').hidden = false;
+}
+function setKbMode(m){
+  $('roleMenu').hidden = true;
+  if(MODE === m) return true;
+  if(m === 'editor' && !hasEditorToken()) return false;
+  if(!canLeaveEdit()) return false;
+  MODE = m;
+  try{ localStorage.setItem('kb-mode', MODE); }catch(e){}
+  editing = false;
+  if(view !== 'home') view = 'article';
+  applyMode();
+  render();
+  return true;
 }
 
 function renderRoleSelect(){
   const box = $('roleOpts');
   box.innerHTML = roles.length
-    ? roles.map(r=>'<button class="role-opt' + (r.id === readerRoleId ? ' on' : '') + '" data-role-pick="' + r.id + '">' + escapeHtml(r.label) + '</button>').join('')
+    ? roles.map(r=>'<button class="role-opt' + (MODE !== 'editor' && r.id === readerRoleId ? ' on' : '') + '" data-role-pick="' + r.id + '">👤 ' + escapeHtml(r.label) + '</button>').join('')
     : '<div class="status" style="margin:0">Zatím nejsou nastavené žádné role.</div>';
   box.querySelectorAll('[data-role-pick]').forEach(b=>{
     b.onclick = ()=>{
+      if(MODE === 'editor' && !canLeaveEdit()) return;
       readerRoleId = b.dataset.rolePick;
       try{ localStorage.setItem('kb-reader-role', readerRoleId); }catch(e){}
       $('roleMenu').hidden = true;
+      if(MODE === 'editor'){ setKbMode('reader'); return; }
       renderRoleSelect();
+      updateRailRole();
       render();
     };
   });
@@ -1554,6 +1591,15 @@ function renderCatList(){
   };
 }
 
+// Odkaz …/#pobocky (z karty zaměstnance) otevře správu poboček
+function openBranchesHash(){
+  if(location.hash !== '#pobocky') return false;
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+  if(MODE !== 'editor' || !canLeaveEdit()) return false;
+  editing = false;
+  view = 'branches';
+  return true;
+}
 // Odkaz typu …/#id_clanku otevře rovnou daný článek
 function openFromHash(){
   const id = decodeURIComponent((location.hash || '').slice(1));
@@ -3060,7 +3106,7 @@ function renderHelpMain(){
       '<li><b>Úvodní stránku</b> upravíš přímo na ní: klikni do nadpisu, názvu nebo popisu dlaždice a piš. Kliknutím na ikonu ji změníš – nebo tam dáš vlastní obrázek z počítače (🖼 Vybrat obrázek…, nejlépe PNG s průhledným pozadím nebo SVG), dole v dlaždici vybereš, kam vede, šipkami ← → měníš pořadí. Prázdná čárkovaná dlaždice přidá novou. Ukládá se hned.</li>' +
       '<li><b>🔖 QR štítky</b> (dole v panelu) – vyber články a vytiskni štítky s QR kódem k nalepení na pracoviště.</li>' +
       '<li>Novou sekci přidáš tlačítkem <b>+</b> v liště pod sekcemi. Sekci přejmenuješ ✎ (kliknutím na ikonu změníš i ikonu) nebo smažeš ✕ v její hlavičce v panelu (jen prázdnou, aspoň jedna musí zůstat). Kdo ji uvidí, nastavíš v rolích.</li>' +
-      '<li>Přepínání editor/čtenář najdeš pod <b>✏️ / 👤</b> dole v liště – vidí ho jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
+      '<li>Přepínání editor/čtenář je v bloku <b>Pohled</b> dole v liště (na mobilu tlačítko <b>👁</b>); pod <b>👤</b> vybereš roli čtenáře – vidí ho jen prohlížeč s uloženým tokenem. Na novém zařízení otevři odkaz končící <b>#editor</b> a zadej token.</li>' +
       '</ul>' +
       '<h3>Uložit a publikovat</h3><ul>' +
       '<li><b>Uložit</b> ukládá jen do tohoto prohlížeče – ostatní změny zatím nevidí.</li>' +
@@ -3151,16 +3197,9 @@ function render(){
   else renderMain();
 }
 
-$('modeToggleBtn').onclick = ()=>{
-  if(!canLeaveEdit()) return;
-  MODE = (MODE === 'editor') ? 'reader' : 'editor';
-  try{ localStorage.setItem('kb-mode', MODE); }catch(e){}
-  editing = false;
-  if(view !== 'home') view = 'article';
-  $('roleMenu').hidden = true;
-  applyMode();
-  render();
-};
+$('pvEditor').onclick = ()=>{ setKbMode('editor'); };
+$('pvMenuEditor').onclick = ()=>{ setKbMode('editor'); };
+$('pvReader').onclick = e=>{ e.stopPropagation(); if($('roleMenu').hidden) openRoleMenu(); else $('roleMenu').hidden = true; };
 $('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'help'; render(); scrollToMainOnMobile(); };
 $('homeLink').onclick = ()=>{ goHome(); };
 $('helpBtnM').onclick = ()=>$('helpBtn').onclick();
@@ -3172,7 +3211,7 @@ $('toolsMenu').addEventListener('click', ()=>{ $('toolsMenu').classList.remove('
 document.addEventListener('click', e=>{
   if(!e.target.closest('#toolsBtn')) $('toolsMenu').classList.remove('open');
   const m = $('roleMenu');
-  if(!m.hidden && !m.contains(e.target) && !e.target.closest('#railRole')) m.hidden = true;
+  if(!m.hidden && !m.contains(e.target) && !e.target.closest('#railRole') && !e.target.closest('#pvReader')) m.hidden = true;
 });
 $('branchesBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'branches'; render(); scrollToMainOnMobile(); };
 $('logBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view = 'log'; loadLog(); scrollToMainOnMobile(); };
