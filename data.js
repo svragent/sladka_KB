@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-01T23:41:08.408Z",
+ "publishedAt": "2026-10-02T00:17:40.427Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
@@ -82,10 +82,6 @@ const INITIAL_DATA = {
   {
    "id": "jak_se_to_vari",
    "label": "Jak se to vaří (limo/svařák/čoko)"
-  },
-  {
-   "id": "a17908666195430yuf7",
-   "label": "TEST"
   }
  ],
  "wikiCats": [
@@ -124,17 +120,9 @@ const INITIAL_DATA = {
    "label": "Kam volat v nouzi"
   }
  ],
- "customSections": [
-  {
-   "id": "sec_mupwrdx4",
-   "label": "TESTOVACI SEKCE",
-   "cats": []
-  }
- ],
+ "customSections": [],
  "baseSections": {
-  "renamed": {
-   "troubleshooting": "🛟 Troubleshooting"
-  },
+  "renamed": {},
   "deleted": []
  },
  "home": {
@@ -188,12 +176,6 @@ const INITIAL_DATA = {
     "lbl": "Když se něco pokazí",
     "dsc": "Rychlá pomoc v nestandardní situaci",
     "section": "troubleshooting"
-   },
-   {
-    "ico": "📄",
-    "lbl": "testgdgdg",
-    "dsc": "ddd",
-    "id": "a1790866626938swfjm"
    }
   ]
  },
@@ -253,30 +235,12 @@ const INITIAL_DATA = {
  ],
  "seedAll": [
   {
-   "id": "a1790866626938swfjm",
-   "section": "sop",
-   "title": "TESSSS",
-   "body": "SDSSDDSD<div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div>SDSDSD</div></div><div>DCXC</div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div><br></div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div>",
-   "postupTags": [],
-   "manualTags": [],
-   "wikiTags": [],
-   "troubleshootTags": [],
-   "videoUrl": "",
-   "related": [],
-   "updatedAt": "2026-10-01",
-   "customTags": [],
-   "files": [],
-   "branches": []
-  },
-  {
    "id": "prostory",
    "title": "Prostory cukrárny",
    "postupTags": [
     "vstupni_logistika"
    ],
-   "manualTags": [
-    "prostory"
-   ],
+   "manualTags": [],
    "videoUrl": "",
    "section": "wiki",
    "wikiTags": [
@@ -303,10 +267,11 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "related": [],
-   "body": "<div>Priority práce na place, v tomto pořadí:</div><div>1. Obsluha zákazníků</div><div>2. Úklid placu a pracovní barové plochy kolem kávovaru a dřezu</div><div>3. Doplnění vitríny</div><div>4. Veškeré ostatní činnosti (vyleštění vitríny, skládání krabic/ubrousků, razítkování...)</div><br><div>Nenecháváme nikdy prázdný krám – na place musí být vždy alespoň jeden člen posádky. Pokud musíš jít pro dort nebo cokoli jiného dozadu a jsi na place sám, popros jiného dostupného kolegu, aby šel na stráž.</div><br><div>Když do cukrárny vstoupí zákazník, dáváme mu najevo, že jsme ready o něj pečovat – nahlas mile a s úsměvem pozdravíme. Small talky jsou vítané.</div><br><div>Když zrovna nikoho neobsluhujeme, neznamená to, že se můžeme opírat o pult nebo koukat do mobilu. Osobní telefon používáme pouze v zázemí, a jen když si potřebujeme vyřídit něco urgentního.</div><br><div>Na směnu chodíme 10 minut předem – v čase zapsaném v TT už musíme být převlečení a připravení pracovat. Nečekané zpoždění včas hlásíme vedoucímu směny.</div><br><div>Čipování: při příchodu se čipujeme až po převlečení do pracovního se zástěrou, při odchodu se čipujeme po dokončení práce a teprve pak se jdeme převlékat.</div><br><div>Komunikace s kolegy: udáváme pozici nebo nejbližší plány (jdu pro Pavlovu, jdu na WC, jdu pro dort do boxu...). Pokud bereš ze skladu poslední kus něčeho (poslední pytel kávy, poslední balík brček), vždy to nahlas služebně staršímu kolegovi. Pokud doplňuješ vitrínu, jsi v kontaktu s kuchyní – hlásíš, co dochází.</div><br><div>Úklid a sklízení stolů: stoly udržujeme čisté, špinavé nádobí odnášíme na myčku vždy s platem – nikdy s minimálním množstvím (třeba s jedním talířem). Pokud poškodíš dort nebo zákusek, odnes ho do kuchyně na resuscitaci – většinou to jde zachránit.</div>",
+   "body": "<div>Priority práce na place, v tomto pořadí:</div><div>1. Obsluha zákazníků</div><div>2. Úklid placu a pracovní barové plochy kolem kávovaru a dřezu</div><div>3. Doplnění vitríny</div><div>4. Veškeré ostatní činnosti (vyleštění vitríny, skládání krabic/ubrousků, razítkování...)</div><br><div>Nenecháváme nikdy prázdný krám – na place musí být vždy alespoň jeden člen posádky. Pokud musíš jít pro dort nebo cokoli jiného dozadu a jsi na place sám, popros jiného dostupného kolegu, aby šel na stráž.</div><br><div>Když do cukrárny vstoupí zákazník, dáváme mu najevo, že jsme ready o něj pečovat – nahlas mile a s úsměvem pozdravíme. Small talky jsou vítané.</div><br><div>Když zrovna nikoho neobsluhujeme, neznamená to, že se můžeme opírat o pult nebo koukat do mobilu. Osobní telefon používáme pouze v zázemí, a jen když si potřebujeme vyřídit něco urgentního.</div><br><div>Na směnu chodíme 10 minut předem – v čase zapsaném v TT už musíme být převlečení a připravení pracovat. Nečekané zpoždění včas hlásíme vedoucímu směny.</div><br><div>Čipování: při příchodu se čipujeme až po převlečení do pracovního se zástěrou, při odchodu se čipujeme po dokončení práce a teprve pak se jdeme převlékat.</div><br><div>Po příchodu na směnu se nejdřív zorientuj, pomoz tam, kde je to potřeba, a nepřekážej ostatním v práci. Když si nejsi čímkoli jistý, zeptej se – kolegové ti rádi pomůžou.</div><br><div>Komunikace s kolegy: udáváme pozici nebo nejbližší plány (jdu pro Pavlovu, jdu na WC, jdu pro dort do boxu...). Pokud bereš ze skladu poslední kus něčeho (poslední pytel kávy, poslední balík brček), vždy to nahlas služebně staršímu kolegovi. Pokud doplňuješ vitrínu, jsi v kontaktu s kuchyní – hlásíš, co dochází.</div><br><div>Úklid a sklízení stolů: stoly udržujeme čisté, špinavé nádobí odnášíme na myčku vždy s platem – nikdy s minimálním množstvím (třeba s jedním talířem). Pokud poškodíš dort nebo zákusek, odnes ho do kuchyně na resuscitaci – většinou to jde zachránit.</div>",
    "customTags": [],
    "files": [],
-   "branches": []
+   "branches": [],
+   "updatedAt": "2026-10-02T00:17:40.427Z"
   },
   {
    "id": "desatero",
@@ -380,10 +345,11 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "related": [],
-   "body": "<div>Vitrína je středobod cukrárny – musí být vždy čistá, doplněná, upravená a lákavá.</div><br><div>Všechny dorty i zákusky doplňujeme metodou FIFO (first in first out) – starší dozadu, čerstvější dopředu, aby se nikdy nestalo, že se novější zákusky prodají dřív než starší.</div><br><div>Akutně doplňuj, když na tácu chybí 4 a více kusů. Při 1–3 chybějících kusech doplň, až nebude fronta a budeš mít čas.</div><br><div>Dorty musí být vždy otočené řezem k zákazníkovi a u nich musí být správná cedulka – když dort přehodíš na jiné místo, přehoď i cedulku.</div><br><div>Na jeden tác dáváme max. dva druhy dortu, výjimečně tři (pokud zbyl jeden/dva kousky).</div><br><div>Horní patro: pečené nanuky (barevný mix z chladicího boxu), makronky (mix z jedné krabice v nerezové lednici), Tiramisu/Panna cotta (bílá lednice v zázemí – Panna cottu před doplněním zalij zavařeninou cca 1 cm), rumové koule (9 na tácek, doplňují se přes bílý košík), cake pops (prosklená lednice, vždy namíchej barvy).</div><br><div>Druhé patro (porcovky, větrníky): doplňuj podle FIFO, akutně při 4+ chybějících kusech. Vždy hlas v kuchyni, když zákusky docházejí. Doplňuj opatrně, ať zákusky nepoškodíš – u tartaletky se slaným karamelem a indiánku se nedotýkej určitých částí (otisky prstů).</div><br><div>Třetí patro: 4 tácy – koláče, cheesecake, 2× různé dorty podle nabídky dne.</div><br><div>Spodní patro: 4 tácy různých dortů, Pavlova vzadu za ostatními dorty (zákazníci ji znají, případně upozorníme).</div><br><div>Pokud cokoli chybí a ve vitríně to nenajdeš, zkontroluj nerezovou lednici (první po levé ruce před kuchyní), případně popros cukrářky o dopečení – nejlépe kontroluj zásoby průběžně a hlas v kuchyni ještě před úplným dojitím.</div><br><div>Udržuj vitrínu čistou – utírej prosklené police, vymetej drobečky, v případě potřeby umyj lopatku, kleště a tácek.</div>",
+   "body": "<div>Vitrína je středobod cukrárny – musí být vždy čistá, doplněná, upravená a lákavá.</div><br><div>Všechny dorty i zákusky doplňujeme metodou FIFO (first in first out) – starší dozadu, čerstvější dopředu, aby se nikdy nestalo, že se novější zákusky prodají dřív než starší.</div><br><div>Pokud tím zákusek nepoškodíš, můžeš ho doplnit i čistýma rukama bez nářadí.</div><br><div>Akutně doplňuj, když na tácu chybí 4 a více kusů. Při 1–3 chybějících kusech doplň, až nebude fronta a budeš mít čas.</div><br><div>Dorty musí být vždy otočené řezem k zákazníkovi a u nich musí být správná cedulka – když dort přehodíš na jiné místo, přehoď i cedulku.</div><br><div>Na jeden tác dáváme max. dva druhy dortu, výjimečně tři (pokud zbyl jeden/dva kousky).</div><br><div>Horní patro: pečené nanuky (barevný mix z chladicího boxu), makronky (mix z jedné krabice v nerezové lednici), Tiramisu/Panna cotta (bílá lednice v zázemí – Panna cottu před doplněním zalij zavařeninou cca 1 cm), rumové koule (9 na tácek, doplňují se přes bílý košík), cake pops (prosklená lednice, vždy namíchej barvy).</div><br><div>Druhé patro (porcovky, větrníky): doplňuj podle FIFO, akutně při 4+ chybějících kusech. Vždy hlas v kuchyni, když zákusky docházejí. Doplňuj opatrně, ať zákusky nepoškodíš – u tartaletky se slaným karamelem a indiánku se nedotýkej určitých částí (otisky prstů).</div><br><div>Třetí patro: 4 tácy – koláče, cheesecake, 2× různé dorty podle nabídky dne.</div><br><div>Spodní patro: 4 tácy různých dortů, Pavlova vzadu za ostatními dorty (zákazníci ji znají, případně upozorníme).</div><br><div>Pokud cokoli chybí a ve vitríně to nenajdeš, zkontroluj nerezovou lednici (první po levé ruce před kuchyní), případně popros cukrářky o dopečení – nejlépe kontroluj zásoby průběžně a hlas v kuchyni ještě před úplným dojitím.</div><br><div>Udržuj vitrínu čistou – utírej prosklené police, vymetej drobečky, v případě potřeby umyj lopatku, kleště a tácek.</div>",
    "customTags": [],
    "files": [],
-   "branches": []
+   "branches": [],
+   "updatedAt": "2026-10-02T00:17:40.427Z"
   },
   {
    "id": "kasa_penize",
@@ -399,10 +365,11 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "related": [],
-   "body": "<div>Ráno počítá pokladnu vedoucí (nebo někoho pověří) – depozit je 3 000 Kč. Večer pokladnu uzavírá vedoucí.</div><br><div>Nepřijímáme stravenky. Zákazník může platit stravenkovou kartou, ale ne všechny fungují.</div><br><div>ODPIS – markuje se v kase na stoly dole vpravo. Použij, když zákusek spadne nebo se zničí a nejde opravit.</div><br><div>VYŘAZENO – použij, když se zboží nedá prodat kvůli špatné kvalitě, nestabilitě nebo stáří.</div><br><div>Slevy pro zaměstnance: 20 % na vše (platí i pro blízkou rodinu, ne pro vzdálené příbuzné, které jsi nikdy neviděl). Bývalí dlouhodobí zaměstnanci mají 10 % na vše. Sousedské podniky (květinářství, Malina, Duha, Farmářský obchůdek, kadeřnictví) mají nárok na sousedskou kávu (espresso, espresso macchiatto, cappuccino, latte, lungo, americano) – jiné nápoje/zákusky se markují klasicky, bez slevy. Pokud si nejsi jistý, jestli má někdo na sousedskou kávu nárok, zeptej se služebně staršího kolegy nebo vedoucího.</div><br><div>Perso káva: každý zaměstnanec má nárok na jednu kávu denně zdarma, každá další je za 10 Kč (tlačítko v kase „personální káva“). Když nepiješ kávu, můžeš mít místo ní za směnu jedno Chai latte nebo limču.</div>",
+   "body": "<div>Ráno počítá pokladnu vedoucí (nebo někoho pověří) – depozit je 3 000 Kč. Večer pokladnu uzavírá vedoucí.</div><br><div>Nepřijímáme stravenky. Zákazník může platit stravenkovou kartou, ale ne všechny fungují.</div><br><div>ODPIS – markuje se v kase na stoly dole vpravo. Použij, když zákusek spadne nebo se zničí a nejde opravit.</div><br><div>VYŘAZENO – použij, když se zboží nedá prodat kvůli špatné kvalitě, nestabilitě nebo stáří.</div><br><div>Slevy pro zaměstnance, sousedskou a personální kávu najdeš v článku <a class=\"kb-link\" data-art=\"slevy_kava\" href=\"#slevy_kava\">Slevy, sousedská a personální káva</a>.</div>",
    "customTags": [],
    "files": [],
-   "branches": []
+   "branches": [],
+   "updatedAt": "2026-10-02T00:17:40.427Z"
   },
   {
    "id": "tocenim",
@@ -457,10 +424,11 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "related": [],
-   "body": "<div>Mléko ke kávovým nápojům, které standardně mléko neobsahují, dáváme podle přání zákazníka teplé nebo studené bokem v malé konvičce. S sebou nalévej mléko před zákazníkem, aby mohl říct stop.</div><br><div>Pozor na zbytečné přehřívání mléka nad 65 °C při šlehání – kvalita pěny je důležitější než perfektní obrázek na hladině.</div><br><div>ESPRESSO – jeden shot čerstvé kávy do malého šálku, mléko jen na vyžádání. Tady: espresso šálek. S sebou: XS kelímek.</div><img src=\"images/napoj-espresso.jpg\" alt=\"Espresso\"><br><div>CAPPUCCINO – jeden shot kávy do šálku, doplnit do plna lesklou čerstvou pěnou (1–2 cm). Tady: cappuccino šálek. S sebou: S kelímek.</div><img src=\"images/napoj-cappuccino.jpg\" alt=\"Cappuccino\"><br><div>CAFFÈ LATTE – shot kávy rovnou do šálku, doplnit našlehaným mlékem s lesklou pěnou (1 cm). Tady: šálek 300 ml. S sebou: L kelímek.</div><img src=\"images/napoj-caffe-latte.jpg\" alt=\"Caffè latte\"><br><div>FLAT WHITE – doppio rovnou do sklenky, doplnit do plna mlékem téměř bez pěny (0,5 cm). Nech čerstvé doppio chvíli odstát, než začneš nalévat – má hustou cremu. Tady: Flat white sklenka. S sebou: S kelímek.</div><img src=\"images/napoj-flat-white.jpg\" alt=\"Flat white\"><br><div>Pokud si nejsi jistý kvalitou nápoje, zeptej se odpovědné osoby.</div><br><div>Toto je základ pro zaškolení – kompletní recepty na všechny nápoje (Americano, Lungo, Macchiatto, čaje, matcha, studené i alkoholické nápoje) najdeš v plném nápojovém manuálu.</div><img src=\"images/nadobi-tady-kava.jpg\" alt=\"Nádobí – tady (káva)\"><img src=\"images/nadobi-tady-ostatni.jpg\" alt=\"Nádobí – tady (ostatní nápoje)\"><img src=\"images/kelimky-s-sebou.jpg\" alt=\"Kelímky – s sebou\">",
+   "body": "<div>Mléko ke kávovým nápojům, které standardně mléko neobsahují, dáváme podle přání zákazníka teplé nebo studené bokem v malé konvičce. S sebou nalévej mléko před zákazníkem, aby mohl říct stop.</div><br><div>Pozor na zbytečné přehřívání mléka nad 65 °C při šlehání – kvalita pěny je důležitější než perfektní obrázek na hladině.</div><br><div>Recepty na základní nápoje – ESPRESSO, CAPPUCCINO, CAFFÈ LATTE a FLAT WHITE – i s fotkami najdeš v článku <a class=\"kb-link\" data-art=\"napoje_kava\" href=\"#napoje_kava\">Nápojový manuál – káva</a>.</div><br><div>Pokud si nejsi jistý kvalitou nápoje, zeptej se odpovědné osoby.</div><br><div>Toto je základ pro zaškolení – kompletní recepty na všechny nápoje (Americano, Lungo, Macchiatto, čaje, matcha, studené i alkoholické nápoje) najdeš v plném nápojovém manuálu – začni článkem <a class=\"kb-link\" data-art=\"napoje_kava\" href=\"#napoje_kava\">Nápojový manuál – káva</a>.</div><img src=\"images/nadobi-tady-kava.jpg\" alt=\"Nádobí – tady (káva)\"><img src=\"images/nadobi-tady-ostatni.jpg\" alt=\"Nádobí – tady (ostatní nápoje)\"><img src=\"images/kelimky-s-sebou.jpg\" alt=\"Kelímky – s sebou\">",
    "customTags": [],
    "files": [],
-   "branches": []
+   "branches": [],
+   "updatedAt": "2026-10-02T00:17:40.427Z"
   },
   {
    "id": "system",
@@ -795,11 +763,12 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "videoUrl": "",
-   "body": "<div>Složení výrobků k nahlédnutí je v deskách pod kasou. Doba spotřeby dortů je 48 hodin při teplotě +5 °C – tuto informaci dávej zákazníkovi, když se ptá.</div><br><div>Plac má odpovědnost za to, co prodává – pokud dostaneš z výroby zákusek s nehezkou polevu/vzhledem, je tvou povinností ho vrátit a poprosit o předělání. Při doplňování kontroluj kvalitu (např. oschlé ovoce nevypadá dobře). Pokud je dort/zákusek poškozený, poraď se s cukrářkou, jestli půjde opravit.</div><br><div>CELÉ DORTY K ZAKOUPENÍ – zákazníkovi vždy nabídneme to, co vidí ve vitríně, a popíšeme, co v dortu je a jaké má varianty. Každé ráno dostaneme seznam z výroby, co máme ten den za celé dorty – zákazníka upozorníme, že dozdobení dortu bude trvat cca 10–15 minut. K dortu nabídneme čokoládové číslo/číselnou svíčku/svíčku/fontánu, případně cedulku na počkání (pokud má někdo na směně čas ji napsat). Dorty vždy balíme do tvrdých krabic.</div><br><div>Pokud dort na objednávku nenajdeš v boxu, postup najdeš v Troubleshooting → Dort na objednávku není v boxu.</div>",
+   "body": "<div>Složení výrobků k nahlédnutí je v deskách pod kasou. Doba spotřeby dortů je 48 hodin při teplotě +5 °C – tuto informaci dávej zákazníkovi, když se ptá.</div><br><div>Plac má odpovědnost za to, co prodává – pokud dostaneš z výroby zákusek s nehezkou polevu/vzhledem, je tvou povinností ho vrátit a poprosit o předělání. Při doplňování kontroluj kvalitu (např. oschlé ovoce nevypadá dobře). Pokud je dort/zákusek poškozený, poraď se s cukrářkou, jestli půjde opravit.</div><br><div>Tištěné katalogy už nemáme – jejich roli plní e-shop. Zákazníky tam odkazujeme, najdou tam celou nabídku našich dezertů a dortů.</div><br><div>CELÉ DORTY K ZAKOUPENÍ – zákazníkovi vždy nabídneme to, co vidí ve vitríně, a popíšeme, co v dortu je a jaké má varianty. Každé ráno dostaneme seznam z výroby, co máme ten den za celé dorty – zákazníka upozorníme, že dozdobení dortu bude trvat cca 10–15 minut. K dortu nabídneme čokoládové číslo/číselnou svíčku/svíčku/fontánu, případně cedulku na počkání (pokud má někdo na směně čas ji napsat). Dorty vždy balíme do tvrdých krabic.</div><br><div>Pokud dort na objednávku nenajdeš v boxu, postup najdeš v Troubleshooting → <a class=\"kb-link\" data-art=\"dort_neni_v_boxu\" href=\"#dort_neni_v_boxu\">Dort na objednávku není v boxu</a>.</div>",
    "related": [],
    "customTags": [],
    "files": [],
-   "branches": []
+   "branches": [],
+   "updatedAt": "2026-10-02T00:17:40.427Z"
   },
   {
    "id": "poukazy",
@@ -852,16 +821,19 @@ const INITIAL_DATA = {
    "wikiTags": [],
    "troubleshootTags": [],
    "videoUrl": "",
-   "body": "<h3>Běžná objednávka</h3><div>Administrace → Objednávky → Vytvořit → zaškrtnuté „Běžná objednávka“ → Vyhledat produkt → zvolit dort. Zjisti od zákazníka velikost dortu, zda chce cedulku či čokoládovou číslici, a nabídni další úpravy (ovoce navíc, pusinky/makronky, barevná šlehačka – ne všechny dorty lze celé obmazat).</div><img src=\"images/obj-bezna-na-zitra.jpg\" alt=\"Volba Běžná objednávka / Na zítra\"><img src=\"images/obj-vyhledat-produkt.jpg\" alt=\"Vyhledat produkt\"><img src=\"images/obj-volba-dortu.jpg\" alt=\"Volba velikosti a úprav dortu\"><br><div>Bezlaktózové dorty lze objednat jen ovocný světlý nebo ovocný tmavý. Jedlý tisk může být ležící nebo stojící – má-li zákazník vlastní fotku, ideálně ho nasměruj na objednání přes e-shop; u obecné fotky z internetu (a není nával) můžeme tisk zařídit i na místě (najít na tabletu, screenshot, vložit z galerie).</div><br><div>Figurky – cena = částka od Saši (externista) + 50 % navíc, minimálně 350 Kč. Objednej ji tak, aby byla na výrobně týden před termínem dortu.</div><br><div>Doplňkové poznámky pro cukrářku zadávej do určeného pole, ať je nepřehlédnou. Dál vyplň datum a čas vyzvednutí, jméno zákazníka, místo vyzvednutí (Petřiny/Čakovice), způsob platby a kontakt (e-mail, telefon) – upozorni, že na e-mail přijde potvrzení s číslem objednávky a poslední tři číslice si budeme ověřovat při výdeji. Platba QR/kartou vyžaduje fakturační údaje; při platbě na místě hned zaškrtni „Označit objednávku za zaplacenou“. Objednávku potvrdíš svým kódem zaměstnance.</div><img src=\"images/obj-poznamka-od-provozu.jpg\" alt=\"Pole Poznámka od provozu\"><img src=\"images/obj-informace-zakaznik.jpg\" alt=\"Informace o objednávce a zákazník\"><img src=\"images/obj-platebni-metoda.jpg\" alt=\"Platební metoda a označení zaplacené objednávky\"><img src=\"images/obj-vytvorit.jpg\" alt=\"Tlačítko Vytvořit objednávku\"><br><h3>Objednání na druhý den</h3><div>Stejně přes Objednávky → Vytvořit, ale zaškrtni „Na zítra“ – nabídka dortů je omezená na to, co mají cukrářky založené. Pokud zákazníkovo přání není v nabídce, můžeš zavolat na centrálu, zda by to šlo, jinak nabídni nejbližší alternativu. Některé úpravy na druhý den nejdou zadat – nejasné případy konzultuj s cukrářkami.</div><img src=\"images/obj-na-zitra.jpg\" alt=\"Volba Na zítra\"><img src=\"images/obj-na-zitra-nabidka.jpg\" alt=\"Nabídka dortů na zítra\"><br><div>Neobvyklé požadavky (nejsi si jistý, jestli lze vyrobit) – zeptej se vedoucího směny, případně konzultuj s výrobnou; snažíme se vyjít vstříc, ne rovnou odmítat.</div><br><div>Nesystémové požadavky (systém nedovolí zadat) – volej vrchní cukrářce Nadě, 775 395 493, ta poradí nebo pomůže s alternativou.</div><br><h3>Speciální a svatební dorty</h3><div>Na den je maximální kapacita 3 speciální/svatební dorty; pokud by šlo o 4., konzultuj s výrobnou. Zákazníka odkážeme na e-shop, sekce „Dorty na míru“ (termín lze zkontrolovat i na pobočce) nebo „Svatby“ – tam vyplní krátký formulář a ozve se mu kolegyně, která má danou agendu na starosti a doladí detaily. Svatební dorty rozvážíme, nebo si je zákazník vyzvedne sám.</div><img src=\"images/obj-svatebni-dorty.jpg\" alt=\"E-shop – svatební dorty\"><img src=\"images/obj-svatby-formular.jpg\" alt=\"E-shop – formulář pro svatby\"><img src=\"images/obj-specialni-dorty.jpg\" alt=\"E-shop – speciální dorty\"><img src=\"images/obj-poptavka-terminu.jpg\" alt=\"E-shop – poptávka termínu\"><img src=\"images/obj-poptavka-formular.jpg\" alt=\"E-shop – formulář poptávky\">",
+   "body": "<h3>Běžná objednávka</h3><div>Administrace → Objednávky → Vytvořit → zaškrtnuté „Běžná objednávka“ → Vyhledat produkt → zvolit dort. Zjisti od zákazníka velikost dortu, zda chce cedulku či čokoládovou číslici, a nabídni další úpravy (ovoce navíc, pusinky/makronky, barevná šlehačka – ne všechny dorty lze celé obmazat).</div><img src=\"images/obj-bezna-na-zitra.jpg\" alt=\"Volba Běžná objednávka / Na zítra\"><img src=\"images/obj-vyhledat-produkt.jpg\" alt=\"Vyhledat produkt\"><img src=\"images/obj-volba-dortu.jpg\" alt=\"Volba velikosti a úprav dortu\"><br><div>Bezlaktózové dorty lze objednat jen ovocný světlý nebo ovocný tmavý. Jedlý tisk může být ležící nebo stojící – má-li zákazník vlastní fotku, ideálně ho nasměruj na objednání přes e-shop; u obecné fotky z internetu (a není nával) můžeme tisk zařídit i na místě (najít na tabletu, screenshot, vložit z galerie).</div><br><div>Figurky – cena = částka od Saši (externista) + 50 % navíc, minimálně 350 Kč. Objednej ji tak, aby byla na výrobně týden před termínem dortu.</div><br><div>Doplňkové poznámky pro cukrářku zadávej do určeného pole, ať je nepřehlédnou. Dál vyplň datum a čas vyzvednutí, jméno zákazníka, místo vyzvednutí (Petřiny/Čakovice), způsob platby a kontakt (e-mail, telefon) – upozorni, že na e-mail přijde potvrzení s číslem objednávky a poslední tři číslice si budeme ověřovat při výdeji. Platba QR/kartou vyžaduje fakturační údaje; při platbě na místě hned zaškrtni „Označit objednávku za zaplacenou“. Objednávku potvrdíš svým kódem zaměstnance.</div><img src=\"images/obj-poznamka-od-provozu.jpg\" alt=\"Pole Poznámka od provozu\"><img src=\"images/obj-informace-zakaznik.jpg\" alt=\"Informace o objednávce a zákazník\"><img src=\"images/obj-platebni-metoda.jpg\" alt=\"Platební metoda a označení zaplacené objednávky\"><img src=\"images/obj-vytvorit.jpg\" alt=\"Tlačítko Vytvořit objednávku\"><br><div>Zákazníka můžeme upozornit, že si dort příště jednoduše objedná sám z pohodlí domova přes e-shop – ale tak, aby to nevyznělo, že ho s objednávkou nechceme obsloužit.</div><br><h3>Objednání na druhý den</h3><div>Stejně přes Objednávky → Vytvořit, ale zaškrtni „Na zítra“ – nabídka dortů je omezená na to, co mají cukrářky založené. Pokud zákazníkovo přání není v nabídce, můžeš zavolat na centrálu, zda by to šlo, jinak nabídni nejbližší alternativu. Některé úpravy na druhý den nejdou zadat – nejasné případy konzultuj s cukrářkami.</div><img src=\"images/obj-na-zitra.jpg\" alt=\"Volba Na zítra\"><img src=\"images/obj-na-zitra-nabidka.jpg\" alt=\"Nabídka dortů na zítra\"><br><div>Neobvyklé požadavky (nejsi si jistý, jestli lze vyrobit) – zeptej se vedoucího směny, případně konzultuj s výrobnou; snažíme se vyjít vstříc, ne rovnou odmítat.</div><br><div>Nesystémové požadavky (systém nedovolí zadat) – volej vrchní cukrářce Nadě, 775 395 493, ta poradí nebo pomůže s alternativou.</div><br><h3>Speciální a svatební dorty</h3><div>Na den je maximální kapacita 3 speciální/svatební dorty; pokud by šlo o 4., konzultuj s výrobnou. Zákazníka odkážeme na e-shop, sekce „Dorty na míru“ (termín lze zkontrolovat i na pobočce) nebo „Svatby“ – tam vyplní krátký formulář a ozve se mu kolegyně, která má danou agendu na starosti a doladí detaily. Svatební dorty rozvážíme, nebo si je zákazník vyzvedne sám.</div><img src=\"images/obj-svatebni-dorty.jpg\" alt=\"E-shop – svatební dorty\"><img src=\"images/obj-svatby-formular.jpg\" alt=\"E-shop – formulář pro svatby\"><img src=\"images/obj-specialni-dorty.jpg\" alt=\"E-shop – speciální dorty\"><img src=\"images/obj-poptavka-terminu.jpg\" alt=\"E-shop – poptávka termínu\"><img src=\"images/obj-poptavka-formular.jpg\" alt=\"E-shop – formulář poptávky\">",
    "related": [],
    "customTags": [],
    "files": [],
-   "branches": []
+   "branches": [],
+   "updatedAt": "2026-10-02T00:17:40.427Z"
   },
   {
    "id": "uvod",
    "title": "Úvod – co je Sladká dílna",
-   "postupTags": [],
+   "postupTags": [
+    "vstupni_logistika"
+   ],
    "manualTags": [
     "uvod"
    ],
@@ -889,28 +861,9 @@ const INITIAL_DATA = {
    "troubleshootTags": [],
    "customTags": [],
    "videoUrl": "",
-   "related": [
-    "a1790866626938swfjm"
-   ],
+   "related": [],
    "checklist": true,
    "updatedAt": "2026-10-01T21:58:27.209Z",
-   "files": [],
-   "branches": []
-  },
-  {
-   "id": "a179089194842572l9p",
-   "section": "sop",
-   "title": "oprava auta",
-   "body": "<b>sdsdsdsdsxcxc</b><h3>xcxcxcc</h3><div><br></div><div><ul><li>xcxcc</li></ul><div>xcxcxc</div></div><div><br></div><div><img src=\"images/e424fe10a7cd4f2de04d.jpg\"></div><div><div class=\"kb-video\" contenteditable=\"false\" data-url=\"https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s\">🎬 Video: https://www.youtube.com/watch?v=M7Eup3ZeHlI&amp;t=2s</div><div>ddff</div></div><div><br></div>",
-   "postupTags": [],
-   "manualTags": [],
-   "wikiTags": [],
-   "troubleshootTags": [],
-   "customTags": [],
-   "videoUrl": "",
-   "related": [],
-   "checklist": false,
-   "updatedAt": "2026-10-01T22:00:12.354Z",
    "files": [],
    "branches": []
   }
