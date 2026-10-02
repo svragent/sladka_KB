@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Sladká dílna">
 <title>Znalostní báze – Sladká dílna</title>
 <!-- data se čtou z data.js; editor ukládá rozpracované změny do prohlížeče a tlačítkem Publikovat je zapíše do data.js na GitHubu -->
-<!-- v2.50 -->
+<!-- v2.51 -->
 <style>
   :root{
     --cream:#F7EFE0;
@@ -538,7 +538,6 @@
 <div class="app">
   <nav class="rail" id="rail" aria-label="Sekce">
     <button class="rail-btn" id="railHome" title="Úvodní stránka"><span class="ri">🏠</span>Úvod</button>
-    <button class="rail-btn rail-mob" id="railSearch"><span class="ri">🔍</span>Hledat</button>
     <div class="rail-sep"></div>
     <div class="rail-secs" id="sectionSwitch"></div>
     <div class="rail-spacer"></div>
@@ -593,7 +592,7 @@
 <script>document.write('<script src="data.js?t=' + Date.now() + '"><\/script>');</script>
 
 <script>
-const APP_VERSION = 'v2.50';
+const APP_VERSION = 'v2.51';
 
 const BASE_SECTIONS = [
   {id:'sop', label:'📋 Postupy (SOP)'},
@@ -3069,7 +3068,7 @@ function renderHelpMain(){
     '<li><b>📄 Tisk</b> vytiskne jen samotný článek.</li>' +
     '<li>Video v článku spustíš kliknutím na náhled.</li>' +
     '<li>U postupů s <b>odškrtávacím seznamem</b> (např. ranní příprava, večerní úklid) si kliknutím odškrtáváš hotové kroky. Ukládá se jen ve tvém telefonu a druhý den se seznam vynuluje.</li>' +
-    '<li>Na mobilu je dole lišta: <b>🏠 Úvod</b>, <b>🔍 Hledat</b> a sekce. Z článku se do seznamu vrátíš odkazem <b>‹</b> nahoře.</li>' +
+    '<li>Na mobilu je dole lišta: <b>🏠 Úvod</b> a sekce; hledání je nahoře v seznamu sekce. Z článku se do seznamu vrátíš odkazem <b>‹</b> nahoře.</li>' +
     '<li><b>Přílohy</b> (PDF, Excel) najdeš pod textem článku – kliknutím je otevřeš nebo stáhneš.</li>' +
     '<li>U dlouhých článků je nahoře <b>Obsah článku</b> – kliknutím skočíš na danou část.</li>' +
     '<li>Obrázek zvětšíš kliknutím, zavřeš ho dalším kliknutím.</li>' +
@@ -3207,7 +3206,6 @@ $('helpBtn').onclick = ()=>{ if(!canLeaveEdit()) return; editing = false; view =
 $('homeLink').onclick = ()=>{ goHome(); };
 $('helpBtnM').onclick = ()=>$('helpBtn').onclick();
 $('railHome').onclick = ()=>{ goHome(); };
-$('railSearch').onclick = ()=>{ document.body.classList.add('m-panel'); window.scrollTo(0, 0); setTimeout(()=>$('searchInput').focus(), 150); };
 $('railRole').onclick = e=>{ e.stopPropagation(); if($('roleMenu').hidden) openRoleMenu(); else $('roleMenu').hidden = true; };
 $('toolsBtn').onclick = e=>{ e.stopPropagation(); $('toolsMenu').classList.toggle('open'); };
 $('toolsMenu').addEventListener('click', ()=>{ $('toolsMenu').classList.remove('open'); });
