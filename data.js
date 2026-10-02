@@ -1,5 +1,5 @@
 const INITIAL_DATA = {
- "publishedAt": "2026-10-02T01:00:50.410Z",
+ "publishedAt": "2026-10-02T01:06:18.245Z",
  "postupCats": [
   {
    "id": "vstupni_logistika",
@@ -195,7 +195,8 @@ const INITIAL_DATA = {
     "dsc": "ddd",
     "id": "a1790866626938swfjm"
    }
-  ]
+  ],
+  "hero": "images/9bb493a7598d24d4be52.png"
  },
  "branches": [
   {
